@@ -622,6 +622,9 @@ class tqdm(Comparable):
             # fractional and percentage progress
             frac = n / total
             percentage = frac * 100
+            if percentage >= 99.5 and n != total:
+                percentage = 99
+
 
             if title:
                 l_bar += f'{OSC_PROGRESS}{round(percentage)}{OSC_END}{percentage:3.0f}%|'
