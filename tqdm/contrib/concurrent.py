@@ -65,7 +65,7 @@ def thread_map(fn, *iterables, **tqdm_kwargs):
     max_workers  : int, optional
         Maximum number of workers to spawn; passed to
         `concurrent.futures.ThreadPoolExecutor.__init__`.
-        [default: max(32, cpu_count() + 4)].
+        [default: min(32, cpu_count() + 4)].
     timeout  : int or float, optional
         The iterator raises a TimeoutError if __next()__ is called and the
         result isn't available within the timeout specified from the
