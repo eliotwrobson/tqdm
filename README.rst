@@ -1020,7 +1020,7 @@ Instead, either call ``pbar.close()`` manually or use the context manager syntax
 Pandas Integration
 ~~~~~~~~~~~~~~~~~~
 
-Due to popular demand we've added support for ``pandas`` -- here's an example
+Due to popular demand, we've added support for ``pandas`` -- here's an example
 for ``DataFrame.progress_apply`` and ``DataFrameGroupBy.progress_apply``:
 
 .. code:: python
