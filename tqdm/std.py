@@ -1322,13 +1322,15 @@ class tqdm(Comparable):
         if not nolock:
             self._lock.acquire()
         pos = abs(self.pos)
-        if pos < (self.nrows or 20):
-            self.moveto(pos)
-            self.sp('')
-            self.fp.write('\r')  # place cursor back at the beginning of line
-            self.moveto(-pos)
-        if not nolock:
-            self._lock.release()
+        try:
+            if pos < (self.nrows or 20):
+                self.moveto(pos)
+                self.sp('')
+                self.fp.write('\r')  # place cursor back at the beginning of line
+                self.moveto(-pos)
+        finally:
+            if not nolock:
+                self._lock.release()
 
     def refresh(self, nolock=False, lock_args=None):
         """
@@ -1352,9 +1354,11 @@ class tqdm(Comparable):
                     return False
             else:
                 self._lock.acquire()
-        self.display()
-        if not nolock:
-            self._lock.release()
+        try:
+            self.display()
+        finally:
+            if not nolock:
+                self._lock.release()
         return True
 
     def unpause(self):
