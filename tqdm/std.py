@@ -22,7 +22,7 @@ from numbers import Number
 from operator import length_hint
 from time import time
 from warnings import warn
-from typing import Any, Callable, Iterable, TextIO, Self
+from typing import Any, Callable, Iterable, Iterator, Literal, TextIO, Self
 from weakref import WeakSet
 
 from ._monitor import TMonitor
@@ -1349,7 +1349,7 @@ class tqdm(Comparable):
             else getattr(self, "total", None)
         )
 
-    def __reversed__(self):
+    def __reversed__(self) -> Self:
         try:
             orig = self.iterable
         except AttributeError:
@@ -1381,7 +1381,7 @@ class tqdm(Comparable):
                 raise
             warn("AttributeError ignored", TqdmWarning, stacklevel=2)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
         if len(tqdm._instances) == 0:
             if hasattr(tqdm, "_lock"):
@@ -1389,17 +1389,17 @@ class tqdm(Comparable):
             if hasattr(tqdm, "monitor") and tqdm.monitor is not None:
                 tqdm.monitor.exit()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.format_meter(**self.format_dict)
 
     @property
-    def _comparable(self):
+    def _comparable(self) -> int:
         return abs(getattr(self, "pos", 1 << 31))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return id(self)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         """Backward-compatibility to use: for x in tqdm(iterable)"""
 
         # Inlining instance variables as locals (speed optimisation)
@@ -1437,7 +1437,7 @@ class tqdm(Comparable):
             self.n = n
             self.close()
 
-    def update(self, n=1):
+    def update(self, n: int | float = 1) -> None:
         """
         Manually update the progress bar, useful for streams
         such as reading files.
@@ -1505,7 +1505,7 @@ class tqdm(Comparable):
                 self.last_print_t = cur_t
                 return True
 
-    def close(self):
+    def close(self) -> None:
         """Cleanup and (if leave=False) close the progressbar."""
         if self.disable:
             return
@@ -1551,7 +1551,7 @@ class tqdm(Comparable):
             # decrement instance pos and remove from internal set
             self._decr_instances(self)
 
-    def clear(self, nolock=False):
+    def clear(self, nolock: bool = False) -> None:
         """Clear current bar display."""
         if self.disable:
             return
@@ -1569,7 +1569,7 @@ class tqdm(Comparable):
             if not nolock:
                 self._lock.release()
 
-    def refresh(self, nolock=False, lock_args=None):
+    def refresh(self, nolock: bool = False, lock_args: tuple = None) -> None:
         """
         Force refresh the display of this bar.
 
@@ -1596,9 +1596,8 @@ class tqdm(Comparable):
         finally:
             if not nolock:
                 self._lock.release()
-        return True
 
-    def pause(self, refresh=True):
+    def pause(self, refresh: bool = True) -> None:
         """Pause the tqdm timer.
 
         Refresh the progress bar by default.
@@ -1615,7 +1614,7 @@ class tqdm(Comparable):
 
         self.last_pause_t = self._time()
 
-    def unpause(self):
+    def unpause(self) -> None:
         """Restart tqdm timer from last pause."""
         if self.disable:
             return
@@ -1633,7 +1632,7 @@ class tqdm(Comparable):
         self.start_t += dt
         self.last_print_t += dt
 
-    def reset(self, total=None):
+    def reset(self, total: int | float | None = None) -> None:
         """
         Resets to 0 iterations for repeated use.
 
@@ -1655,7 +1654,7 @@ class tqdm(Comparable):
         self._ema_miniters = EMA(self.smoothing)
         self.refresh()
 
-    def set_description(self, desc=None, refresh=True):
+    def set_description(self, desc: str | None = None, refresh: bool = True) -> None:
         """
         Set/modify description of the progress bar.
 
@@ -1669,20 +1668,24 @@ class tqdm(Comparable):
         if refresh:
             self.refresh()
 
-    def set_description_str(self, desc=None, refresh=True):
+    def set_description_str(
+        self, desc: str | None = None, refresh: bool = True
+    ) -> None:
         """Set/modify description without ': ' appended."""
         self.desc = desc or ""
         if refresh:
             self.refresh()
 
-    def set_postfix(self, ordered_dict=None, refresh=True, **kwargs):
+    def set_postfix(
+        self, ordered_dict: dict = None, refresh: bool = True, **kwargs: dict[str, Any]
+    ) -> None:
         """
         Set/modify postfix (additional stats)
         with automatic formatting based on datatype.
 
         Parameters
         ----------
-        ordered_dict  : dict or OrderedDict, optional
+        ordered_dict  : dict, optional
         refresh  : bool, optional
             Forces refresh [default: True].
         kwargs  : dict, optional
@@ -1707,7 +1710,7 @@ class tqdm(Comparable):
         if refresh:
             self.refresh()
 
-    def set_postfix_str(self, s="", refresh=True):
+    def set_postfix_str(self, s: str = "", refresh: bool = True) -> None:
         """
         Postfix without dictionary expansion, similar to prefix handling.
         """
@@ -1721,7 +1724,7 @@ class tqdm(Comparable):
         getattr(self.fp, "flush", lambda: None)()
 
     @property
-    def format_dict(self):
+    def format_dict(self) -> dict[str, Any]:
         """Public API for read-only member access."""
         if self.disable and not hasattr(self, "unit"):
             return defaultdict(
@@ -1749,7 +1752,7 @@ class tqdm(Comparable):
             "title": self.title,
         }
 
-    def display(self, msg=None, pos=None):
+    def display(self, msg: str | None = None, pos: int | None = None) -> None:
         """
         Use `self.sp` to display `msg` in the specified `pos`.
 
@@ -1787,7 +1790,15 @@ class tqdm(Comparable):
 
     @classmethod
     @contextmanager
-    def wrapattr(cls, stream, method, total=None, bytes=True, **tqdm_kwargs):
+    def wrapattr(
+        cls,
+        stream: TextIO,
+        method: Literal["read", "write"],
+        total: int | float | None = None,
+        bytes: bool = True,
+        **tqdm_kwargs: dict[str, Any],
+    ):
+        # TODO add return type
         """
         stream  : file-like object.
         method  : str, "read" or "write". The result of `read()` and
@@ -1807,7 +1818,7 @@ class tqdm(Comparable):
             yield CallbackIOWrapper(t.update, stream, method)
 
 
-def trange(*args, **kwargs):
+def trange(*args: tuple, **kwargs: dict[str, Any]) -> tqdm:
     """Shortcut for tqdm(range(*args), **kwargs)."""
     return tqdm(range(*args), **kwargs)
 
