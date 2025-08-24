@@ -30,27 +30,27 @@ def norm(bytestr):
     """Normalise line endings."""
     return bytestr if linesep == "\n" else bytestr.replace(linesep.encode(), b"\n")
 
-# TODO uncomment
-# @mark.slow
-# def test_pipes():
-#     """Test command line pipes"""
-#     ls_out = subprocess.check_output(['ls'])  # nosec
-#     ls = subprocess.Popen(['ls'], stdout=subprocess.PIPE)  # nosec
-#     res = subprocess.Popen(  # nosec
-#         [sys.executable, '-c', 'from tqdm.cli import main; main()'],
-#         stdin=ls.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#     out, err = res.communicate()
-#     assert ls.poll() == 0
+@mark.slow
+@mark.skipif(IS_WIN, reason="no pipes on windows")
+def test_pipes():
+    """Test command line pipes"""
+    ls_out = subprocess.check_output(['ls'])  # nosec
+    ls = subprocess.Popen(['ls'], stdout=subprocess.PIPE)  # nosec
+    res = subprocess.Popen(  # nosec
+        [sys.executable, '-c', 'from tqdm.cli import main; main()'],
+        stdin=ls.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = res.communicate()
+    assert ls.poll() == 0
 
-#     # actual test:
-#     assert norm(ls_out) == norm(out)
-#     assert b"it/s" in err
-#     assert b"Error" not in err
+    # actual test:
+    assert norm(ls_out) == norm(out)
+    assert b"it/s" in err
+    assert b"Error" not in err
 
 
-# if sys.version_info[:2] >= (3, 8):
-#     test_pipes = mark.filterwarnings("ignore:unclosed file:ResourceWarning")(
-#         test_pipes)
+if sys.version_info[:2] >= (3, 8):
+    test_pipes = mark.filterwarnings("ignore:unclosed file:ResourceWarning")(
+        test_pipes)
 
 
 def test_main_import():
