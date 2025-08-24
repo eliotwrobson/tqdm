@@ -1372,7 +1372,7 @@ class tqdm(Comparable):
     def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         try:
             self.close()
         except AttributeError:
