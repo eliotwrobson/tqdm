@@ -1,6 +1,7 @@
 """
 Tests for `tqdm.contrib`.
 """
+
 import pytest
 
 from tqdm import tqdm
@@ -17,8 +18,9 @@ def incr(x):
 @pytest.mark.parametrize("tqdm_kwargs", [{}, {"tqdm_class": tqdm}])
 def test_enumerate(tqdm_kwargs):
     """Test contrib.tenumerate"""
+    a = range(9)
+
     with closing(StringIO()) as our_file:
-        a = range(9)
         assert list(tenumerate(a, file=our_file, **tqdm_kwargs)) == list(enumerate(a))
         assert list(tenumerate(a, 42, file=our_file, **tqdm_kwargs)) == list(
             enumerate(a, 42)

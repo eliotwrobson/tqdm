@@ -18,12 +18,23 @@ wiki = "https://github.com/tqdm/tqdm/wiki"
 [project]
 name = "tqdm"
 dynamic = ["version"]
-maintainers = [{name = "tqdm developers", email = "devs@tqdm.ml"}]
+maintainers = [{ name = "tqdm developers", email = "devs@tqdm.ml" }]
 description = "Fast, Extensible Progress Meter"
 readme = "README.rst"
 requires-python = ">=3.7"
-keywords = ["progressbar", "progressmeter", "progress", "bar", "meter", "rate", "eta", "console", "terminal", "time"]
-license = {text = "MPL-2.0 AND MIT"}
+keywords = [
+    "progressbar",
+    "progressmeter",
+    "progress",
+    "bar",
+    "meter",
+    "rate",
+    "eta",
+    "console",
+    "terminal",
+    "time",
+]
+license = { text = "MPL-2.0 AND MIT" }
 # Trove classifiers (https://pypi.org/pypi?%3Aaction=list_classifiers)
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -80,11 +91,18 @@ classifiers = [
     "Topic :: System :: Monitoring",
     "Topic :: System :: Shells",
     "Topic :: Terminals",
-    "Topic :: Utilities"]
-dependencies = ['colorama; platform_system == "Windows"']
+    "Topic :: Utilities",
+]
+dependencies = ['colorama']
 
 [project.optional-dependencies]
-dev = ["pytest>=6", "pytest-cov", "pytest-timeout", "pytest-asyncio>=0.24", "nbval"]
+dev = [
+    "pytest>=6",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-asyncio>=0.24",
+    "nbval",
+]
 discord = ["requests"]
 slack = ["slack-sdk"]
 telegram = ["requests"]
@@ -95,7 +113,16 @@ tqdm = "tqdm.cli:main"
 
 [tool.flake8]
 max_line_length = 99
-exclude = [".git", "__pycache__", "build", "dist", ".eggs", ".asv", ".tox", ".ipynb_checkpoints"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    ".asv",
+    ".tox",
+    ".ipynb_checkpoints",
+]
 
 [tool.yapf]
 spaces_before_comment = [15, 20]
@@ -132,7 +159,8 @@ omit = [
     "tqdm/contrib/slack.py",
     "tqdm/contrib/discord.py",
     "tqdm/contrib/telegram.py",
-    "tqdm/contrib/utils_worker.py"]
+    "tqdm/contrib/utils_worker.py",
+]
 relative_files = true
 disable_warnings = ["include-ignored"]
 [tool.coverage.report]
