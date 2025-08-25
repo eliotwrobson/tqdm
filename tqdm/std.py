@@ -58,6 +58,7 @@ OSC_PROGRESS = "\x1b]9;4;1;"
 OSC_END = "\7"
 
 # Colorama initialization for windows
+# TODO skip on linux
 init()
 
 
@@ -1212,21 +1213,6 @@ class tqdm(Comparable):
             self.total = total
             self.leave = leave
             return
-
-        if kwargs:
-            self.disable = True
-            with self.get_lock():
-                self.pos = self._get_free_pos(self)
-                self._instances.remove(self)
-            raise (
-                TqdmDeprecationWarning(
-                    "`nested` is deprecated and automated.\n"
-                    "Use `position` instead for manual control.\n",
-                    fp_write=getattr(file, "write", sys.stderr.write),
-                )
-                if "nested" in kwargs
-                else TqdmKeyError("Unknown argument(s): " + str(kwargs))
-            )
 
         # Preprocess the arguments
         keep_original_size = ncols is not None, nrows is not None
