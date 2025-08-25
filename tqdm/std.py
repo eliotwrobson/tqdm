@@ -799,7 +799,7 @@ class tqdm(Comparable):
                 f"{n_fmt}{unit} [{elapsed_str}, {rate_fmt}{postfix}]"
             )
 
-    def __new__(cls, *args, **kwargs) -> Self:
+    def __new__(cls, *args: tuple, **kwargs: dict[str, Any]) -> Self:
         instance = object.__new__(cls)
         tqdm.registered_classes.add(cls)
         with cls.get_lock():  # also constructs lock if non-existent
@@ -932,19 +932,19 @@ class tqdm(Comparable):
                 cls._lock.release()
 
     @classmethod
-    def set_lock(cls, lock):
+    def set_lock(cls, lock: TqdmDefaultWriteLock) -> None:
         """Set the global lock."""
         cls._lock = lock
 
     @classmethod
-    def get_lock(cls):
+    def get_lock(cls) -> TqdmDefaultWriteLock:
         """Get the global lock. Construct it if it does not exist."""
         if not hasattr(cls, "_lock"):
             cls._lock = TqdmDefaultWriteLock()
         return cls._lock
 
     @classmethod
-    def pandas(cls, **tqdm_kwargs):
+    def pandas(cls, **tqdm_kwargs: dict[str, Any]) -> None:
         """
         Registers the current `tqdm` class with
             pandas.core.
@@ -1561,10 +1561,10 @@ class tqdm(Comparable):
         pos = abs(self.pos)
         try:
             if pos < (self.nrows or 20):
-                self.moveto(pos)
+                self._moveto(pos)
                 self.sp("")
                 self.fp.write("\r")  # place cursor back at the beginning of line
-                self.moveto(-pos)
+                self._moveto(-pos)
         finally:
             if not nolock:
                 self._lock.release()
@@ -1718,7 +1718,7 @@ class tqdm(Comparable):
         if refresh:
             self.refresh()
 
-    def moveto(self, n):
+    def _moveto(self, n: int) -> None:
         # TODO: private method
         self.fp.write("\n" * n + _term_move_up() * -n)
         getattr(self.fp, "flush", lambda: None)()
@@ -1782,10 +1782,10 @@ class tqdm(Comparable):
             )
 
         if pos:
-            self.moveto(pos)
+            self._moveto(pos)
         self.sp(self.__str__() if msg is None else msg)
         if pos:
-            self.moveto(-pos)
+            self._moveto(-pos)
         return True
 
     @classmethod
