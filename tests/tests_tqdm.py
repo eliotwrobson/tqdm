@@ -362,11 +362,19 @@ def test_si_format() -> None:
     assert "1.00P " in format_meter(1, 999999999999999, 1, unit_scale=True)
     assert "1.00E " in format_meter(1, 999999999999999999, 1, unit_scale=True)
     assert "1.00Z " in format_meter(1, 999999999999999999999, 1, unit_scale=True)
-    assert "1.0Y " in format_meter(1, 999999999999999999999999, 1, unit_scale=True)
-    assert "10.0Y " in format_meter(1, 9999999999999999999999999, 1, unit_scale=True)
-    assert "100.0Y " in format_meter(1, 99999999999999999999999999, 1, unit_scale=True)
-    assert "1000.0Y " in format_meter(
-        1, 999999999999999999999999999, 1, unit_scale=True
+    assert "1.00Y " in format_meter(1, 999999999999999999999999, 1, unit_scale=True)
+    assert "1.00R " in format_meter(1, 999999999999999999999999999, 1, unit_scale=True)
+    assert "1.00Q " in format_meter(
+        1, 999999999999999999999999999999, 1, unit_scale=True
+    )
+    assert "10.0Q " in format_meter(
+        1, 9999999999999999999999999999999, 1, unit_scale=True
+    )
+    assert "100Q " in format_meter(
+        1, 99999999999999999999999999999999, 1, unit_scale=True
+    )
+    assert "1000Q " in format_meter(
+        1, 999999999999999999999999999999999, 1, unit_scale=True
     )
 
 

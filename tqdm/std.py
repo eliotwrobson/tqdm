@@ -8,6 +8,7 @@ Usage:
 ...     ...
 """
 
+import math
 import numbers
 from colorama import Fore, Style, init
 from icecream import ic
@@ -171,11 +172,6 @@ class TqdmDefaultWriteLock(object):
                 cls.mp_lock = RLock()
             except (ImportError, OSError):  # pragma: no cover
                 cls.mp_lock = None
-
-    @classmethod
-    def create_th_lock(cls) -> None:
-        assert hasattr(cls, "th_lock")
-        warn("create_th_lock not needed anymore", TqdmDeprecationWarning, stacklevel=2)
 
 
 class Bar(object):
@@ -462,15 +458,30 @@ class tqdm(Comparable):
         out  : str
             Number with Order of Magnitude SI unit postfix.
         """
-        for unit in ["", "k", "M", "G", "T", "P", "E", "Z"]:
-            if abs(num) < 999.5:
-                if abs(num) < 99.95:
-                    if abs(num) < 9.995:
-                        return f"{num:1.2f}{unit}{suffix}"
-                    return f"{num:2.1f}{unit}{suffix}"
-                return f"{num:3.0f}{unit}{suffix}"
-            num /= divisor
-        return f"{num:3.1f}Y{suffix}"
+        if num == 0:
+            return f"0{suffix}"
+
+        units = ["", "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"]
+
+        # Calculate the exponent of the number's magnitude
+        # This directly finds the correct unit without looping
+        exponent = int(round(math.log(abs(num), divisor), 4))
+
+        # Clamp the exponent to the number of available units to avoid an IndexError
+        exponent = min(exponent, len(units) - 1)
+
+        # Scale the number and select the correct unit
+        num_scaled = num / (divisor**exponent)
+        unit = units[exponent]
+        ic(num_scaled, unit, divisor, exponent, math.log(abs(num), divisor))
+
+        # Apply the correct formatting based on the scaled number
+        if abs(num_scaled) < 9.995:
+            return f"{num_scaled:.2f}{unit}{suffix}"
+        elif abs(num_scaled) < 99.995:
+            return f"{num_scaled:.1f}{unit}{suffix}"
+        else:
+            return f"{num_scaled:.0f}{unit}{suffix}"
 
     @staticmethod
     def format_interval(t: int) -> str:
