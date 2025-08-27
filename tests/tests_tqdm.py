@@ -2194,7 +2194,7 @@ def test_bool() -> None:
         with tqdm([0], **kwargs) as t:
             assert t
         with tqdm(iter([]), **kwargs) as t:
-            assert t
+            assert not t  # NOTE behavior change from previous
         with tqdm(iter([1, 2, 3]), **kwargs) as t:
             assert t
         with tqdm(**kwargs) as t:
