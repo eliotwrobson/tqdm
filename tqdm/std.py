@@ -10,7 +10,7 @@ Usage:
 
 import numbers
 from colorama import Fore, Style, init
-
+from icecream import ic
 
 import signal
 import sys
@@ -1192,12 +1192,14 @@ class tqdm(Comparable):
             disable = True
 
         if total is None and iterable is not None:
+            # TODO do this via hasattr or some other better method than just trying a bunch
+            # of random crap.
             try:
                 total = len(iterable)
             except (TypeError, AttributeError):
-                try:
+                if hasattr(iterable, "__length_hint__"):
                     total = length_hint(iterable)
-                except (TypeError, AttributeError):
+                else:
                     total = None
         if total == float("inf"):
             # Infinite iterations, behave same as unknown
