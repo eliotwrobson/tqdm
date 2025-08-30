@@ -11,8 +11,13 @@ from unicodedata import east_asian_width
 from warnings import warn
 from wcwidth import wcwidth
 from weakref import proxy
+from colorama import Fore, Style
 
-from typing import Callable
+from typing import Callable, TextIO, Any
+from datetime import datetime, timezone, timedelta
+import math
+import numbers
+
 
 _range, _unich, _unicode, _basestring = range, chr, str, str
 CUR_OS = sys.platform
@@ -482,3 +487,498 @@ def get_ema_func(smoothing: float = 0.3) -> Callable[[float | None], float]:
         return last / (1 - beta**calls) if calls else last
 
     return ema
+
+###### TODO all of the helper functions below are related to formatting. #####
+# should probably be moved to a separate file
+# TODO make a separate file with exception + warning types
+
+class TqdmWarning(Warning):
+    """base class for all tqdm warnings.
+
+    Used for non-external-code-breaking errors, such as garbled printing.
+    """
+
+    def __init__(
+        self,
+        msg: str,
+        fp_write: TextIO | None = None,
+        *args: tuple,
+        **kwargs: dict[str, Any],
+    ) -> None:
+        if fp_write is not None:
+            fp_write("\n" + self.__class__.__name__ + ": " + str(msg).rstrip() + "\n")
+        else:
+            super().__init__(msg, *args, **kwargs)
+
+class Bar(object):
+    """
+    `str.format`-able bar with format specifiers: `[width][type]`
+
+    - `width`
+      + unspecified (default): use `self.default_len`
+      + `int >= 0`: overrides `self.default_len`
+      + `int < 0`: subtract from `self.default_len`
+    - `type`
+      + `a`: ascii (`charset=self.ASCII` override)
+      + `u`: unicode (`charset=self.UTF` override)
+      + `b`: blank (`charset="  "` override)
+    """
+
+    ASCII = " 123456789#"
+    UTF = " " + "".join(map(chr, range(0x258F, 0x2587, -1)))
+    BLANK = "  "
+    COLOUR_RESET = Style.RESET_ALL
+    COLOUR_RGB = "\x1b[38;2;%d;%d;%dm"
+    COLOURS = {
+        "BLACK": Fore.BLACK,
+        "RED": Fore.RED,
+        "GREEN": Fore.GREEN,
+        "YELLOW": Fore.YELLOW,
+        "BLUE": Fore.BLUE,
+        "MAGENTA": Fore.MAGENTA,
+        "CYAN": Fore.CYAN,
+        "WHITE": Fore.WHITE,
+    }
+
+    def __init__(
+        self,
+        frac: float,
+        default_len: int = 10,
+        charset: str = UTF,
+        colour: str | None = None,
+    ) -> None:
+        if not 0 <= frac <= 1:
+            warn("clamping frac to range [0, 1]", TqdmWarning, stacklevel=2)
+            frac = max(0, min(1, frac))
+        assert default_len > 0
+        self.frac = frac
+        self.default_len = default_len
+        self.charset = charset
+        self.colour = colour
+
+    @property
+    def colour(self) -> str | None:
+        return self._colour
+
+    @colour.setter
+    def colour(self, value: str | None) -> None:
+        """
+        TODO change to use color setting and validation with colorama
+        """
+        if not value:
+            self._colour = None
+            return
+        try:
+            if value.upper() in self.COLOURS:
+                self._colour = self.COLOURS[value.upper()]
+            elif value[0] == "#" and len(value) == 7:
+                self._colour = self.COLOUR_RGB % tuple(
+                    int(i, 16) for i in (value[1:3], value[3:5], value[5:7])
+                )
+            else:
+                raise KeyError
+        except (KeyError, AttributeError):
+            warn(
+                "Unknown colour (%s); valid choices: [hex (#00ff00), %s]"
+                % (value, ", ".join(self.COLOURS)),
+                TqdmWarning,
+                stacklevel=2,
+            )
+            self._colour = None
+
+    def __format__(self, format_spec: str) -> str:
+        if format_spec:
+            _type = format_spec[-1].lower()
+            try:
+                charset = {"a": self.ASCII, "u": self.UTF, "b": self.BLANK}[_type]
+            except KeyError:
+                charset = self.charset
+            else:
+                format_spec = format_spec[:-1]
+            if format_spec:
+                N_BARS = int(format_spec)
+                if N_BARS < 0:
+                    N_BARS += self.default_len
+            else:
+                N_BARS = self.default_len
+        else:
+            charset = self.charset
+            N_BARS = self.default_len
+
+        nsyms = len(charset) - 1
+        bar_length, frac_bar_length = divmod(int(self.frac * N_BARS * nsyms), nsyms)
+
+        res = charset[-1] * bar_length
+        if bar_length < N_BARS:  # whitespace padding
+            res = (
+                res + charset[frac_bar_length] + charset[0] * (N_BARS - bar_length - 1)
+            )
+        return self.colour + res + self.COLOUR_RESET if self.colour else res
+
+
+def format_sizeof(num: float, divisor: int = 1000) -> str:
+    """
+    Formats a number (>= 1) with SI Order of Magnitude prefixes.
+
+    Parameters
+    ----------
+    num  : float
+        Number (>= 1) to format.
+    divisor  : float, optional
+        Divisor between prefixes [default: 1000].
+
+    Returns
+    -------
+    out  : str
+        Number with Order of Magnitude SI unit postfix.
+    """
+    if num == 0:
+        return "0"
+
+    units = ["", "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"]
+
+    # Calculate the exponent of the number's magnitude
+    # This directly finds the correct unit without looping
+    exponent = int(round(math.log(abs(num), divisor), 4))
+
+    # Clamp the exponent to the number of available units to avoid an IndexError
+    exponent = min(exponent, len(units) - 1)
+
+    # Scale the number and select the correct unit
+    num_scaled = num / (divisor**exponent)
+    unit = units[exponent]
+
+    # Apply the correct formatting based on the scaled number
+    if abs(num_scaled) < 9.995:
+        return f"{num_scaled:.2f}{unit}"
+    elif abs(num_scaled) < 99.995:
+        return f"{num_scaled:.1f}{unit}"
+    else:
+        return f"{num_scaled:.0f}{unit}"
+
+def format_interval(t: int) -> str:
+    """
+    Formats a number of seconds as a clock time, [[Dd ]H:]MM:SS
+
+    Parameters
+    ----------
+    t  : int
+        Number of seconds.
+
+    Returns
+    -------
+    out  : str
+        [[Dd ]H:]MM:SS
+    """
+    mins, s = divmod(int(t), 60)
+    h, m = divmod(mins, 60)
+    days, h = divmod(h, 24)
+    if days:
+        return "{0:d}d {1:d}:{2:02d}:{3:02d}".format(days, h, m, s)
+    elif h:
+        return "{0:d}:{1:02d}:{2:02d}".format(h, m, s)
+    else:
+        return "{0:02d}:{1:02d}".format(m, s)
+
+
+def format_num(n: numbers.Real) -> str:
+    """
+    Intelligent scientific notation (.3g).
+
+    Parameters
+    ----------
+    n  : int or float or Numeric
+        A Number.
+
+    Returns
+    -------
+    out  : str
+        Formatted number.
+    """
+    f = f"{n:.3g}".replace("e+0", "e+").replace("e-0", "e-")
+    n = str(n)
+    return f if len(f) < len(n) else n
+
+
+def get_status_printer(file: TextIO) -> Callable[[str], None]:
+    """
+    Manage the printing and in-place updating of a line of characters.
+    Note that if the string is longer than a line, then in-place
+    updating may not work (it will print a new line at each refresh).
+    """
+    fp = file
+    fp_flush = getattr(fp, "flush", lambda: None)  # pragma: no cover
+    if fp in (sys.stderr, sys.stdout):
+        getattr(sys.stderr, "flush", lambda: None)()
+        getattr(sys.stdout, "flush", lambda: None)()
+
+    def fp_write(s):
+        fp.write(str(s))
+        fp_flush()
+
+    last_len = 0
+
+    def print_status(s: str) -> None:
+        nonlocal last_len
+        len_s = disp_len(s)
+        fp_write("\r" + s + (" " * max(last_len - len_s, 0)))
+        last_len = len_s
+
+    return print_status
+
+
+def format_meter(
+    n: float | int,
+    total: float | int,
+    elapsed: float,
+    ncols: int | None = None,
+    prefix: str = "",
+    ascii: bool | str = False,
+    unit: str = "it",
+    unit_scale: bool | int | float = False,
+    rate: float | None = None,
+    bar_format: str | None = None,
+    postfix: str | None = None,
+    unit_divisor: float = 1000,
+    initial: float | int = 0,
+    colour: str | None = None,
+    title: bool = False,
+    **extra_kwargs: dict[str, Any],
+):
+    """
+    Return a string-based progress bar given some parameters
+
+    Parameters
+    ----------
+    n  : int or float
+        Number of finished iterations.
+    total  : int or float
+        The expected total number of iterations. If meaningless (None),
+        only basic progress statistics are displayed (no ETA).
+    elapsed  : float
+        Number of seconds passed since start.
+    ncols  : int, optional
+        The width of the entire output message. If specified,
+        dynamically resizes `{bar}` to stay within this bound
+        [default: None]. If `0`, will not print any bar (only stats).
+        The fallback is `{bar:10}`.
+    prefix  : str, optional
+        Prefix message (included in total width) [default: ''].
+        Use as {desc} in bar_format string.
+    ascii  : bool or str, optional
+        If not set, use unicode (smooth blocks) to fill the meter
+        [default: False]. The fallback is to use ASCII characters
+        " 123456789#".
+    unit  : str, optional
+        The iteration unit [default: 'it'].
+    unit_scale  : bool or int or float, optional
+        If 1 or True, the number of iterations will be printed with an
+        appropriate SI metric prefix (k = 10^3, M = 10^6, etc.)
+        [default: False]. If any other non-zero number, will scale
+        `total` and `n`.
+    rate  : float, optional
+        Manual override for iteration rate.
+        If [default: None], uses n/elapsed.
+    bar_format  : str, optional
+        Specify a custom bar string formatting. May impact performance.
+        [default: '{l_bar}{bar}{r_bar}'], where
+        l_bar='{desc}: {percentage:3.0f}%|' and
+        r_bar='| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, '
+            '{rate_fmt}{postfix}]'
+        Possible vars: l_bar, bar, r_bar, n, n_fmt, total, total_fmt,
+            percentage, elapsed, elapsed_s, ncols, nrows, desc, unit,
+            rate, rate_fmt, rate_noinv, rate_noinv_fmt,
+            rate_inv, rate_inv_fmt, postfix, unit_divisor,
+            remaining, remaining_s, eta.
+        Note that a trailing ": " is automatically removed after {desc}
+        if the latter is empty.
+    postfix  : *, optional
+        Similar to `prefix`, but placed at the end
+        (e.g. for additional stats).
+        Note: postfix is usually a string (not a dict) for this method,
+        and will if possible be set to postfix = ', ' + postfix.
+        However other types are supported (#382).
+    unit_divisor  : float, optional
+        [default: 1000], ignored unless `unit_scale` is True.
+    initial  : int or float, optional
+        The initial counter value [default: 0].
+    colour  : str, optional
+        Bar colour (e.g. 'green', '#00ff00').
+
+    Returns
+    -------
+    out  : Formatted meter and stats, ready to display.
+    """
+
+    # sanity check: total
+    if total and n >= (total + 0.5):  # allow float imprecision (#849)
+        total = None
+
+    # apply custom scale if necessary
+    if unit_scale and unit_scale not in (True, 1):
+        if total:
+            total *= unit_scale
+        n *= unit_scale
+        if rate:
+            rate *= unit_scale  # by default rate = self.avg_dn / self.avg_dt
+        unit_scale = False
+
+    elapsed_str = format_interval(elapsed)
+
+    # if unspecified, attempt to use rate = average speed
+    # (we allow manual override since predicting time is an arcane art)
+    if rate is None and elapsed:
+        rate = (n - initial) / elapsed
+    inv_rate = 1 / rate if rate else None
+
+    rate_noinv_fmt = (
+        ((format_sizeof(rate) if unit_scale else f"{rate:5.2f}") if rate else "?")
+        + unit
+        + "/s"
+    )
+    rate_inv_fmt = (
+        (
+            (format_sizeof(inv_rate) if unit_scale else f"{inv_rate:5.2f}")
+            if inv_rate
+            else "?"
+        )
+        + "s/"
+        + unit
+    )
+    rate_fmt = rate_inv_fmt if inv_rate and inv_rate > 1 else rate_noinv_fmt
+
+    if unit_scale:
+        n_fmt = format_sizeof(n, divisor=unit_divisor)
+        total_fmt = (
+            format_sizeof(total, divisor=unit_divisor) if total is not None else "?"
+        )
+    else:
+        n_fmt = str(n)
+        total_fmt = str(total) if total is not None else "?"
+
+    try:
+        postfix = ", " + postfix if postfix else ""
+    except TypeError:
+        pass
+
+    remaining = (
+        elapsed / (n - initial) * (total - n + initial) if rate and total else 0
+    )
+    remaining_str = format_interval(remaining) if rate else "?"
+    try:
+        eta_dt = (
+            datetime.now() + timedelta(seconds=remaining)
+            if rate and total
+            else datetime.fromtimestamp(0, timezone.utc)
+        )
+    except OverflowError:
+        eta_dt = datetime.max
+
+    # format the stats displayed to the left and right sides of the bar
+    if prefix:
+        # old prefix setup work around
+        bool_prefix_colon_already = prefix[-2:] == ": "
+        l_bar = prefix if bool_prefix_colon_already else prefix + ": "
+    else:
+        l_bar = ""
+
+    r_bar = f"| {n_fmt}/{total_fmt} [{elapsed_str}<{remaining_str}, {rate_fmt}{postfix}]"
+
+    # Custom bar formatting
+    # Populate a dict with all available progress indicators
+    format_dict = {
+        # slight extension of self.format_dict
+        "n": n,
+        "n_fmt": n_fmt,
+        "total": total,
+        "total_fmt": total_fmt,
+        "elapsed": elapsed_str,
+        "elapsed_s": elapsed,
+        "ncols": ncols,
+        "desc": prefix or "",
+        "unit": unit,
+        "rate": inv_rate if inv_rate and inv_rate > 1 else rate,
+        "rate_fmt": rate_fmt,
+        "rate_noinv": rate,
+        "rate_noinv_fmt": rate_noinv_fmt,
+        "rate_inv": inv_rate,
+        "rate_inv_fmt": rate_inv_fmt,
+        "postfix": postfix,
+        "unit_divisor": unit_divisor,
+        "colour": colour,
+        # plus more useful definitions
+        "remaining": remaining_str,
+        "remaining_s": remaining,
+        "l_bar": l_bar,
+        "r_bar": r_bar,
+        "eta": eta_dt,
+        **extra_kwargs,
+    }
+
+    # total is known: we can predict some stats
+    if total:
+        # fractional and percentage progress
+        frac = n / total
+        percentage = frac * 100
+        if percentage >= 99.5 and n != total:
+            percentage = 99
+
+        if title:
+            l_bar += (
+                f"{OSC_PROGRESS}{round(percentage)}{OSC_END}{percentage:3.0f}%|"
+            )
+        else:
+            l_bar += f"{percentage:3.0f}%|"
+
+        if ncols == 0:
+            return l_bar[:-1] + r_bar[1:]
+
+        format_dict.update(l_bar=l_bar)
+        if bar_format:
+            format_dict.update(percentage=percentage)
+
+            # auto-remove colon for empty `{desc}`
+            if not prefix:
+                bar_format = bar_format.replace("{desc}: ", "")
+        else:
+            bar_format = "{l_bar}{bar}{r_bar}"
+
+        full_bar = FormatReplace()
+        nobar = bar_format.format(bar=full_bar, **format_dict)
+        if not full_bar.format_called:
+            return nobar  # no `{bar}`; nothing else to do
+
+        # Formatting progress bar space available for bar's display
+        full_bar = Bar(
+            frac,
+            max(1, ncols - disp_len(nobar)) if ncols else 10,
+            charset=Bar.ASCII if ascii is True else ascii or Bar.UTF,
+            colour=colour,
+        )
+        if not _is_ascii(full_bar.charset) and _is_ascii(bar_format):
+            bar_format = str(bar_format)
+        res = bar_format.format(bar=full_bar, **format_dict)
+        return disp_trim(res, ncols) if ncols else res
+
+    elif bar_format:
+        # user-specified bar_format but no total
+        l_bar += "|"
+        format_dict.update(l_bar=l_bar, percentage=0)
+        full_bar = FormatReplace()
+        nobar = bar_format.format(bar=full_bar, **format_dict)
+        if not full_bar.format_called:
+            return nobar
+        full_bar = Bar(
+            0,
+            max(1, ncols - disp_len(nobar)) if ncols else 10,
+            charset=Bar.BLANK,
+            colour=colour,
+        )
+        res = bar_format.format(bar=full_bar, **format_dict)
+        return disp_trim(res, ncols) if ncols else res
+    else:
+        # no total: no progressbar, ETA, just progress stats
+        return (
+            f"{(prefix + ': ') if prefix else ''}"
+            f"{n_fmt}{unit} [{elapsed_str}, {rate_fmt}{postfix}]"
+        )

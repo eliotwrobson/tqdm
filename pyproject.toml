@@ -75,7 +75,7 @@ classifiers = [
     "Topic :: Terminals",
     "Topic :: Utilities",
 ]
-dependencies = ['colorama']
+dependencies = ['colorama', "wcwidth"]
 
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning"]

@@ -202,7 +202,7 @@ def worker(total, blocking=True):
 
 @retry_on_except()
 @patch_lock(thread=True)
-@mark.skip("Erroring on windows, idk what's happening. Maybe windows issue?")
+#@mark.skip("Erroring on windows, idk what's happening. Maybe windows issue?")
 def test_lock_args():
     """Test overhead of nonblocking threads"""
     ThreadPoolExecutor = importorskip('concurrent.futures').ThreadPoolExecutor

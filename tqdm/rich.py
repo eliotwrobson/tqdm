@@ -17,6 +17,7 @@ from rich.progress import (
 
 from .std import TqdmExperimentalWarning, TqdmWarning
 from .std import tqdm as std_tqdm
+from .utils import format_sizeof
 
 __author__ = {"github.com/": ["casperdcl"]}
 __all__ = ["tqdm_rich", "trrange", "tqdm", "trange"]
@@ -30,7 +31,7 @@ class UnitScaleColumn(ProgressColumn):
 
     def unit_format(self, task: Task, num, fmt=""):
         if task.fields["unit_scale"]:
-            return std_tqdm.format_sizeof(num, divisor=task.fields["unit_divisor"])
+            return format_sizeof(num, divisor=task.fields["unit_divisor"])
         return f"{num:{fmt}}"
 
 

@@ -1145,6 +1145,7 @@ name = "tqdm"
 source = { editable = "." }
 dependencies = [
     { name = "colorama" },
+    { name = "wcwidth" },
 ]
 
 [package.dev-dependencies]
@@ -1170,7 +1171,10 @@ telegram = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "colorama" }]
+requires-dist = [
+    { name = "colorama" },
+    { name = "wcwidth" },
+]
 
 [package.metadata.requires-dev]
 dev = [

@@ -6,7 +6,7 @@ Subpackages contain potentially unstable extensions.
 from warnings import warn
 
 from ..auto import tqdm as tqdm_auto
-from ..std import TqdmDeprecationWarning, tqdm
+from ..std import tqdm
 from ..utils import ObjectWrapper
 
 __author__ = {"github.com/": ["casperdcl"]}
@@ -38,13 +38,6 @@ class DummyTqdmFile(ObjectWrapper):
                 tqdm.write(blank.join(self._buf), end=blank, file=self._wrapped)
             except (OSError, ValueError):
                 pass
-
-
-def builtin_iterable(func):
-    """Returns `func`"""
-    warn("This function has no effect, and will be removed in tqdm==5.0.0",
-         TqdmDeprecationWarning, stacklevel=2)
-    return func
 
 
 def tenumerate(iterable, start=0, total=None, tqdm_class=tqdm_auto, **tqdm_kwargs):

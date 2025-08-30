@@ -6,7 +6,7 @@ from operator import length_hint
 from os import cpu_count
 
 from ..auto import tqdm as tqdm_auto
-from ..std import TqdmWarning
+from ..utils import TqdmWarning
 
 __author__ = {"github.com/": ["casperdcl"]}
 __all__ = ['thread_map', 'process_map']

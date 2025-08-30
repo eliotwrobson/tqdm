@@ -8,7 +8,7 @@ from ast import literal_eval as numeric
 from textwrap import indent
 
 from .std import TqdmKeyError, TqdmTypeError, tqdm
-from .version import __version__
+from tqdm import __version__
 
 __all__ = ["main"]
 log = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ RE_OPTS = re.compile(r'\n {4}(\S+)\s{2,}:\s*([^,]+)')
 RE_SHLEX = re.compile(r'\s*(?<!\S)--?([^\s=]+)(\s+|=|$)')
 
 # TODO: add custom support for some of the following?
-UNSUPPORTED_OPTS = ('iterable', 'gui', 'out', 'file')
+UNSUPPORTED_OPTS = ('iterable', 'out', 'file')
 
 # The 8 leading spaces are required for consistency
 CLI_EXTRA_DOC = r"""
