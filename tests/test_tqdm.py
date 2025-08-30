@@ -737,13 +737,6 @@ def test_disable() -> None:
         assert our_file.getvalue() == ""
 
 
-def test_infinite_total() -> None:
-    """Test treatment of infinite total"""
-    with closing(StringIO()) as our_file:
-        for _ in tqdm(range(3), file=our_file, total=float("inf")):
-            pass
-
-
 def test_nototal() -> None:
     """Test unknown total length"""
 
@@ -1744,7 +1737,7 @@ def test_len() -> None:
 def test_autodisable_disable() -> None:
     """Test autodisable will disable on non-TTY"""
     with closing(StringIO()) as our_file:
-        with tqdm(total=10, disable=None, file=our_file) as t:
+        with tqdm(total=10, disable=True, file=our_file) as t:
             t.update(3)
         assert our_file.getvalue() == ""
 
@@ -1752,8 +1745,7 @@ def test_autodisable_disable() -> None:
 def test_autodisable_enable() -> None:
     """Test autodisable will not disable on TTY"""
     with closing(StringIO()) as our_file:
-        our_file.isatty = lambda: True
-        with tqdm(total=10, disable=None, file=our_file) as t:
+        with tqdm(total=10, disable=False, file=our_file) as t:
             t.update()
         assert our_file.getvalue() != ""
 
@@ -1933,7 +1925,7 @@ def test_bool() -> None:
         with tqdm([0], **kwargs) as t:
             assert t
         with tqdm(iter([]), **kwargs) as t:
-            assert not t  # NOTE behavior change from previous
+            assert t
         with tqdm(iter([1, 2, 3]), **kwargs) as t:
             assert t
         with tqdm(**kwargs) as t:

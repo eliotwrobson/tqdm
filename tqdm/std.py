@@ -445,10 +445,13 @@ class tqdm(Comparable):
         **kwargs: dict[str, Any],
     ):
         """see tqdm.tqdm for arguments"""
+
+        # NOTE must set this here first to avoid issues with changing sys.stderr
         if file is None:
             file = sys.stderr
 
         if write_bytes:
+            # TODO figure out when exactly we can get rid of this because we don't care about python 2
             # Despite coercing unicode into bytes, py2 sys.std* streams
             # should have bytes written to them.
             file = SimpleTextIOWrapper(
@@ -457,22 +460,20 @@ class tqdm(Comparable):
 
         file = DisableOnWriteError(file, tqdm_instance=self)
 
-        if disable is None and hasattr(file, "isatty") and not file.isatty():
-            disable = True
-
         if total is None and iterable is not None:
+            total = length_hint(iterable)
+            if total == 0:
+                total = None
+
             # TODO do this via hasattr or some other better method than just trying a bunch
             # of random crap.
-            try:
-                total = len(iterable)
-            except (TypeError, AttributeError):
-                if hasattr(iterable, "__length_hint__"):
-                    total = length_hint(iterable)
-                else:
-                    total = None
-        if total == float("inf"):
-            # Infinite iterations, behave same as unknown
-            total = None
+            # try:
+            #    total = len(iterable)
+            # except (TypeError, AttributeError):
+            #    if hasattr(iterable, "__length_hint__"):
+            #
+            #    else:
+            #        total = None
 
         if disable:
             self.iterable = iterable
