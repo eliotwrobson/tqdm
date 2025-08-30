@@ -1,11 +1,12 @@
 """
 Tests for `tqdm.contrib.itertools`.
 """
+
 import itertools as it
 
 from tqdm.contrib.itertools import product
 
-from .tests_tqdm import StringIO, closing
+from .test_tqdm import StringIO, closing
 
 
 class NoLenIter(object):
@@ -23,11 +24,15 @@ def test_product():
         a = range(9)
         assert list(product(a, a[::-1], file=our_file)) == list(it.product(a, a[::-1]))
 
-        assert list(product(a, NoLenIter(a), file=our_file)) == list(it.product(a, NoLenIter(a)))
+        assert list(product(a, NoLenIter(a), file=our_file)) == list(
+            it.product(a, NoLenIter(a))
+        )
 
 
 def test_product_with_repeat():
     """Test the case where a repeat argument has been set"""
     with closing(StringIO()) as our_file:
         a = range(9)
-        assert list(product(a, repeat=2, file=our_file)) == list(it.product(a, repeat=2))
+        assert list(product(a, repeat=2, file=our_file)) == list(
+            it.product(a, repeat=2)
+        )

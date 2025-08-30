@@ -139,7 +139,7 @@ minversion = "6.0"
 timeout = 30
 log_level = "INFO"
 markers = ["asyncio", "slow"]
-python_files = ["tests_*.py", "tests_*.ipynb"]
+python_files = ["test_*.py", "test_*.ipynb"]
 testpaths = ["tests"]
 addopts = "-v --tb=short -rxs -W=error --durations=0 --durations-min=0.1 --asyncio-mode=strict"
 asyncio_default_fixture_loop_scope = "function"
