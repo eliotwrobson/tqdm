@@ -174,10 +174,6 @@ def squash_ctrlchars(s):
     return lines
 
 
-
-
-
-
 def test_all_defaults() -> None:
     """Test default kwargs"""
     with closing(UnicodeIO()) as our_file:
@@ -536,7 +532,7 @@ def test_dynamic_min_iters() -> None:
 
         out = our_file.getvalue()
         assert t.dynamic_miniters
-        del t # simulate immediate del gc
+        del t  # simulate immediate del gc
 
     assert "  0%|          | 0/10 [00:00<" in out
     assert "40%" in out
@@ -1081,7 +1077,10 @@ def test_eta(capsys):
 
 @mark.xfail(reason="Pause functionality was changed")
 def test_unpause() -> None:
-    """Test unpause"""
+    """
+    Test unpause
+    TODO revise this test with the logic from here: https://github.com/tqdm/tqdm/pull/1617
+    """
     timer = DiscreteTimer()
     with closing(StringIO()) as our_file:
         t = trange(10, file=our_file, leave=True, mininterval=0)
