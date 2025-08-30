@@ -11,6 +11,7 @@ from unicodedata import east_asian_width
 from warnings import warn
 from wcwidth import wcwidth
 from weakref import proxy
+
 from typing import Callable
 
 _range, _unich, _unicode, _basestring = range, chr, str, str

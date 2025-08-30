@@ -1352,13 +1352,14 @@ class tqdm(Comparable):
                 raise
             warn("AttributeError ignored", TqdmWarning, stacklevel=2)
 
-    def __del__(self) -> None:
-        self.close()
-        if len(tqdm._instances) == 0:
-            if hasattr(tqdm, "_lock"):
-                del tqdm._lock
-            if hasattr(tqdm, "monitor") and tqdm.monitor is not None:
-                tqdm.monitor.exit()
+    # TODO add the functionality from this code back if necessary
+    # def __del__(self) -> None:
+    #     self.close()
+    #     if len(tqdm._instances) == 0:
+    #         if hasattr(tqdm, "_lock"):
+    #             del tqdm._lock
+    #         if hasattr(tqdm, "monitor") and tqdm.monitor is not None:
+    #             tqdm.monitor.exit()
 
     def __str__(self) -> str:
         return self.format_meter(**self.format_dict)

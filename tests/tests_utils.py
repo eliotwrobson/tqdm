@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import Union  # py<3.10
 
 from tqdm.utils import envwrap, get_ema_func
+from tqdm.tqdm import Bar
 
 
 def test_envwrap(monkeypatch):
@@ -59,3 +60,11 @@ def test_ema() -> None:
     assert round(ema(), 2) == 5.48
     assert round(ema(1), 2) == 3.97
     assert round(ema(1), 2) == 3.22
+
+def test_bar_formatspec() -> None:
+    """Test Bar.__format__ spec"""
+    assert f"{Bar(0.3):5a}" == "#5   "
+    assert f"{Bar(0.5, charset=' .oO0'):2}" == "0 "
+    assert f"{Bar(0.5, charset=' .oO0'):2a}" == "# "
+    assert f"{Bar(0.5, 10):-6a}" == "##  "
+    assert f"{Bar(0.5, 10):2b}" == "  "
