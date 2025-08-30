@@ -1,14 +1,3 @@
-[build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-write_to = "tqdm/_dist_ver.py"
-write_to_template = "__version__ = '{version}'\n"
-
-[tool.setuptools.packages.find]
-exclude = ["benchmarks", "examples", "tests", "wiki", "docs", "feedstock"]
-
 [project.urls]
 homepage = "https://tqdm.github.io"
 repository = "https://github.com/tqdm/tqdm"
@@ -21,7 +10,7 @@ dynamic = ["version"]
 maintainers = [{ name = "tqdm developers", email = "devs@tqdm.ml" }]
 description = "Fast, Extensible Progress Meter"
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 keywords = [
     "progressbar",
     "progressmeter",
@@ -35,6 +24,8 @@ keywords = [
     "time",
 ]
 license = { text = "MPL-2.0 AND MIT" }
+
+
 # Trove classifiers (https://pypi.org/pypi?%3Aaction=list_classifiers)
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -65,20 +56,11 @@ classifiers = [
     "Operating System :: Unix",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: Implementation",
-    "Programming Language :: Python :: Implementation :: IronPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-    "Programming Language :: Unix Shell",
     "Topic :: Desktop Environment",
-    "Topic :: Education :: Computer Aided Instruction (CAI)",
-    "Topic :: Education :: Testing",
     "Topic :: Office/Business",
     "Topic :: Other/Nonlisted Topic",
     "Topic :: Software Development :: Build Tools",
@@ -95,13 +77,24 @@ classifiers = [
 ]
 dependencies = ['colorama']
 
-[project.optional-dependencies]
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+fallback-version = "0.0.0"
+
+[dependency-groups]
 dev = [
     "pytest>=6",
     "pytest-cov",
     "pytest-timeout",
     "pytest-asyncio>=0.24",
     "nbval",
+    "icecream",
 ]
 discord = ["requests"]
 slack = ["slack-sdk"]
