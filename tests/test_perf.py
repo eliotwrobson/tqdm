@@ -4,18 +4,15 @@ from functools import wraps
 from time import sleep, time
 
 # Use relative/cpu timer to have reliable timings when there is a sudden load
-try:
-    from time import process_time
-except ImportError:
-    from time import clock
 
-    process_time = clock
+from time import process_time
+
 
 from tqdm import tqdm, trange
 
-from .test_tqdm import importorskip, mark, patch_lock, skip
+from .conftest import patch_lock
 
-pytestmark = mark.slow
+from pytest import importorskip, skip
 
 
 def cpu_sleep(t):

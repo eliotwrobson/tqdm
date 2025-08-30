@@ -3,10 +3,10 @@ import os
 import re
 import sys
 from contextlib import contextmanager
-from functools import wraps
 from warnings import catch_warnings, simplefilter
 
-from pytest import importorskip, mark, raises, skip
+from pytest import importorskip, mark, skip
+from .conftest import patch_lock
 
 from tqdm import tqdm, trange
 from tqdm.contrib import DummyTqdmFile
@@ -1907,35 +1907,6 @@ def test_unit_scale() -> None:
             pass
         out = our_file.getvalue()
         assert "81/81" in out
-
-
-def patch_lock(thread=True):
-    """decorator replacing tqdm's lock with vanilla threading/multiprocessing"""
-    try:
-        if thread:
-            from threading import RLock
-        else:
-            from multiprocessing import RLock
-        lock = RLock()
-    except (ImportError, OSError) as err:
-        skip(str(err))
-
-    def outer(func):
-        """actual decorator"""
-
-        @wraps(func)
-        def inner(*args, **kwargs):
-            """set & reset lock even if exceptions occur"""
-            default_lock = tqdm.get_lock()
-            try:
-                tqdm.set_lock(lock)
-                return func(*args, **kwargs)
-            finally:
-                tqdm.set_lock(default_lock)
-
-        return inner
-
-    return outer
 
 
 @patch_lock(thread=False)

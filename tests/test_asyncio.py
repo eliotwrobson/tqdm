@@ -7,7 +7,9 @@ from time import time
 
 from tqdm.asyncio import tarange, tqdm_asyncio
 
-from .test_tqdm import StringIO, closing, mark, raises
+from io import StringIO
+from contextlib import closing
+from pytest import mark, raises
 
 tqdm = partial(tqdm_asyncio, miniters=0, mininterval=0)
 trange = partial(tarange, miniters=0, mininterval=0)

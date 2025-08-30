@@ -6,7 +6,8 @@ import itertools as it
 
 from tqdm.contrib.itertools import product
 
-from .test_tqdm import StringIO, closing
+from io import StringIO
+from contextlib import closing
 
 
 class NoLenIter(object):

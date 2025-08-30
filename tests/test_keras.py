@@ -1,4 +1,4 @@
-from .test_tqdm import importorskip, mark
+from pytest import importorskip, mark
 
 pytestmark = mark.slow
 

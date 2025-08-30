@@ -12,7 +12,7 @@ from tqdm.contrib.logging import _get_first_found_console_logging_handler
 from tqdm.contrib.logging import _TqdmLoggingHandler as TqdmLoggingHandler
 from tqdm.contrib.logging import logging_redirect_tqdm, tqdm_logging_redirect
 
-from .test_tqdm import importorskip
+from pytest import importorskip
 
 LOGGER = logging.getLogger(__name__)
 

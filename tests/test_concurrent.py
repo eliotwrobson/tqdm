@@ -6,7 +6,11 @@ from pytest import warns
 
 from tqdm.contrib.concurrent import process_map, thread_map
 
-from .test_tqdm import StringIO, TqdmWarning, closing, importorskip, mark, skip
+from tqdm.utils import TqdmWarning
+
+from io import StringIO
+from contextlib import closing
+from pytest import mark, importorskip, skip
 
 
 def incr(x):

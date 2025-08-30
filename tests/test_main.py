@@ -9,7 +9,9 @@ from os import linesep, environ
 from tqdm.cli import TqdmKeyError, TqdmTypeError, main
 from tqdm.utils import IS_WIN
 
-from .test_tqdm import BytesIO, closing, mark, raises
+from io import BytesIO
+from contextlib import closing
+from pytest import mark, raises
 
 
 def restore_sys(func):

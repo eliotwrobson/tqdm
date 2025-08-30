@@ -1,8 +1,8 @@
 from tqdm import tqdm
 
-from .test_tqdm import StringIO, closing, importorskip, mark, skip
-
-pytestmark = mark.slow
+from io import StringIO
+from contextlib import closing
+from pytest import mark, importorskip, skip
 
 np = importorskip("numpy")
 random = importorskip("numpy.random")

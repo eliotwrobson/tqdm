@@ -1,6 +1,6 @@
 """Test `tqdm.rich`."""
 
-from .test_tqdm import importorskip
+from pytest import importorskip
 
 
 def test_rich_import():

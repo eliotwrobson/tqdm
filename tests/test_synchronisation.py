@@ -5,7 +5,11 @@ from time import sleep, time
 from tqdm import TMonitor, tqdm, trange
 import pytest
 
-from .test_tqdm import StringIO, closing, importorskip, patch_lock, skip
+from .conftest import patch_lock
+
+from io import StringIO
+from contextlib import closing
+from pytest import importorskip, skip
 
 
 class Time(object):

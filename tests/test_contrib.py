@@ -7,7 +7,9 @@ import pytest
 from tqdm import tqdm
 from tqdm.contrib import tenumerate, tmap, tzip
 
-from .test_tqdm import StringIO, closing, importorskip
+from io import StringIO
+from contextlib import closing
+from pytest import importorskip
 
 
 def incr(x):

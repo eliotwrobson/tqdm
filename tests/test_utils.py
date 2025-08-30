@@ -2,14 +2,21 @@ from ast import literal_eval
 from collections import defaultdict
 from typing import Union  # py<3.10
 
-from tqdm.utils import envwrap, get_ema_func, format_meter, format_num, format_interval, Bar
+from tqdm.utils import (
+    envwrap,
+    get_ema_func,
+    format_meter,
+    format_num,
+    format_interval,
+    Bar,
+)
 
 
 def test_envwrap(monkeypatch):
     """Test @envwrap (basic)"""
-    monkeypatch.setenv('FUNC_A', "42")
-    monkeypatch.setenv('FUNC_TyPe_HiNt', "1337")
-    monkeypatch.setenv('FUNC_Unused', "x")
+    monkeypatch.setenv("FUNC_A", "42")
+    monkeypatch.setenv("FUNC_TyPe_HiNt", "1337")
+    monkeypatch.setenv("FUNC_Unused", "x")
 
     @envwrap("FUNC_")
     def func(a=1, b=2, type_hint: int = None):
@@ -21,7 +28,7 @@ def test_envwrap(monkeypatch):
 
 def test_envwrap_types(monkeypatch):
     """Test @envwrap(types)"""
-    monkeypatch.setenv('FUNC_notype', "3.14159")
+    monkeypatch.setenv("FUNC_notype", "3.14159")
 
     @envwrap("FUNC_", types=defaultdict(lambda: literal_eval))
     def func(notype=None):
@@ -29,10 +36,10 @@ def test_envwrap_types(monkeypatch):
 
     assert 3.14159 == func()
 
-    monkeypatch.setenv('FUNC_number', "1")
-    monkeypatch.setenv('FUNC_string', "1")
+    monkeypatch.setenv("FUNC_number", "1")
+    monkeypatch.setenv("FUNC_string", "1")
 
-    @envwrap("FUNC_", types={'number': int})
+    @envwrap("FUNC_", types={"number": int})
     def nofallback(number=None, string=None):
         return number, string
 
@@ -41,8 +48,8 @@ def test_envwrap_types(monkeypatch):
 
 def test_envwrap_annotations(monkeypatch):
     """Test @envwrap with typehints"""
-    monkeypatch.setenv('FUNC_number', "1.1")
-    monkeypatch.setenv('FUNC_string', "1.1")
+    monkeypatch.setenv("FUNC_number", "1.1")
+    monkeypatch.setenv("FUNC_string", "1.1")
 
     @envwrap("FUNC_")
     def annotated(number: Union[int, float] = None, string: int = None):
@@ -60,6 +67,7 @@ def test_ema() -> None:
     assert round(ema(1), 2) == 3.97
     assert round(ema(1), 2) == 3.22
 
+
 def test_bar_formatspec() -> None:
     """Test Bar.__format__ spec"""
     assert f"{Bar(0.3):5a}" == "#5   "
@@ -67,6 +75,7 @@ def test_bar_formatspec() -> None:
     assert f"{Bar(0.5, charset=' .oO0'):2a}" == "# "
     assert f"{Bar(0.5, 10):-6a}" == "##  "
     assert f"{Bar(0.5, 10):2b}" == "  "
+
 
 def test_si_format() -> None:
     """Test SI unit prefixes"""
@@ -98,6 +107,7 @@ def test_si_format() -> None:
     assert "1000Q " in format_meter(
         1, 999999999999999999999999999999999, 1, unit_scale=True
     )
+
 
 def test_ansi_escape_codes() -> None:
     """Test stripping of ANSI escape codes"""
@@ -248,6 +258,7 @@ def test_format_meter() -> None:
         == chr(0x258F) + "|test"
     )
 
+
 def test_format_num() -> None:
     """Test number format"""
 
@@ -256,6 +267,7 @@ def test_format_num() -> None:
     assert format_num(1239876) == "1239876"
     assert format_num(0.00001234) == "1.23e-5"
     assert format_num(-0.1234) == "-0.123"
+
 
 def test_format_interval() -> None:
     """Test time interval format"""
