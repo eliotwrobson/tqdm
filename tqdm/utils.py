@@ -1,11 +1,13 @@
 """
 General helpers required for `tqdm.std`.
 """
+
 import os
 import re
 import sys
 from functools import partial, partialmethod, wraps
 from inspect import signature
+
 # TODO consider using wcswidth third-party package for 0-width characters
 from unicodedata import east_asian_width
 from warnings import warn
@@ -21,8 +23,8 @@ import numbers
 
 _range, _unich, _unicode, _basestring = range, chr, str, str
 CUR_OS = sys.platform
-IS_WIN = CUR_OS.startswith(('win32', 'cygwin'))
-IS_NIX = CUR_OS.startswith(('aix', 'linux', 'darwin', 'freebsd'))
+IS_WIN = CUR_OS.startswith(("win32", "cygwin"))
+IS_NIX = CUR_OS.startswith(("aix", "linux", "darwin", "freebsd"))
 RE_ANSI = re.compile(r"\x1b\[[;\d]*[A-Za-z]")
 
 try:
@@ -75,7 +77,9 @@ def envwrap(prefix, types=None, is_method=False):
     if types is None:
         types = {}
     i = len(prefix)
-    env_overrides = {k[i:].lower(): v for k, v in os.environ.items() if k.startswith(prefix)}
+    env_overrides = {
+        k[i:].lower(): v for k, v in os.environ.items() if k.startswith(prefix)
+    }
     part = partialmethod if is_method else partial
 
     def wrap(func):
@@ -86,7 +90,7 @@ def envwrap(prefix, types=None, is_method=False):
         for k in overrides:
             param = params[k]
             if param.annotation is not param.empty:  # typehints
-                for typ in getattr(param.annotation, '__args__', (param.annotation,)):
+                for typ in getattr(param.annotation, "__args__", (param.annotation,)):
                     try:
                         overrides[k] = typ(overrides[k])
                     except Exception:
@@ -101,6 +105,7 @@ def envwrap(prefix, types=None, is_method=False):
                 except KeyError:  # keep unconverted (`str`)
                     pass
         return part(func, **overrides)
+
     return wrap
 
 
@@ -110,7 +115,8 @@ class FormatReplace(object):
     >>> f"{a:5d}"
     'something'
     """  # NOQA: P102
-    def __init__(self, replace=''):
+
+    def __init__(self, replace=""):
         self.replace = replace
         self.format_called = 0
 
@@ -123,37 +129,47 @@ class Comparable(object):
     """
     Compares `self._comparable` & `other._comparable` (fallback `self.iterable` & `other`)
     """
+
     def __lt__(self, other):
-        if hasattr(other, '_comparable'):
+        if hasattr(other, "_comparable"):
             return self._comparable < other._comparable
         if not isinstance(self.iterable, other.__class__):
-            raise TypeError(("'<' not supported between instances of"
-                             " {i.__class__.__name__!r} and {j.__class__.__name__!r}").format(
-                            i=self.iterable, j=other))
+            raise TypeError(
+                (
+                    "'<' not supported between instances of"
+                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
+                ).format(i=self.iterable, j=other)
+            )
         for i, j in zip(self, other):
             if i != j:
                 return i < j
         return len(self) < len(other)
 
     def __le__(self, other):
-        if hasattr(other, '_comparable'):
+        if hasattr(other, "_comparable"):
             return self._comparable <= other._comparable
         if not isinstance(self.iterable, other.__class__):
-            raise TypeError(("'<=' not supported between instances of"
-                             " {i.__class__.__name__!r} and {j.__class__.__name__!r}").format(
-                            i=self.iterable, j=other))
+            raise TypeError(
+                (
+                    "'<=' not supported between instances of"
+                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
+                ).format(i=self.iterable, j=other)
+            )
         for i, j in zip(self, other):
             if i != j:
                 return i <= j
         return len(self) <= len(other)
 
     def __eq__(self, other):
-        if hasattr(other, '_comparable'):
+        if hasattr(other, "_comparable"):
             return self._comparable == other._comparable
         if not isinstance(self.iterable, other.__class__):
-            raise TypeError(("'==' not supported between instances of"
-                             " {i.__class__.__name__!r} and {j.__class__.__name__!r}").format(
-                            i=self.iterable, j=other))
+            raise TypeError(
+                (
+                    "'==' not supported between instances of"
+                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
+                ).format(i=self.iterable, j=other)
+            )
         for i, j in zip(self, other):
             if i != j:
                 return False
@@ -191,7 +207,7 @@ class ObjectWrapper(object):
         """
         Thin wrapper around a given object
         """
-        self.wrapper_setattr('_wrapped', wrapped)
+        self.wrapper_setattr("_wrapped", wrapped)
 
 
 class SimpleTextIOWrapper(ObjectWrapper):
@@ -199,25 +215,27 @@ class SimpleTextIOWrapper(ObjectWrapper):
     Change only `.write()` of the wrapped object by encoding the passed
     value and passing the result to the wrapped object's `.write()` method.
     """
+
     # pylint: disable=too-few-public-methods
     def __init__(self, wrapped, encoding):
         super().__init__(wrapped)
-        self.wrapper_setattr('encoding', encoding)
+        self.wrapper_setattr("encoding", encoding)
 
     def write(self, s):
         """
         Encode `s` and pass to the wrapped object's `.write()` method.
         """
-        return self._wrapped.write(s.encode(self.wrapper_getattr('encoding')))
+        return self._wrapped.write(s.encode(self.wrapper_getattr("encoding")))
 
     def __eq__(self, other):
-        return self._wrapped == getattr(other, '_wrapped', other)
+        return self._wrapped == getattr(other, "_wrapped", other)
 
 
 class DisableOnWriteError(ObjectWrapper):
     """
     Disable the given `tqdm_instance` upon `write()` or `flush()` errors.
     """
+
     @staticmethod
     def disable_on_exception(tqdm_instance, func):
         """
@@ -232,29 +250,32 @@ class DisableOnWriteError(ObjectWrapper):
                 if e.errno != 5:
                     raise
                 try:
-                    tqdm_instance.miniters = float('inf')
+                    tqdm_instance.miniters = float("inf")
                 except ReferenceError:
                     pass
             except ValueError as e:
-                if 'closed' not in str(e):
+                if "closed" not in str(e):
                     raise
                 try:
-                    tqdm_instance.miniters = float('inf')
+                    tqdm_instance.miniters = float("inf")
                 except ReferenceError:
                     pass
+
         return inner
 
     def __init__(self, wrapped, tqdm_instance):
         super().__init__(wrapped)
-        if hasattr(wrapped, 'write'):
+        if hasattr(wrapped, "write"):
             self.wrapper_setattr(
-                'write', self.disable_on_exception(tqdm_instance, wrapped.write))
-        if hasattr(wrapped, 'flush'):
+                "write", self.disable_on_exception(tqdm_instance, wrapped.write)
+            )
+        if hasattr(wrapped, "flush"):
             self.wrapper_setattr(
-                'flush', self.disable_on_exception(tqdm_instance, wrapped.flush))
+                "flush", self.disable_on_exception(tqdm_instance, wrapped.flush)
+            )
 
     def __eq__(self, other):
-        return self._wrapped == getattr(other, '_wrapped', other)
+        return self._wrapped == getattr(other, "_wrapped", other)
 
 
 class CallbackIOWrapper(ObjectWrapper):
@@ -266,31 +287,35 @@ class CallbackIOWrapper(ObjectWrapper):
         super().__init__(stream)
         func = getattr(stream, method)
         if method == "write":
+
             @wraps(func)
             def write(data, *args, **kwargs):
                 res = func(data, *args, **kwargs)
                 callback(len(data))
                 return res
-            self.wrapper_setattr('write', write)
+
+            self.wrapper_setattr("write", write)
         elif method == "read":
+
             @wraps(func)
             def read(*args, **kwargs):
                 data = func(*args, **kwargs)
                 callback(len(data))
                 return data
-            self.wrapper_setattr('read', read)
+
+            self.wrapper_setattr("read", read)
         else:
             raise KeyError("Can only wrap read/write methods")
 
 
 def _is_utf(encoding):
     try:
-        u'\u2588\u2589'.encode(encoding)
+        "\u2588\u2589".encode(encoding)
     except UnicodeEncodeError:
         return False
     except Exception:
         try:
-            return encoding.lower().startswith('utf-') or ('U8' == encoding)
+            return encoding.lower().startswith("utf-") or ("U8" == encoding)
         except Exception:
             return False
     else:
@@ -344,8 +369,19 @@ def _screen_shape_windows(fp):  # pragma: no cover
         csbi = create_string_buffer(22)
         res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
         if res:
-            (_bufx, _bufy, _curx, _cury, _wattr, left, top, right, bottom,
-             _maxx, _maxy) = struct.unpack("hhhhHhhhhhh", csbi.raw)
+            (
+                _bufx,
+                _bufy,
+                _curx,
+                _cury,
+                _wattr,
+                left,
+                top,
+                right,
+                bottom,
+                _maxx,
+                _maxy,
+            ) = struct.unpack("hhhhHhhhhhh", csbi.raw)
             return right - left, bottom - top  # +1
     except Exception:  # nosec
         pass
@@ -357,15 +393,16 @@ def _screen_shape_tput(*_):  # pragma: no cover
     try:
         import shlex
         from subprocess import check_call  # nosec
-        return [int(check_call(shlex.split('tput ' + i))) - 1
-                for i in ('cols', 'lines')]
+
+        return [
+            int(check_call(shlex.split("tput " + i))) - 1 for i in ("cols", "lines")
+        ]
     except Exception:  # nosec
         pass
     return None, None
 
 
 def _screen_shape_linux(fp):  # pragma: no cover
-
     try:
         from array import array
         from fcntl import ioctl
@@ -374,7 +411,7 @@ def _screen_shape_linux(fp):  # pragma: no cover
         return None, None
     else:
         try:
-            rows, cols = array('h', ioctl(fp, TIOCGWINSZ, '\0' * 8))[:2]
+            rows, cols = array("h", ioctl(fp, TIOCGWINSZ, "\0" * 8))[:2]
             return cols, rows
         except Exception:
             try:
@@ -388,8 +425,12 @@ def _environ_cols_wrapper():  # pragma: no cover
     Return a function which returns console width.
     Supported: linux, osx, windows, cygwin.
     """
-    warn("Use `_screen_shape_wrapper()(file)[0]` instead of"
-         " `_environ_cols_wrapper()(file)`", DeprecationWarning, stacklevel=2)
+    warn(
+        "Use `_screen_shape_wrapper()(file)[0]` instead of"
+        " `_environ_cols_wrapper()(file)`",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     shape = _screen_shape_wrapper()
     if not shape:
         return None
@@ -402,10 +443,10 @@ def _environ_cols_wrapper():  # pragma: no cover
 
 
 def _term_move_up():  # pragma: no cover
-    return '' if (os.name == 'nt') and (colorama is None) else '\x1b[A'
+    return "" if (os.name == "nt") and (colorama is None) else "\x1b[A"
 
 
-def _wcswidth_tolerant(pwcs, n=None, unicode_version='auto'):
+def _wcswidth_tolerant(pwcs, n=None, unicode_version="auto"):
     """
     Given a unicode string, return its printable length on a terminal.
 
@@ -441,7 +482,7 @@ def disp_len(data):
     Returns the real on-screen length of a string which may contain
     ANSI control codes and wide chars.
     """
-    return _wcswidth_tolerant(RE_ANSI.sub('', data))
+    return _wcswidth_tolerant(RE_ANSI.sub("", data))
 
 
 def disp_trim(data, length):
@@ -458,6 +499,7 @@ def disp_trim(data, length):
         # assume ANSI reset is required
         return data if data.endswith("\033[0m") else data + "\033[0m"
     return data
+
 
 def get_ema_func(smoothing: float = 0.3) -> Callable[[float | None], float]:
     """
@@ -488,9 +530,11 @@ def get_ema_func(smoothing: float = 0.3) -> Callable[[float | None], float]:
 
     return ema
 
+
 ###### TODO all of the helper functions below are related to formatting. #####
 # should probably be moved to a separate file
 # TODO make a separate file with exception + warning types
+
 
 class TqdmWarning(Warning):
     """base class for all tqdm warnings.
@@ -509,6 +553,7 @@ class TqdmWarning(Warning):
             fp_write("\n" + self.__class__.__name__ + ": " + str(msg).rstrip() + "\n")
         else:
             super().__init__(msg, *args, **kwargs)
+
 
 class Bar(object):
     """
@@ -655,6 +700,7 @@ def format_sizeof(num: float, divisor: int = 1000) -> str:
         return f"{num_scaled:.1f}{unit}"
     else:
         return f"{num_scaled:.0f}{unit}"
+
 
 def format_interval(t: int) -> str:
     """
@@ -861,9 +907,7 @@ def format_meter(
     except TypeError:
         pass
 
-    remaining = (
-        elapsed / (n - initial) * (total - n + initial) if rate and total else 0
-    )
+    remaining = elapsed / (n - initial) * (total - n + initial) if rate and total else 0
     remaining_str = format_interval(remaining) if rate else "?"
     try:
         eta_dt = (
@@ -882,7 +926,9 @@ def format_meter(
     else:
         l_bar = ""
 
-    r_bar = f"| {n_fmt}/{total_fmt} [{elapsed_str}<{remaining_str}, {rate_fmt}{postfix}]"
+    r_bar = (
+        f"| {n_fmt}/{total_fmt} [{elapsed_str}<{remaining_str}, {rate_fmt}{postfix}]"
+    )
 
     # Custom bar formatting
     # Populate a dict with all available progress indicators
@@ -924,9 +970,9 @@ def format_meter(
             percentage = 99
 
         if title:
-            l_bar += (
-                f"{OSC_PROGRESS}{round(percentage)}{OSC_END}{percentage:3.0f}%|"
-            )
+            OSC_PROGRESS = "\x1b]9;4;1;"
+            OSC_END = "\7"
+            l_bar += f"{OSC_PROGRESS}{round(percentage)}{OSC_END}{percentage:3.0f}%|"
         else:
             l_bar += f"{percentage:3.0f}%|"
 

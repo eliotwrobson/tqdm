@@ -47,10 +47,6 @@ from .utils import (
     get_status_printer,
 )
 
-
-OSC_PROGRESS = "\x1b]9;4;1;"
-OSC_END = "\7"
-
 # Colorama initialization for windows
 # TODO skip on linux
 init()
@@ -443,7 +439,7 @@ class tqdm(Comparable):
         delay: float = 0.0,
         title: str | None = False,
         **kwargs: dict[str, Any],
-    ):
+    ) -> None:
         """see tqdm.tqdm for arguments"""
 
         # NOTE must set this here first to avoid issues with changing sys.stderr
@@ -465,16 +461,6 @@ class tqdm(Comparable):
             if total == 0:
                 total = None
 
-            # TODO do this via hasattr or some other better method than just trying a bunch
-            # of random crap.
-            # try:
-            #    total = len(iterable)
-            # except (TypeError, AttributeError):
-            #    if hasattr(iterable, "__length_hint__"):
-            #
-            #    else:
-            #        total = None
-
         if disable:
             self.iterable = iterable
             self.disable = disable
@@ -491,7 +477,7 @@ class tqdm(Comparable):
         force_dynamic_ncols_update = dynamic_ncols
         if (
             (ncols is None or nrows is None) and (file in (sys.stderr, sys.stdout))
-        ) or force_dynamic_ncols_update:  # pragma: no cover
+        ) or force_dynamic_ncols_update:
             dynamic_ncols = _screen_shape_wrapper()
             if force_dynamic_ncols_update and dynamic_ncols:
                 keep_original_size = False, False
@@ -516,9 +502,6 @@ class tqdm(Comparable):
         if bar_format and ascii is not True and not _is_ascii(ascii):
             # Convert bar format into unicode since terminal uses unicode
             bar_format = str(bar_format)
-
-        if smoothing is None:
-            smoothing = 0
 
         # Store the arguments
         self.iterable = iterable

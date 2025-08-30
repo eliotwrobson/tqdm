@@ -886,7 +886,7 @@ def test_smoothing() -> None:
 
     # -- Test disabling smoothing
     with closing(StringIO()) as our_file:
-        with tqdm(range(3), file=our_file, smoothing=None, leave=True) as t:
+        with tqdm(range(3), file=our_file, smoothing=0, leave=True) as t:
             cpu_timify(t, timer)
 
             for _ in t:
@@ -900,7 +900,7 @@ def test_smoothing() -> None:
             t = tqdm(
                 range(3),
                 file=our_file2,
-                smoothing=None,
+                smoothing=0,
                 leave=True,
                 miniters=1,
                 mininterval=0,
@@ -910,7 +910,7 @@ def test_smoothing() -> None:
             with tqdm(
                 range(3),
                 file=our_file,
-                smoothing=None,
+                smoothing=0,
                 leave=True,
                 miniters=1,
                 mininterval=0,
