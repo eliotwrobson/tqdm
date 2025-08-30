@@ -10,7 +10,7 @@ from pytest import importorskip, mark, raises, skip
 
 from tqdm import TqdmDeprecationWarning, TqdmWarning, tqdm, trange
 from tqdm.contrib import DummyTqdmFile
-from tqdm.std import EMA, Bar
+from tqdm.std import Bar
 
 from typing import NoReturn
 from io import StringIO
@@ -1100,16 +1100,6 @@ def test_close() -> None:
         t.update()
         t.update()
     t.close()
-
-
-def test_ema() -> None:
-    """Test exponential weighted average"""
-    ema = EMA(0.01)
-    assert round(ema(10), 2) == 10
-    assert round(ema(1), 2) == 5.48
-    assert round(ema(), 2) == 5.48
-    assert round(ema(1), 2) == 3.97
-    assert round(ema(1), 2) == 3.22
 
 
 def test_smoothing() -> None:

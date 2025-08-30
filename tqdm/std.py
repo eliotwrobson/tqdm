@@ -40,6 +40,7 @@ from .utils import (
     disp_len,
     disp_trim,
     envwrap,
+    get_ema_func,
 )
 
 __author__ = "https://github.com/tqdm/tqdm#contributions"
@@ -280,36 +281,7 @@ class Bar(object):
         return self.colour + res + self.COLOUR_RESET if self.colour else res
 
 
-class EMA(object):
-    """
-    Exponential moving average: smoothing to give progressively lower
-    weights to older values.
 
-    Parameters
-    ----------
-    smoothing  : float, optional
-        Smoothing factor in range [0, 1], [default: 0.3].
-        Increase to give more weight to recent values.
-        Ranges from 0 (yields old value) to 1 (yields new value).
-    """
-
-    def __init__(self, smoothing: float = 0.3) -> None:
-        self.alpha = smoothing
-        self.last = 0
-        self.calls = 0
-
-    def __call__(self, x: float | None = None) -> float:
-        """
-        Parameters
-        ----------
-        x  : float
-            New value to include in EMA.
-        """
-        beta = 1 - self.alpha
-        if x is not None:
-            self.last = self.alpha * x + beta * self.last
-            self.calls += 1
-        return self.last / (1 - beta**self.calls) if self.calls else self.last
 
 
 class tqdm(Comparable):
@@ -1292,9 +1264,9 @@ class tqdm(Comparable):
         self.force_dynamic_ncols_update = force_dynamic_ncols_update
         self.dynamic_ncols = dynamic_ncols
         self.smoothing = smoothing
-        self._ema_dn = EMA(smoothing)
-        self._ema_dt = EMA(smoothing)
-        self._ema_miniters = EMA(smoothing)
+        self._ema_dn = get_ema_func(smoothing)
+        self._ema_dt = get_ema_func(smoothing)
+        self._ema_miniters = get_ema_func(smoothing)
         self.bar_format = bar_format
         self.postfix = None
         self.colour = colour
@@ -1517,10 +1489,6 @@ class tqdm(Comparable):
                 # haven't ever displayed; nothing to clear
                 return
 
-            # GUI mode
-            if getattr(self, "sp", None) is None:
-                return
-
             # annoyingly, _supports_unicode isn't good enough
             def fp_write(s):
                 self.fp.write(str(s))
@@ -1648,9 +1616,9 @@ class tqdm(Comparable):
             return
         self.last_print_n = 0
         self.last_print_t = self.start_t = self._time()
-        self._ema_dn = EMA(self.smoothing)
-        self._ema_dt = EMA(self.smoothing)
-        self._ema_miniters = EMA(self.smoothing)
+        self._ema_dn = get_ema_func(self.smoothing)
+        self._ema_dt = get_ema_func(self.smoothing)
+        self._ema_miniters = get_ema_func(self.smoothing)
         self.refresh()
 
     def set_description(self, desc: str | None = None, refresh: bool = True) -> None:
@@ -1774,11 +1742,6 @@ class tqdm(Comparable):
             if msg or msg is None:  # override at `nrows - 1`
                 msg = " ... (more hidden) ..."
 
-        if not hasattr(self, "sp"):
-            raise TqdmDeprecationWarning(
-                "Please use `tqdm.gui.tqdm(...)` instead of `tqdm(..., gui=True)`\n",
-                fp_write=getattr(self.fp, "write", sys.stderr.write),
-            )
 
         if pos:
             self._moveto(pos)

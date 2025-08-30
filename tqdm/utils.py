@@ -11,6 +11,7 @@ from unicodedata import east_asian_width
 from warnings import warn
 from wcwidth import wcwidth
 from weakref import proxy
+from typing import Callable
 
 _range, _unich, _unicode, _basestring = range, chr, str, str
 CUR_OS = sys.platform
@@ -451,3 +452,32 @@ def disp_trim(data, length):
         # assume ANSI reset is required
         return data if data.endswith("\033[0m") else data + "\033[0m"
     return data
+
+def get_ema_func(smoothing: float = 0.3) -> Callable[[float | None], float]:
+    """
+    Get a function that computes the exponential moving average (EMA) of a stream of values.
+
+    Parameters
+    ----------
+    smoothing  : float, optional
+        Smoothing factor in range [0, 1], [default: 0.3].
+        Increase to give more weight to recent values.
+        Ranges from 0 (yields old value) to 1 (yields new value).
+
+    Returns
+    -------
+    Callable[[float | None], float]
+        A function that takes a new value and returns the current EMA.
+    """
+    beta = 1 - smoothing
+    last = 0
+    calls = 0
+
+    def ema(x: float | None = None) -> float:
+        nonlocal last, calls
+        if x is not None:
+            last = smoothing * x + beta * last
+            calls += 1
+        return last / (1 - beta**calls) if calls else last
+
+    return ema

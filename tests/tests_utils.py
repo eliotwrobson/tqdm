@@ -2,7 +2,7 @@ from ast import literal_eval
 from collections import defaultdict
 from typing import Union  # py<3.10
 
-from tqdm.utils import envwrap
+from tqdm.utils import envwrap, get_ema_func
 
 
 def test_envwrap(monkeypatch):
@@ -49,3 +49,13 @@ def test_envwrap_annotations(monkeypatch):
         return number, string
 
     assert 1.1, "1.1" == annotated()
+
+
+def test_ema() -> None:
+    """Test exponential weighted average"""
+    ema = get_ema_func(0.01)
+    assert round(ema(10), 2) == 10
+    assert round(ema(1), 2) == 5.48
+    assert round(ema(), 2) == 5.48
+    assert round(ema(1), 2) == 3.97
+    assert round(ema(1), 2) == 3.22
