@@ -95,6 +95,8 @@ dev = [
     "pytest-asyncio>=0.24",
     "nbval",
     "icecream",
+    "mypy",
+    "types-colorama",
 ]
 discord = ["requests"]
 slack = ["slack-sdk"]

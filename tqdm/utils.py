@@ -989,9 +989,9 @@ def format_meter(
         else:
             bar_format = "{l_bar}{bar}{r_bar}"
 
-        full_bar = FormatReplace()
-        nobar = bar_format.format(bar=full_bar, **format_dict)
-        if not full_bar.format_called:
+        bar_replacer = FormatReplace()
+        nobar = bar_format.format(bar=bar_replacer, **format_dict)
+        if not bar_replacer.format_called:
             return nobar  # no `{bar}`; nothing else to do
 
         # Formatting progress bar space available for bar's display
@@ -1010,10 +1010,12 @@ def format_meter(
         # user-specified bar_format but no total
         l_bar += "|"
         format_dict.update(l_bar=l_bar, percentage=0)
-        full_bar = FormatReplace()
-        nobar = bar_format.format(bar=full_bar, **format_dict)
-        if not full_bar.format_called:
+
+        bar_replacer = FormatReplace()
+        nobar = bar_format.format(bar=bar_replacer, **format_dict)
+        if not bar_replacer.format_called:
             return nobar
+
         full_bar = Bar(
             0,
             max(1, ncols - disp_len(nobar)) if ncols else 10,
