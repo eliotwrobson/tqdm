@@ -559,23 +559,21 @@ def test_dynamic_min_iters() -> None:
 
     # Check iterable based tqdm
     with closing(StringIO()) as our_file:
-        t = tqdm(
-            range(10), file=our_file, miniters=None, mininterval=None, smoothing=0.5
-        )
+        t = tqdm(range(10), file=our_file, miniters=None, mininterval=0, smoothing=0.5)
         for _ in t:
             pass
         assert t.dynamic_miniters
 
     # No smoothing
     with closing(StringIO()) as our_file:
-        t = tqdm(range(10), file=our_file, miniters=None, mininterval=None, smoothing=0)
+        t = tqdm(range(10), file=our_file, miniters=None, mininterval=0, smoothing=0)
         for _ in t:
             pass
         assert t.dynamic_miniters
 
     # No dynamic_miniters (miniters is fixed manually)
     with closing(StringIO()) as our_file:
-        t = tqdm(range(10), file=our_file, miniters=1, mininterval=None)
+        t = tqdm(range(10), file=our_file, miniters=1, mininterval=0)
         for _ in t:
             pass
         assert not t.dynamic_miniters

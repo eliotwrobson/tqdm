@@ -509,12 +509,6 @@ class tqdm(Comparable):
         else:
             dynamic_miniters = False
 
-        if mininterval is None:
-            mininterval = 0
-
-        if maxinterval is None:
-            maxinterval = 0
-
         if ascii is None:
             ascii = not _supports_unicode(file)
 
