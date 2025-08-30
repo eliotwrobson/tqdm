@@ -133,6 +133,7 @@ class TqdmDefaultWriteLock(object):
                 cls.mp_lock = None
 
 
+# TODO add typevar the way the TQDM types are set up
 class tqdm(Comparable):
     """
     Decorate an iterable object, returning an iterator which acts exactly
