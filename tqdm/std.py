@@ -64,7 +64,7 @@ class TqdmKeyError(KeyError):
     pass
 
 
-class TqdmMonitorWarning:
+class TqdmMonitorWarning(Warning):
     """tqdm monitor errors which do not affect external functionality"""
 
     pass
@@ -254,7 +254,8 @@ class tqdm(Comparable):
 
     monitor_interval = 10  # set to 0 to disable the thread
     monitor = None
-    _instances: WeakSet[Self] = WeakSet()
+    _instances: WeakSet["tqdm"] = WeakSet()
+    _lock: TqdmDefaultWriteLock
 
     registered_classes: set[type[Self]] = set()
 
@@ -400,6 +401,9 @@ class tqdm(Comparable):
             cls._lock = TqdmDefaultWriteLock()
         return cls._lock
 
+    # Type annotations for instance variables
+    disable: bool
+
     # override defaults via env vars
     @envwrap(
         "TQDM_",
@@ -439,7 +443,7 @@ class tqdm(Comparable):
         nrows: int | None = None,
         colour: str | None = None,
         delay: float = 0.0,
-        title: str | None = False,
+        title: bool = False,
         **kwargs: dict[str, Any],
     ) -> None:
         """see tqdm.tqdm for arguments"""
