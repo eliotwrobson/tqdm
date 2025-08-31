@@ -16,15 +16,18 @@ from icecream import ic
 import signal
 import sys
 from collections import OrderedDict, defaultdict
-from contextlib import contextmanager
+from contextlib import contextmanager, AbstractContextManager
 import copy
 from datetime import datetime, timedelta, timezone
 from numbers import Number
 from operator import length_hint
 from time import time
 from warnings import warn
-from typing import Any, Callable, Iterable, Iterator, Literal, TextIO, Self
+from typing import Any, Callable, Iterable, Iterator, Literal, TextIO, Self, Protocol
 from weakref import WeakSet
+
+from multiprocessing import RLock
+from threading import RLock as TRLock
 
 from ._monitor import TMonitor
 from .utils import (
@@ -52,6 +55,7 @@ from .utils import (
 init()
 
 
+# TODO remove some of these errors and put them in a separate file
 class TqdmTypeError(TypeError):
     pass
 
@@ -66,14 +70,12 @@ class TqdmMonitorWarning:
     pass
 
 
-def TRLock(*args: tuple, **kwargs: dict[str, Any]) -> Any:
-    """threading RLock"""
-    try:
-        from threading import RLock
+# TODO Move lock related stuff to a separate file as well
 
-        return RLock(*args, **kwargs)
-    except (ImportError, OSError):  # pragma: no cover
-        pass
+
+class _LockType(AbstractContextManager, Protocol):
+    def acquire(self, blocking: bool = ..., timeout: float = ...) -> bool: ...
+    def release(self) -> None: ...
 
 
 class TqdmDefaultWriteLock(object):
@@ -89,7 +91,8 @@ class TqdmDefaultWriteLock(object):
     # global thread lock so no setup required for multithreading.
     # NB: Do not create multiprocessing lock as it sets the multiprocessing
     # context, disallowing `spawn()`/`forkserver()`
-    th_lock = TRLock()
+    th_lock: _LockType = TRLock()
+    mp_lock: _LockType | None
 
     def __init__(self) -> None:
         # Create global parallelism locks to avoid racing issues with parallel
@@ -103,7 +106,7 @@ class TqdmDefaultWriteLock(object):
         if root_lock is not None:
             root_lock.release()
 
-    def acquire(self, *args: tuple, **kwargs: dict[str, Any]) -> None:
+    def acquire(self, *args: Any, **kwargs: Any) -> None:
         for lock in self.locks:
             lock.acquire(*args, **kwargs)
 
@@ -115,7 +118,7 @@ class TqdmDefaultWriteLock(object):
     def __enter__(self) -> None:
         self.acquire()
 
-    def __exit__(self, *args: tuple) -> None:
+    def __exit__(self, *args: Any) -> None:
         self.release()
 
     def __del__(self) -> None:
@@ -126,10 +129,8 @@ class TqdmDefaultWriteLock(object):
     def create_mp_lock(cls) -> None:
         if not hasattr(cls, "mp_lock"):
             try:
-                from multiprocessing import RLock
-
                 cls.mp_lock = RLock()
-            except (ImportError, OSError):  # pragma: no cover
+            except OSError:  # pragma: no cover
                 cls.mp_lock = None
 
 
@@ -253,9 +254,9 @@ class tqdm(Comparable):
 
     monitor_interval = 10  # set to 0 to disable the thread
     monitor = None
-    _instances = WeakSet()
+    _instances: WeakSet[Self] = WeakSet()
 
-    registered_classes = set()
+    registered_classes: set[type[Self]] = set()
 
     def __new__(cls, *args: tuple, **kwargs: dict[str, Any]) -> Self:
         instance = object.__new__(cls)
