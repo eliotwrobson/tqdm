@@ -341,7 +341,7 @@ def _screen_shape_linux(
         return None, None
     else:
         try:
-            rows, cols = array("h", ioctl(fp, TIOCGWINSZ, "\0" * 8))[:2]
+            rows, cols = array("h", ioctl(fp, TIOCGWINSZ, ("\0" * 8).encode()))[:2]
             return cols, rows
         except Exception:
             try:
