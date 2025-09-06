@@ -481,16 +481,17 @@ class tqdm(Comparable):
         # Preprocess the arguments
         keep_original_size = ncols is not None, nrows is not None
         force_dynamic_ncols_update = dynamic_ncols
+        dynamic_ncols_func = None
         if (
             (ncols is None or nrows is None) and (file in (sys.stderr, sys.stdout))
         ) or force_dynamic_ncols_update:
-            dynamic_ncols = _screen_shape_wrapper()
-            if force_dynamic_ncols_update and dynamic_ncols:
+            dynamic_ncols_func = _screen_shape_wrapper()
+            if force_dynamic_ncols_update and dynamic_ncols_func:
                 keep_original_size = False, False
-                ncols, nrows = dynamic_ncols(file)
+                ncols, nrows = dynamic_ncols_func(file)
             else:
-                if dynamic_ncols:
-                    _ncols, _nrows = dynamic_ncols(file)
+                if dynamic_ncols_func:
+                    _ncols, _nrows = dynamic_ncols_func(file)
                     if ncols is None:
                         ncols = _ncols
                     if nrows is None:
@@ -531,7 +532,7 @@ class tqdm(Comparable):
         self.lock_args = lock_args
         self.delay = delay
         self.force_dynamic_ncols_update = force_dynamic_ncols_update
-        self.dynamic_ncols = dynamic_ncols
+        self.dynamic_ncols_func = dynamic_ncols_func
         self.smoothing = smoothing
         self._ema_dn = get_ema_func(smoothing)
         self._ema_dt = get_ema_func(smoothing)
@@ -969,8 +970,8 @@ class tqdm(Comparable):
                 lambda: None,
                 {"n": self.n, "total": self.total, "elapsed": 0, "unit": "it"},
             )
-        if self.force_dynamic_ncols_update and self.dynamic_ncols:
-            self.ncols, self.nrows = self.dynamic_ncols(self.fp)
+        if self.force_dynamic_ncols_update and self.dynamic_ncols_func:
+            self.ncols, self.nrows = self.dynamic_ncols_func(self.fp)
         return {
             "n": self.n,
             "total": self.total,
