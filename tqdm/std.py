@@ -808,7 +808,7 @@ class tqdm(Comparable):
             if not nolock:
                 self._lock.release()
 
-    def refresh(self, nolock: bool = False, lock_args: tuple = None) -> None:
+    def refresh(self, nolock: bool = False, lock_args: tuple | None = None) -> None:
         """
         Force refresh the display of this bar.
 
