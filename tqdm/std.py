@@ -449,7 +449,7 @@ class tqdm(Generic[T]):
         bar_format: str | None = None,
         initial: float | int = 0,
         position: int | None = None,
-        postfix: str | None = None,
+        postfix: dict[str, Any] | str | None = None,
         unit_divisor: int = 1000,
         lock_args: tuple | None = None,
         nrows: int | None = None,
@@ -542,14 +542,14 @@ class tqdm(Generic[T]):
         self._ema_dt = get_ema_func(smoothing)
         self._ema_miniters = get_ema_func(smoothing)
         self.bar_format = bar_format
-        self.postfix = None
+        self.postfix: str | None = None
         self.colour = colour
         self._time = time
         self.title = title
         if postfix:
-            try:
+            if isinstance(postfix, dict):
                 self.set_postfix(refresh=False, **postfix)
-            except TypeError:
+            elif isinstance(postfix, str):
                 self.postfix = postfix
 
         # Init the iterations counters
