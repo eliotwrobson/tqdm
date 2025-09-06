@@ -827,8 +827,8 @@ class tqdm(Comparable[T]):
 
         if not nolock:
             if lock_args:
-                if not self._lock.acquire(*lock_args):
-                    return False
+                if not self._lock.acquire(*lock_args):  # type: ignore[func-returns-arg]
+                    return
             else:
                 self._lock.acquire()
         try:
@@ -917,7 +917,10 @@ class tqdm(Comparable[T]):
             self.refresh()
 
     def set_postfix(
-        self, ordered_dict: dict = None, refresh: bool = True, **kwargs: dict[str, Any]
+        self,
+        ordered_dict: dict | None = None,
+        refresh: bool = True,
+        **kwargs: dict[str, Any],
     ) -> None:
         """
         Set/modify postfix (additional stats)
@@ -992,7 +995,7 @@ class tqdm(Comparable[T]):
             "title": self.title,
         }
 
-    def display(self, msg: str | None = None, pos: int | None = None) -> None:
+    def display(self, msg: str | None = None, pos: int | None = None) -> bool:
         """
         Use `self.sp` to display `msg` in the specified `pos`.
 
@@ -1004,6 +1007,11 @@ class tqdm(Comparable[T]):
         msg  : str, optional. What to display (default: `repr(self)`).
         pos  : int, optional. Position to `moveto`
           (default: `abs(self.pos)`).
+
+        Returns
+        -------
+        bool
+            Whether the display was successful.
         """
         if pos is None:
             pos = abs(self.pos)
