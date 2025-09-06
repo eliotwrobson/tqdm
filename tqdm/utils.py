@@ -339,28 +339,6 @@ def _screen_shape_linux(fp):  # pragma: no cover
                 return None, None
 
 
-def _environ_cols_wrapper():  # pragma: no cover
-    """
-    Return a function which returns console width.
-    Supported: linux, osx, windows, cygwin.
-    """
-    warn(
-        "Use `_screen_shape_wrapper()(file)[0]` instead of"
-        " `_environ_cols_wrapper()(file)`",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    shape = _screen_shape_wrapper()
-    if not shape:
-        return None
-
-    @wraps(shape)
-    def inner(fp):
-        return shape(fp)[0]
-
-    return inner
-
-
 def _term_move_up() -> str:  # pragma: no cover
     return "" if (os.name == "nt") and (colorama is None) else "\x1b[A"
 
@@ -582,7 +560,7 @@ class Bar(object):
         return self.colour + res + self.COLOUR_RESET if self.colour else res
 
 
-def format_sizeof(num: float, divisor: int = 1000) -> str:
+def format_sizeof(num: float, divisor: float = 1000) -> str:
     """
     Formats a number (>= 1) with SI Order of Magnitude prefixes.
 
@@ -623,13 +601,13 @@ def format_sizeof(num: float, divisor: int = 1000) -> str:
         return f"{num_scaled:.0f}{unit}"
 
 
-def format_interval(t: int) -> str:
+def format_interval(t: float) -> str:
     """
     Formats a number of seconds as a clock time, [[Dd ]H:]MM:SS
 
     Parameters
     ----------
-    t  : int
+    t  : float
         Number of seconds.
 
     Returns
@@ -663,8 +641,8 @@ def format_num(n: numbers.Real) -> str:
         Formatted number.
     """
     f = f"{n:.3g}".replace("e+0", "e+").replace("e-0", "e-")
-    n = str(n)
-    return f if len(f) < len(n) else n
+    n_str = str(n)
+    return f if len(f) < len(n_str) else n_str
 
 
 def get_status_printer(file: TextIO) -> Callable[[str], None]:
@@ -696,7 +674,7 @@ def get_status_printer(file: TextIO) -> Callable[[str], None]:
 
 def format_meter(
     n: float | int,
-    total: float | int,
+    total: float | int | None,
     elapsed: float,
     ncols: int | None = None,
     prefix: str = "",
@@ -719,7 +697,7 @@ def format_meter(
     ----------
     n  : int or float
         Number of finished iterations.
-    total  : int or float
+    total  : int or float or None
         The expected total number of iterations. If meaningless (None),
         only basic progress statistics are displayed (no ETA).
     elapsed  : float
