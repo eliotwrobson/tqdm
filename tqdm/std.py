@@ -275,7 +275,7 @@ class tqdm(Generic[T]):
 
     def __new__(cls, *args: tuple, **kwargs: dict[str, Any]) -> Self:
         instance = object.__new__(cls)
-        tqdm.registered_classes.add(cls)
+        tqdm.registered_classes.add(cls)  # type: ignore[misc]
         with cls.get_lock():  # also constructs lock if non-existent
             cls._instances.add(instance)
             # create monitoring thread
@@ -649,7 +649,7 @@ class tqdm(Generic[T]):
             )
         for i, j in zip(self, other):
             if i != j:
-                return i < j
+                return i < j  # type: ignore[operator]
         return len(self) < len(other)
 
     def __le__(self, other: Self) -> bool:
@@ -664,7 +664,7 @@ class tqdm(Generic[T]):
             )
         for i, j in zip(self, other):
             if i != j:
-                return i <= j
+                return i <= j  # type: ignore[operator]
 
         return len(self) <= len(other)
 
@@ -878,7 +878,7 @@ class tqdm(Generic[T]):
 
         if not nolock:
             if lock_args:
-                if not self._lock.acquire(*lock_args):  # type: ignore[func-returns-arg]
+                if not self._lock.acquire(*lock_args):  # type: ignore[func-returns-value]
                     return
             else:
                 self._lock.acquire()
