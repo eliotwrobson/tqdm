@@ -15,7 +15,7 @@ from wcwidth import wcwidth
 from weakref import proxy
 from colorama import Fore, Style
 
-from typing import Callable, TextIO, Any
+from typing import Callable, TextIO, Any, cast
 from datetime import datetime, timezone, timedelta
 import math
 from typing import TypeVar, Generic, Self
@@ -40,7 +40,9 @@ else:
     colorama.just_fix_windows_console()
 
 
-def envwrap(prefix, types=None, is_method=False):
+def envwrap(
+    prefix: str, types: dict[str, type] | None = None, is_method: bool = False
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Override parameter defaults via `os.environ[prefix + param_name]`.
     Maps UPPER_CASE env vars map to lower_case param names.
@@ -84,7 +86,7 @@ def envwrap(prefix, types=None, is_method=False):
     }
     part = partialmethod if is_method else partial
 
-    def wrap(func):
+    def wrap(func: Callable[..., Any]) -> Callable[..., Any]:
         params = signature(func).parameters
         # ignore unknown env vars
         overrides = {k: v for k, v in env_overrides.items() if k in params}
@@ -106,7 +108,7 @@ def envwrap(prefix, types=None, is_method=False):
                     overrides[k] = types[k](overrides[k])
                 except KeyError:  # keep unconverted (`str`)
                     pass
-        return part(func, **overrides)
+        return cast(Callable[..., Any], part(func, **overrides))
 
     return wrap
 
@@ -118,11 +120,11 @@ class FormatReplace(object):
     'something'
     """  # NOQA: P102
 
-    def __init__(self, replace=""):
+    def __init__(self, replace: str = "") -> None:
         self.replace = replace
         self.format_called = 0
 
-    def __format__(self, _):
+    def __format__(self, _: str) -> str:
         self.format_called += 1
         return self.replace
 
@@ -181,24 +183,21 @@ class Comparable(Generic[T]):
 
 
 class ObjectWrapper(object):
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._wrapped, name)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         return setattr(self._wrapped, name, value)
 
-    def wrapper_getattr(self, name):
+    def wrapper_getattr(self, name: str) -> Any:
         """Actual `self.getattr` rather than self._wrapped.getattr"""
-        try:
-            return object.__getattr__(self, name)
-        except AttributeError:  # py2
-            return getattr(self, name)
+        return object.__getattr__(self, name)
 
-    def wrapper_setattr(self, name, value):
+    def wrapper_setattr(self, name: str, value: Any) -> None:
         """Actual `self.setattr` rather than self._wrapped.setattr"""
         return object.__setattr__(self, name, value)
 
-    def __init__(self, wrapped):
+    def __init__(self, wrapped: Any) -> None:
         """
         Thin wrapper around a given object
         """
@@ -416,11 +415,13 @@ def _environ_cols_wrapper():  # pragma: no cover
     return inner
 
 
-def _term_move_up():  # pragma: no cover
+def _term_move_up() -> str:  # pragma: no cover
     return "" if (os.name == "nt") and (colorama is None) else "\x1b[A"
 
 
-def _wcswidth_tolerant(pwcs, n=None, unicode_version="auto"):
+def _wcswidth_tolerant(
+    pwcs: str, n: int | None = None, unicode_version: str = "auto"
+) -> int:
     """
     Given a unicode string, return its printable length on a terminal.
 
@@ -459,7 +460,7 @@ def disp_len(data):
     return _wcswidth_tolerant(RE_ANSI.sub("", data))
 
 
-def disp_trim(data, length):
+def disp_trim(data: str, length: int) -> str:
     """
     Trim a string which may contain ANSI control characters.
     """
