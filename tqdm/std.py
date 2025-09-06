@@ -50,7 +50,6 @@ from tqdm.utils import (
     _is_ascii,
     _screen_shape_wrapper,
     _supports_unicode,
-    _term_move_up,
     disp_len,
     disp_trim,
     envwrap,
@@ -1014,7 +1013,8 @@ class tqdm(Generic[T]):
 
     def _moveto(self, n: int) -> None:
         # TODO: private method
-        self.fp.write("\n" * n + _term_move_up() * -n)
+        _term_move_up_chr = "\x1b[A"
+        self.fp.write("\n" * n + _term_move_up_chr * -n)
         getattr(self.fp, "flush", lambda: None)()
 
     @property

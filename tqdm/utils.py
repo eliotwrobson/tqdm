@@ -20,6 +20,7 @@ from datetime import datetime, timezone, timedelta
 import math
 from typing import TypeVar, Generic, Self
 import numbers
+import colorama
 
 
 CUR_OS = sys.platform
@@ -28,14 +29,7 @@ IS_NIX = CUR_OS.startswith(("aix", "linux", "darwin", "freebsd"))
 RE_ANSI = re.compile(r"\x1b\[[;\d]*[A-Za-z]")
 T = TypeVar("T")
 
-try:
-    if IS_WIN:
-        import colorama
-    else:
-        raise ImportError
-except ImportError:
-    colorama = None
-else:
+if IS_WIN:
     colorama.just_fix_windows_console()
 
 
@@ -351,10 +345,6 @@ def _screen_shape_linux(
                 )
             except (KeyError, ValueError):
                 return None, None
-
-
-def _term_move_up() -> str:  # pragma: no cover
-    return "" if (os.name == "nt") and (colorama is None) else "\x1b[A"
 
 
 def _wcswidth_tolerant(
