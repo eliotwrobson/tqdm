@@ -251,9 +251,9 @@ def _is_ascii(s):
     return _supports_unicode(s)
 
 
-def _screen_shape_wrapper() -> Callable[
-    [TextIO], tuple[int, int] | tuple[None, None]
-]:  # pragma: no cover
+def _screen_shape_wrapper() -> (
+    Callable[[TextIO], tuple[int, int] | tuple[None, None]] | None
+):  # pragma: no cover
     """
     Return a function which returns console dimensions (width, height).
     Supported: linux, osx, windows, cygwin.
