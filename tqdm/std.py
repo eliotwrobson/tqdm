@@ -577,17 +577,16 @@ class tqdm(Comparable):
         return bool(self.iterable)
 
     def __len__(self) -> int:
-        return (
-            self.total
-            if self.iterable is None
-            else self.iterable.shape[0]
-            if hasattr(self.iterable, "shape")
-            else len(self.iterable)
-            if hasattr(self.iterable, "__len__")
-            else length_hint(self.iterable)
-            if hasattr(self.iterable, "__length_hint__")
-            else getattr(self, "total", None)
-        )
+        if self.iterable is None:
+            return self.total
+        elif hasattr(self.iterable, "shape"):
+            return self.iterable.shape[0]
+        elif hasattr(self.iterable, "__len__"):
+            return len(self.iterable)
+        elif hasattr(self.iterable, "__length_hint__"):
+            return length_hint(self.iterable)
+
+        return getattr(self, "total", None)
 
     def __reversed__(self) -> Self:
         try:
