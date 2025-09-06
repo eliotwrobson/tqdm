@@ -227,7 +227,7 @@ class CallbackIOWrapper(ObjectWrapper):
             raise KeyError("Can only wrap read/write methods")
 
 
-def _is_utf(encoding):
+def _is_utf(encoding: str) -> bool:
     try:
         "\u2588\u2589".encode(encoding)
     except UnicodeEncodeError:
@@ -241,7 +241,7 @@ def _is_utf(encoding):
         return True
 
 
-def _supports_unicode(fp):
+def _supports_unicode(fp: TextIO) -> bool:
     try:
         return _is_utf(fp.encoding)
     except AttributeError:
@@ -257,7 +257,9 @@ def _is_ascii(s):
     return _supports_unicode(s)
 
 
-def _screen_shape_wrapper():  # pragma: no cover
+def _screen_shape_wrapper() -> Callable[
+    [TextIO], tuple[int, int] | tuple[None, None]
+]:  # pragma: no cover
     """
     Return a function which returns console dimensions (width, height).
     Supported: linux, osx, windows, cygwin.
@@ -272,7 +274,9 @@ def _screen_shape_wrapper():  # pragma: no cover
     return _screen_shape
 
 
-def _screen_shape_windows(fp):  # pragma: no cover
+def _screen_shape_windows(
+    fp: TextIO,
+) -> tuple[int, int] | tuple[None, None]:  # pragma: no cover
     try:
         import struct
         from ctypes import create_string_buffer, windll
@@ -307,21 +311,28 @@ def _screen_shape_windows(fp):  # pragma: no cover
     return None, None
 
 
-def _screen_shape_tput(*_):  # pragma: no cover
+def _screen_shape_tput(
+    *_: Any,
+) -> tuple[int, int] | tuple[None, None]:  # pragma: no cover
     """cygwin xterm (windows)"""
     try:
         import shlex
         from subprocess import check_call  # nosec
 
-        return [
-            int(check_call(shlex.split("tput " + i))) - 1 for i in ("cols", "lines")
-        ]
+        return cast(
+            tuple[int, int],
+            tuple(
+                int(check_call(shlex.split("tput " + i))) - 1 for i in ("cols", "lines")
+            ),
+        )
     except Exception:  # nosec
         pass
     return None, None
 
 
-def _screen_shape_linux(fp):  # pragma: no cover
+def _screen_shape_linux(
+    fp: TextIO,
+) -> tuple[int, int] | tuple[None, None]:
     try:
         from array import array
         from fcntl import ioctl
@@ -334,7 +345,10 @@ def _screen_shape_linux(fp):  # pragma: no cover
             return cols, rows
         except Exception:
             try:
-                return [int(os.environ[i]) - 1 for i in ("COLUMNS", "LINES")]
+                return cast(
+                    tuple[int, int],
+                    tuple(int(os.environ[i]) - 1 for i in ("COLUMNS", "LINES")),
+                )
             except (KeyError, ValueError):
                 return None, None
 
@@ -376,7 +390,7 @@ def _wcswidth_tolerant(
     return width
 
 
-def disp_len(data):
+def disp_len(data: str) -> int:
     """
     Returns the real on-screen length of a string which may contain
     ANSI control codes and wide chars.
@@ -417,8 +431,8 @@ def get_ema_func(smoothing: float = 0.3) -> Callable[[float | None], float]:
         A function that takes a new value and returns the current EMA.
     """
     beta = 1 - smoothing
-    last = 0
-    calls = 0
+    last: float = 0
+    calls: int = 0
 
     def ema(x: float | None = None) -> float:
         nonlocal last, calls
@@ -444,7 +458,7 @@ class TqdmWarning(Warning):
     def __init__(
         self,
         msg: str,
-        fp_write: TextIO | None = None,
+        fp_write: Callable[[str], None] | None = None,
         *args: tuple,
         **kwargs: dict[str, Any],
     ) -> None:
