@@ -220,23 +220,6 @@ def test_unicode_string_io_for_specified_file() -> None:
         pass
 
 
-def test_write_bytes() -> None:
-    """Test write_bytes argument with and without `file`"""
-    # specified file (and bytes)
-    for _ in tqdm(
-        range(3), file=WriteTypeChecker(expected_type=type(b"")), write_bytes=True
-    ):
-        pass
-    # unspecified file (and unicode)
-    stderr = sys.stderr
-    try:
-        sys.stderr = WriteTypeChecker(expected_type=type(""))
-        for _ in tqdm(range(3), write_bytes=False):
-            pass
-    finally:
-        sys.stderr = stderr
-
-
 def test_iterate_over_csv_rows() -> None:
     """Test csv iterator"""
     # Create a test csv pseudo file

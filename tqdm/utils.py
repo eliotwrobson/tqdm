@@ -212,27 +212,6 @@ class ObjectWrapper(object):
         self.wrapper_setattr("_wrapped", wrapped)
 
 
-class SimpleTextIOWrapper(ObjectWrapper):
-    """
-    Change only `.write()` of the wrapped object by encoding the passed
-    value and passing the result to the wrapped object's `.write()` method.
-    """
-
-    # pylint: disable=too-few-public-methods
-    def __init__(self, wrapped, encoding):
-        super().__init__(wrapped)
-        self.wrapper_setattr("encoding", encoding)
-
-    def write(self, s):
-        """
-        Encode `s` and pass to the wrapped object's `.write()` method.
-        """
-        return self._wrapped.write(s.encode(self.wrapper_getattr("encoding")))
-
-    def __eq__(self, other):
-        return self._wrapped == getattr(other, "_wrapped", other)
-
-
 class DisableOnWriteError(ObjectWrapper):
     """
     Disable the given `tqdm_instance` upon `write()` or `flush()` errors.

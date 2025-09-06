@@ -46,7 +46,6 @@ from tqdm.utils import (
     Comparable,
     DisableOnWriteError,
     FormatReplace,
-    SimpleTextIOWrapper,
     _is_ascii,
     _screen_shape_wrapper,
     _supports_unicode,
@@ -178,7 +177,7 @@ class tqdm(Comparable[T]):
     file  : `io.TextIOWrapper` or `io.StringIO`, optional
         Specifies where to output the progress messages
         (default: sys.stderr). Uses `file.write(str)` and `file.flush()`
-        methods.  For encoding, see `write_bytes`.
+        methods.
     ncols  : int, optional
         The width of the entire output message. If specified,
         dynamically resizes the progressbar to stay within this bound.
@@ -248,8 +247,6 @@ class tqdm(Comparable[T]):
         Calls `set_postfix(**postfix)` if possible (dict).
     unit_divisor  : float, optional
         [default: 1000], ignored unless `unit_scale` is True.
-    write_bytes  : bool, optional
-        Whether to write bytes. If (default: False) will write unicode.
     lock_args  : tuple, optional
         Passed to `refresh` for intermediate output
         (initialisation, iterating, and updating).
@@ -453,7 +450,6 @@ class tqdm(Comparable[T]):
         position: int | None = None,
         postfix: str | None = None,
         unit_divisor: int = 1000,
-        write_bytes: bool = False,
         lock_args: tuple | None = None,
         nrows: int | None = None,
         colour: str | None = None,
@@ -466,14 +462,6 @@ class tqdm(Comparable[T]):
         # NOTE must set this here first to avoid issues with changing sys.stderr
         if file is None:
             file = sys.stderr
-
-        if write_bytes:
-            # TODO figure out when exactly we can get rid of this because we don't care about python 2
-            # Despite coercing unicode into bytes, py2 sys.std* streams
-            # should have bytes written to them.
-            file = SimpleTextIOWrapper(
-                file, encoding=getattr(file, "encoding", None) or "utf-8"
-            )
 
         file = DisableOnWriteError(file, tqdm_instance=self)
 

@@ -368,8 +368,8 @@ Documentation
                    maxinterval=10.0, miniters=None, ascii=None, disable=False,
                    unit='it', unit_scale=False, dynamic_ncols=False,
                    smoothing=0.3, bar_format=None, initial=0, position=None,
-                   postfix=None, unit_divisor=1000, write_bytes=False,
-                   lock_args=None, nrows=None, colour=None, delay=0):
+                   postfix=None, unit_divisor=1000, lock_args=None,
+                   nrows=None, colour=None, delay=0):
 
 Parameters
 ~~~~~~~~~~
@@ -394,7 +394,7 @@ Parameters
 * file  : ``io.TextIOWrapper`` or ``io.StringIO``, optional  
     Specifies where to output the progress messages
     (default: sys.stderr). Uses ``file.write(str)`` and ``file.flush()``
-    methods.  For encoding, see ``write_bytes``.
+    methods.
 * ncols  : int, optional  
     The width of the entire output message. If specified,
     dynamically resizes the progressbar to stay within this bound.
@@ -464,8 +464,6 @@ Parameters
     Calls ``set_postfix(**postfix)`` if possible (dict).
 * unit_divisor  : float, optional  
     [default: 1000], ignored unless ``unit_scale`` is True.
-* write_bytes  : bool, optional  
-    Whether to write bytes. If (default: False) will write unicode.
 * lock_args  : tuple, optional  
     Passed to ``refresh`` for intermediate output
     (initialisation, iterating, and updating).
