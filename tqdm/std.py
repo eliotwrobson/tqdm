@@ -1111,7 +1111,7 @@ class tqdm(Generic[T]):
             yield CallbackIOWrapper(t.update, stream, method)
 
 
-def trange(*args: tuple, **kwargs: dict[str, Any]) -> tqdm:
+def trange(*args: Any, **kwargs: dict[str, Any]) -> tqdm:
     """Shortcut for tqdm(range(*args), **kwargs)."""
     return tqdm(range(*args), **kwargs)
 

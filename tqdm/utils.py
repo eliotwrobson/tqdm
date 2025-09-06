@@ -451,7 +451,7 @@ class TqdmWarning(Warning):
         self,
         msg: str,
         fp_write: Callable[[str], None] | None = None,
-        *args: tuple,
+        *args: Any,
         **kwargs: dict[str, Any],
     ) -> None:
         if fp_write is not None:
@@ -546,22 +546,22 @@ class Bar(object):
             else:
                 format_spec = format_spec[:-1]
             if format_spec:
-                N_BARS = int(format_spec)
-                if N_BARS < 0:
-                    N_BARS += self.default_len
+                n_bars = int(format_spec)
+                if n_bars < 0:
+                    n_bars += self.default_len
             else:
-                N_BARS = self.default_len
+                n_bars = self.default_len
         else:
             charset = self.charset
-            N_BARS = self.default_len
+            n_bars = self.default_len
 
         nsyms = len(charset) - 1
-        bar_length, frac_bar_length = divmod(int(self.frac * N_BARS * nsyms), nsyms)
+        bar_length, frac_bar_length = divmod(int(self.frac * n_bars * nsyms), nsyms)
 
         res = charset[-1] * bar_length
-        if bar_length < N_BARS:  # whitespace padding
+        if bar_length < n_bars:  # whitespace padding
             res = (
-                res + charset[frac_bar_length] + charset[0] * (N_BARS - bar_length - 1)
+                res + charset[frac_bar_length] + charset[0] * (n_bars - bar_length - 1)
             )
         return self.colour + res + self.COLOUR_RESET if self.colour else res
 
