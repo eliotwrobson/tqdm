@@ -430,7 +430,7 @@ class tqdm(Comparable[T]):
         ncols: int | None = None,
         mininterval: float = 0.1,
         maxinterval: float = 10.0,
-        miniters: int | None = None,
+        miniters: int | float | None = None,
         ascii: bool | str | None = None,
         disable: bool = False,
         unit: str = "it",
@@ -745,7 +745,6 @@ class tqdm(Comparable[T]):
                 # Store old values for next call
                 self.last_print_n = self.n
                 self.last_print_t = cur_t
-                return True
 
     def close(self) -> None:
         """Cleanup and (if leave=False) close the progressbar."""
