@@ -8,8 +8,6 @@ import sys
 from functools import partial, partialmethod, wraps
 from inspect import signature
 
-# TODO consider using wcswidth third-party package for 0-width characters
-from unicodedata import east_asian_width
 from warnings import warn
 from wcwidth import wcwidth
 from weakref import proxy
@@ -106,7 +104,7 @@ def envwrap(
     return wrap
 
 
-class FormatReplace(object):
+class FormatReplace:
     """
     >>> a = FormatReplace('something')
     >>> f"{a:5d}"
@@ -122,7 +120,7 @@ class FormatReplace(object):
         return self.replace
 
 
-class ObjectWrapper(object):
+class ObjectWrapper:
     def __getattr__(self, name: str) -> Any:
         return getattr(self._wrapped, name)
 
@@ -150,7 +148,9 @@ class DisableOnWriteError(ObjectWrapper):
     """
 
     @staticmethod
-    def disable_on_exception(tqdm_instance, func):
+    def disable_on_exception(
+        tqdm_instance: Any, func: Callable[..., Any]
+    ) -> Callable[..., Any]:
         """
         Quietly set `tqdm_instance.miniters=inf` if `func` raises `errno=5`.
         """
@@ -235,14 +235,14 @@ def _is_utf(encoding: str) -> bool:
         return True
 
 
-def _supports_unicode(fp: TextIO) -> bool:
+def _supports_unicode(fp: Any) -> bool:
     try:
         return _is_utf(fp.encoding)
     except AttributeError:
         return False
 
 
-def _is_ascii(s):
+def _is_ascii(s: Any) -> bool:
     if isinstance(s, str):
         for c in s:
             if ord(c) > 255:
