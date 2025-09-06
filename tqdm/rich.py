@@ -15,7 +15,7 @@ from rich.console import Console
 from rich.progress import (
     BarColumn, Progress, ProgressColumn, Table, Task, Text, TimeRemainingColumn)
 
-from .std import TqdmExperimentalWarning, TqdmWarning
+from .std import TqdmWarning
 from .std import tqdm as std_tqdm
 from .utils import format_sizeof
 
@@ -173,7 +173,6 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
         if self.disable:
             return
 
-        warn("rich is experimental/alpha", TqdmExperimentalWarning, stacklevel=2)
         d = self.format_dict
         if progress_columns is None:
             description = (

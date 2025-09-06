@@ -61,7 +61,7 @@ However it would be helpful to bear in mind:
         * if a newly added `tqdm.std.tqdm` option is not supported by the CLI, append to `tqdm.cli.UNSUPPORTED_OPTS`
     + can implement anything from experimental new features to support for third-party libraries such as `pandas`, `numpy`, etc.
     + submodule maturity
-        * alpha: experimental; missing unit tests, comments, and/or feedback; raises `tqdm.TqdmExperimentalWarning`
+        * alpha: experimental; missing unit tests, comments, and/or feedback
         * beta: well-used; commented, perhaps still missing tests
         * stable: >10 users; commented, 80% coverage
 - `.meta/`

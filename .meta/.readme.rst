@@ -889,11 +889,6 @@ console or notebook versions by using the ``autonotebook`` submodule:
     from tqdm.autonotebook import tqdm
     tqdm.pandas()
 
-Note that this will issue a ``TqdmExperimentalWarning`` if run in a notebook
-since it is not meant to be possible to distinguish between ``jupyter notebook``
-and ``jupyter console``. Use ``auto`` instead of ``autonotebook`` to suppress
-this warning.
-
 Note that notebooks will display the bar in the cell where it was created.
 This may be a different cell from the one where it is used.
 If this is not desired, either

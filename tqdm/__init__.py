@@ -15,7 +15,6 @@ __all__ = ['tqdm', 'tqdm_gui', 'trange', 'tgrange', 'tqdm_pandas',
            'tqdm_notebook', 'tnrange', 'main', 'TMonitor',
            'TqdmTypeError', 'TqdmKeyError',
            'TqdmWarning', 'TqdmDeprecationWarning',
-           'TqdmExperimentalWarning',
            'TqdmMonitorWarning', 'TqdmSynchronisationWarning',
            '__version__']
 
