@@ -23,7 +23,18 @@ from numbers import Number
 from operator import length_hint
 from time import time
 from warnings import warn
-from typing import Any, TypeVar, Iterable, Iterator, Literal, TextIO, Self, Protocol
+from typing import (
+    Any,
+    TypeVar,
+    Iterable,
+    Iterator,
+    Literal,
+    TextIO,
+    Self,
+    Protocol,
+    cast,
+    Callable,
+)
 from weakref import WeakSet
 
 from multiprocessing import RLock
@@ -775,8 +786,12 @@ class tqdm(Comparable[T]):
 
             with self._lock:
                 if leave:
+
+                    def dummy_func(x: Any = None) -> float:
+                        return 1.0
+
                     # stats for overall rate (no weighted average)
-                    self._ema_dt = lambda: None
+                    self._ema_dt = dummy_func
                     self.display(pos=0)
                     fp_write("\n")
                 else:
