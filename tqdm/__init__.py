@@ -1,6 +1,6 @@
 import os
 from ._monitor import TMonitor, TqdmSynchronisationWarning
-from ._tqdm_pandas import tqdm_pandas
+from .pandas import tqdm_pandas
 from .std import (
     TqdmKeyError,
     TqdmTypeError, tqdm, trange)

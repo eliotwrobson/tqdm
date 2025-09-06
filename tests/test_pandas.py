@@ -1,4 +1,4 @@
-from tqdm import tqdm
+from tqdm import tqdm, tqdm_pandas
 
 from io import StringIO
 from contextlib import closing
@@ -12,9 +12,9 @@ pd = importorskip("pandas")
 
 
 def test_pandas_setup():
-    """Test tqdm.pandas()"""
+    """Test tqdm_pandas()"""
     with closing(StringIO()) as our_file:
-        tqdm.pandas(file=our_file, leave=True, ascii=True, total=123)
+        tqdm_pandas(file=our_file, leave=True, ascii=True, total=123)
         series = pd.Series(randint(0, 50, (100,)))
         series.progress_apply(lambda x: x + 10)
         res = our_file.getvalue()
@@ -24,7 +24,7 @@ def test_pandas_setup():
 def test_pandas_rolling_expanding():
     """Test pandas.(Series|DataFrame).(rolling|expanding)"""
     with closing(StringIO()) as our_file:
-        tqdm.pandas(file=our_file, leave=True, ascii=True)
+        tqdm_pandas(file=our_file, leave=True, ascii=True)
 
         series = pd.Series(randint(0, 50, (123,)))
         res1 = series.rolling(10).progress_apply(lambda x: 1, raw=True)
@@ -48,7 +48,7 @@ def test_pandas_rolling_expanding():
 def test_pandas_series():
     """Test pandas.Series.progress_apply and .progress_map"""
     with closing(StringIO()) as our_file:
-        tqdm.pandas(file=our_file, leave=True, ascii=True)
+        tqdm_pandas(file=our_file, leave=True, ascii=True)
 
         series = pd.Series(randint(0, 50, (123,)))
         res1 = series.progress_apply(lambda x: x + 10)
@@ -73,7 +73,7 @@ def test_pandas_series():
 def test_pandas_data_frame():
     """Test pandas.DataFrame.progress_apply and .progress_applymap"""
     with closing(StringIO()) as our_file:
-        tqdm.pandas(file=our_file, leave=True, ascii=True)
+        tqdm_pandas(file=our_file, leave=True, ascii=True)
         df = pd.DataFrame(randint(0, 50, (100, 200)))
 
         def task_func(x):
@@ -120,12 +120,12 @@ def test_pandas_data_frame():
 
 
 @mark.filterwarnings(
-    "ignore:DataFrameGroupBy.apply operated on the grouping columns:DeprecationWarning"
+    "ignore:DataFrameGroupBy.apply operated on the grouping columns:FutureWarning"
 )
 def test_pandas_groupby_apply():
     """Test pandas.DataFrame.groupby(...).progress_apply"""
     with closing(StringIO()) as our_file:
-        tqdm.pandas(file=our_file, leave=False, ascii=True)
+        tqdm_pandas(file=our_file, leave=False, ascii=True)
 
         df = pd.DataFrame(randint(0, 50, (500, 3)))
         df.groupby(0).progress_apply(lambda x: None)
@@ -148,7 +148,7 @@ def test_pandas_groupby_apply():
             raise AssertionError(f"\nDid not expect:\n{nexres}\nIn:{our_file.read()}\n")
 
     with closing(StringIO()) as our_file:
-        tqdm.pandas(file=our_file, leave=True, ascii=True)
+        tqdm_pandas(file=our_file, leave=True, ascii=True)
 
         dfs = pd.DataFrame(randint(0, 50, (500, 3)), columns=list("abc"))
         dfs.loc[0] = [2, 1, 1]
@@ -177,13 +177,13 @@ def test_pandas_groupby_apply():
 
 
 @mark.filterwarnings(
-    "ignore:DataFrameGroupBy.apply operated on the grouping columns:DeprecationWarning"
+    "ignore:DataFrameGroupBy.apply operated on the grouping columns:FutureWarning"
 )
 def test_pandas_leave():
     """Test pandas with `leave=True`"""
     with closing(StringIO()) as our_file:
         df = pd.DataFrame(randint(0, 100, (1000, 6)))
-        tqdm.pandas(file=our_file, leave=True, ascii=True)
+        tqdm_pandas(file=our_file, leave=True, ascii=True)
         df.groupby(0).progress_apply(lambda x: None)
 
         our_file.seek(0)
@@ -193,53 +193,3 @@ def test_pandas_leave():
             our_file.seek(0)
             raise AssertionError(f"\nExpected:\n{exres}\nIn:{our_file.read()}\n")
 
-
-def test_pandas_apply_args_deprecation():
-    """Test warning info in
-    `pandas.Dataframe(Series).progress_apply(func, *args)`"""
-    try:
-        from tqdm import tqdm_pandas
-    except ImportError as err:
-        skip(str(err))
-
-    with closing(StringIO()) as our_file:
-        tqdm_pandas(tqdm(file=our_file, leave=False, ascii=True, ncols=20))
-        df = pd.DataFrame(randint(0, 50, (500, 3)))
-        df.progress_apply(lambda x: None, 1)  # 1 shall cause a warning
-        # Check deprecation message
-        res = our_file.getvalue()
-        assert all(
-            i in res
-            for i in (
-                "TqdmDeprecationWarning",
-                "not supported",
-                "keyword arguments instead",
-            )
-        )
-
-
-@mark.filterwarnings(
-    "ignore:DataFrameGroupBy.apply operated on the grouping columns:DeprecationWarning"
-)
-def test_pandas_deprecation():
-    """Test bar object instance as argument deprecation"""
-    try:
-        from tqdm import tqdm_pandas
-    except ImportError as err:
-        skip(str(err))
-
-    with closing(StringIO()) as our_file:
-        tqdm_pandas(tqdm(file=our_file, leave=False, ascii=True, ncols=20))
-        df = pd.DataFrame(randint(0, 50, (500, 3)))
-        df.groupby(0).progress_apply(lambda x: None)
-        # Check deprecation message
-        assert "TqdmDeprecationWarning" in our_file.getvalue()
-        assert "instead of `tqdm_pandas(tqdm(...))`" in our_file.getvalue()
-
-    with closing(StringIO()) as our_file:
-        tqdm_pandas(tqdm, file=our_file, leave=False, ascii=True, ncols=20)
-        df = pd.DataFrame(randint(0, 50, (500, 3)))
-        df.groupby(0).progress_apply(lambda x: None)
-        # Check deprecation message
-        assert "TqdmDeprecationWarning" in our_file.getvalue()
-        assert "instead of `tqdm_pandas(tqdm, ...)`" in our_file.getvalue()
