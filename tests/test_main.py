@@ -281,10 +281,14 @@ def test_exceptions(capsysbinary):
             main(argv=[i])
 
 
-@mark.xfail(reason="Environment variable setting not working in CI")
 def test_tqdm_notebook_env_set():
     """Test if TQDM_NOTEBOOK environment variable is set, tqdm uses tqdm.notebook"""
     environ["TQDM_NOTEBOOK"] = "1"
+
+    # Remove tqdm from cache so it's re-imported with new env
+    sys.modules.pop("tqdm", None)
+    sys.modules.pop("tqdm.notebook", None)
+
     from tqdm import tqdm
     from tqdm.notebook import tqdm as notebook_tqdm
 
@@ -294,6 +298,11 @@ def test_tqdm_notebook_env_set():
 
 def test_tqdm_notebook_env_not_set():
     """Test if TQDM_NOTEBOOK environment variable is not set, tqdm uses tqdm"""
+
+    # Remove tqdm from cache so it's re-imported with new env
+    sys.modules.pop("tqdm", None)
+    sys.modules.pop("tqdm.std", None)
+
     from tqdm import tqdm
     from tqdm.std import tqdm as std_tqdm
 
