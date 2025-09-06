@@ -97,6 +97,7 @@ dev = [
     "icecream",
     "mypy",
     "types-colorama",
+    "wcwidth-stubs",
 ]
 discord = ["requests"]
 slack = ["slack-sdk"]
