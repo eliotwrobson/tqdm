@@ -20,7 +20,6 @@ from datetime import datetime, timezone, timedelta
 import math
 from typing import TypeVar, Generic, Self
 import numbers
-from functools import total_ordering
 
 
 CUR_OS = sys.platform
@@ -127,59 +126,6 @@ class FormatReplace(object):
     def __format__(self, _: str) -> str:
         self.format_called += 1
         return self.replace
-
-
-@total_ordering
-class Comparable(Generic[T]):
-    """
-    Compares `self._comparable` & `other._comparable` (fallback `self.iterable` & `other`)
-    """
-
-    def __lt__(self, other: Self) -> bool:
-        if hasattr(other, "_comparable"):
-            return self._comparable < other._comparable
-        if not isinstance(self.iterable, other.__class__):
-            raise TypeError(
-                (
-                    "'<' not supported between instances of"
-                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
-                ).format(i=self.iterable, j=other)
-            )
-        for i, j in zip(self, other):
-            if i != j:
-                return i < j
-        return len(self) < len(other)
-
-    def __le__(self, other: Self) -> bool:
-        if hasattr(other, "_comparable"):
-            return self._comparable <= other._comparable
-        if not isinstance(self.iterable, other.__class__):
-            raise TypeError(
-                (
-                    "'<=' not supported between instances of"
-                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
-                ).format(i=self.iterable, j=other)
-            )
-        for i, j in zip(self, other):
-            if i != j:
-                return i <= j
-
-        return len(self) <= len(other)
-
-    def __eq__(self, other: Self) -> bool:
-        if hasattr(other, "_comparable"):
-            return self._comparable == other._comparable
-        if not isinstance(self.iterable, other.__class__):
-            raise TypeError(
-                (
-                    "'==' not supported between instances of"
-                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
-                ).format(i=self.iterable, j=other)
-            )
-        for i, j in zip(self, other):
-            if i != j:
-                return False
-        return len(self) == len(other)
 
 
 class ObjectWrapper(object):

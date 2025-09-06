@@ -34,8 +34,10 @@ from typing import (
     Protocol,
     cast,
     Callable,
+    Generic,
 )
 from weakref import WeakSet
+from functools import total_ordering
 
 from multiprocessing import RLock
 from threading import RLock as TRLock
@@ -43,7 +45,6 @@ from threading import RLock as TRLock
 from ._monitor import TMonitor
 from tqdm.utils import (
     CallbackIOWrapper,
-    Comparable,
     DisableOnWriteError,
     FormatReplace,
     _is_ascii,
@@ -149,7 +150,8 @@ class TqdmDefaultWriteLock(object):
 T = TypeVar("T")
 
 
-class tqdm(Comparable[T]):
+@total_ordering
+class tqdm(Generic[T]):
     """
     Decorate an iterable object, returning an iterator which acts exactly
     like the original iterable, but prints a dynamically updating
@@ -634,6 +636,55 @@ class tqdm(Comparable[T]):
     @property
     def _comparable(self) -> int:
         return abs(getattr(self, "pos", 1 << 31))
+
+    def __lt__(self, other: Self) -> bool:
+        if hasattr(other, "_comparable"):
+            return self._comparable < other._comparable
+        if not isinstance(self.iterable, other.__class__):
+            raise TypeError(
+                (
+                    "'<' not supported between instances of"
+                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
+                ).format(i=self.iterable, j=other)
+            )
+        for i, j in zip(self, other):
+            if i != j:
+                return i < j
+        return len(self) < len(other)
+
+    def __le__(self, other: Self) -> bool:
+        if hasattr(other, "_comparable"):
+            return self._comparable <= other._comparable
+        if not isinstance(self.iterable, other.__class__):
+            raise TypeError(
+                (
+                    "'<=' not supported between instances of"
+                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
+                ).format(i=self.iterable, j=other)
+            )
+        for i, j in zip(self, other):
+            if i != j:
+                return i <= j
+
+        return len(self) <= len(other)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, tqdm):
+            return NotImplemented
+
+        if hasattr(other, "_comparable"):
+            return self._comparable == other._comparable
+        if not isinstance(self.iterable, other.__class__):
+            raise TypeError(
+                (
+                    "'==' not supported between instances of"
+                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
+                ).format(i=self.iterable, j=other)
+            )
+        for i, j in zip(self, other):
+            if i != j:
+                return False
+        return len(self) == len(other)
 
     def __hash__(self) -> int:
         return id(self)
