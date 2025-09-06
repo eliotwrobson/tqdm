@@ -1066,11 +1066,9 @@ def test_eta(capsys):
     assert f"\r100%|{dt.now():%Y-%m-%d}\n" in err
 
 
-@mark.xfail(reason="Pause functionality was changed")
 def test_unpause() -> None:
     """
     Test unpause
-    TODO revise this test with the logic from here: https://github.com/tqdm/tqdm/pull/1617
     """
     timer = DiscreteTimer()
     with closing(StringIO()) as our_file:
@@ -1080,6 +1078,7 @@ def test_unpause() -> None:
         t.update()
         timer.sleep(0.01)
         t.update()
+        t.pause()
         timer.sleep(0.1)  # longer wait time
         t.unpause()
         timer.sleep(0.01)
@@ -1089,7 +1088,6 @@ def test_unpause() -> None:
         t.close()
         r_before = progressbar_rate(get_bar(our_file.getvalue(), 2))
         r_after = progressbar_rate(get_bar(our_file.getvalue(), 3))
-    print(our_file.getvalue())
     assert r_before == r_after
 
 
