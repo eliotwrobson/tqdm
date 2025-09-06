@@ -131,7 +131,7 @@ class ObjectWrapper(object):
 
     def wrapper_getattr(self, name: str) -> Any:
         """Actual `self.getattr` rather than self._wrapped.getattr"""
-        return object.__getattr__(self, name)
+        return object.__getattr__(self, name)  # type: ignore[attr-defined]
 
     def wrapper_setattr(self, name: str, value: Any) -> None:
         """Actual `self.setattr` rather than self._wrapped.setattr"""
@@ -273,7 +273,7 @@ def _screen_shape_windows(
 ) -> tuple[int, int] | tuple[None, None]:  # pragma: no cover
     try:
         import struct
-        from ctypes import create_string_buffer, windll
+        from ctypes import create_string_buffer, windll   # type: ignore[attr-defined]
         from sys import stdin, stdout
 
         io_handle = -12  # assume stderr
