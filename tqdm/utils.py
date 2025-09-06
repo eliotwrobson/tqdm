@@ -187,12 +187,14 @@ class DisableOnWriteError(ObjectWrapper):
                 "flush", self.disable_on_exception(tqdm_instance, wrapped.flush)
             )
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return self._wrapped == getattr(other, "_wrapped", other)
 
 
 class CallbackIOWrapper(ObjectWrapper):
-    def __init__(self, callback, stream, method="read"):
+    def __init__(
+        self, callback: Callable[[int], None], stream: TextIO, method: str = "read"
+    ) -> None:
         """
         Wrap a given `file`-like object's `read()` or `write()` to report
         lengths to the given `callback`
@@ -253,7 +255,7 @@ def _is_ascii(s: Any) -> bool:
 
 def _screen_shape_wrapper() -> (
     Callable[[TextIO], tuple[int, int] | tuple[None, None]] | None
-):  # pragma: no cover
+):
     """
     Return a function which returns console dimensions (width, height).
     Supported: linux, osx, windows, cygwin.

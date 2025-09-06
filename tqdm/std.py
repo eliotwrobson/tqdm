@@ -464,7 +464,7 @@ class tqdm(Generic[T]):
         if file is None:
             file = sys.stderr
 
-        file = DisableOnWriteError(file, tqdm_instance=self)
+        file = cast(TextIO, DisableOnWriteError(file, tqdm_instance=self))
 
         if total is None and iterable is not None:
             total = length_hint(iterable)
@@ -825,7 +825,7 @@ class tqdm(Generic[T]):
             with self._lock:
                 if leave:
 
-                    def dummy_func(x: Any = None) -> float:
+                    def dummy_func(_: Any = None) -> float:
                         return 1.0
 
                     # stats for overall rate (no weighted average)
@@ -1037,7 +1037,7 @@ class tqdm(Generic[T]):
             "ascii": self.ascii,
             "unit": self.unit,
             "unit_scale": self.unit_scale,
-            "rate": self._ema_dn() / self._ema_dt() if self._ema_dt() else None,
+            "rate": self._ema_dn() / self._ema_dt() if self._ema_dt() else None,  # type: ignore[call-arg]
             "bar_format": self.bar_format,
             "postfix": self.postfix,
             "unit_divisor": self.unit_divisor,
