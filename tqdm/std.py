@@ -23,14 +23,14 @@ from numbers import Number
 from operator import length_hint
 from time import time
 from warnings import warn
-from typing import Any, Callable, Iterable, Iterator, Literal, TextIO, Self, Protocol
+from typing import Any, TypeVar, Iterable, Iterator, Literal, TextIO, Self, Protocol
 from weakref import WeakSet
 
 from multiprocessing import RLock
 from threading import RLock as TRLock
 
 from ._monitor import TMonitor
-from .utils import (
+from tqdm.utils import (
     CallbackIOWrapper,
     Comparable,
     DisableOnWriteError,
@@ -48,6 +48,7 @@ from .utils import (
     format_meter,
     format_num,
     get_status_printer,
+    TqdmWarning,
 )
 
 # Colorama initialization for windows
@@ -135,7 +136,10 @@ class TqdmDefaultWriteLock(object):
 
 
 # TODO add typevar the way the TQDM types are set up
-class tqdm(Comparable):
+T = TypeVar("T")
+
+
+class tqdm(Comparable[T]):
     """
     Decorate an iterable object, returning an iterator which acts exactly
     like the original iterable, but prints a dynamically updating
@@ -418,7 +422,7 @@ class tqdm(Comparable):
     )
     def __init__(
         self,
-        iterable: Iterable | None = None,
+        iterable: Iterable[T] | None = None,
         desc: str | None = None,
         total: int | None = None,
         leave: bool = True,
@@ -577,32 +581,28 @@ class tqdm(Comparable):
         return bool(self.iterable)
 
     def __len__(self) -> int:
-        if self.iterable is None:
-            return self.total
-        elif hasattr(self.iterable, "shape"):
-            return self.iterable.shape[0]
+        if hasattr(self.iterable, "shape"):
+            return self.iterable.shape[0]  # type: ignore[union-attr]
         elif hasattr(self.iterable, "__len__"):
-            return len(self.iterable)
+            return len(self.iterable)  # type: ignore[arg-type]
         elif hasattr(self.iterable, "__length_hint__"):
             return length_hint(self.iterable)
+        elif self.total is not None:
+            return self.total
 
-        return getattr(self, "total", None)
+        return 0
 
     def __reversed__(self) -> Self:
-        try:
-            orig = self.iterable
-        except AttributeError:
-            raise TypeError("'tqdm' object is not reversible")
-        else:
-            # Shallow copies the object.
-            reversed_obj = copy.copy(self)
+        if self.iterable is None:
+            raise TypeError("tqdm instance needs an iterable")
 
-            # Replaces the iterable with the reversed iterable.
-            reversed_obj.iterable = reversed(self.iterable)
+        # Shallow copy the object.
+        reversed_obj = copy.copy(self)
 
-            return reversed_obj
-        finally:
-            self.iterable = orig
+        # Replaces the iterable with the reversed iterable.
+        reversed_obj.iterable = reversed(self.iterable)  # type: ignore[call-overload]
+
+        return reversed_obj
 
     def __contains__(self, item: Any) -> bool:
         contains = getattr(self.iterable, "__contains__", None)
@@ -639,16 +639,16 @@ class tqdm(Comparable):
     def __hash__(self) -> int:
         return id(self)
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[T]:
         """Backward-compatibility to use: for x in tqdm(iterable)"""
 
-        # Inlining instance variables as locals (speed optimisation)
-        iterable = self.iterable
+        if self.iterable is None:
+            raise TqdmTypeError("tqdm instance needs an iterable")
 
         # If the bar is disabled, then just walk the iterable
         # (note: keep this check outside the loop for performance)
         if self.disable:
-            for obj in iterable:
+            for obj in self.iterable:
                 yield obj
             return
 
@@ -661,7 +661,7 @@ class tqdm(Comparable):
         time = self._time
 
         try:
-            for obj in iterable:
+            for obj in self.iterable:
                 yield obj
                 # Update and possibly print the progressbar.
                 # Note: does not call self.update(1) for speed optimisation.
@@ -870,7 +870,7 @@ class tqdm(Comparable):
         self.start_t += dt
         self.last_print_t += dt
 
-    def reset(self, total: int | float | None = None) -> None:
+    def reset(self, total: int | None = None) -> None:
         """
         Resets to 0 iterations for repeated use.
 

@@ -18,6 +18,7 @@ from colorama import Fore, Style
 from typing import Callable, TextIO, Any
 from datetime import datetime, timezone, timedelta
 import math
+from typing import TypeVar, Generic
 import numbers
 
 
@@ -26,6 +27,7 @@ CUR_OS = sys.platform
 IS_WIN = CUR_OS.startswith(("win32", "cygwin"))
 IS_NIX = CUR_OS.startswith(("aix", "linux", "darwin", "freebsd"))
 RE_ANSI = re.compile(r"\x1b\[[;\d]*[A-Za-z]")
+T = TypeVar("T")
 
 try:
     if IS_WIN:
@@ -125,7 +127,7 @@ class FormatReplace(object):
         return self.replace
 
 
-class Comparable(object):
+class Comparable(Generic[T]):
     """
     Compares `self._comparable` & `other._comparable` (fallback `self.iterable` & `other`)
     """
