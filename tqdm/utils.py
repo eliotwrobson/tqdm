@@ -18,11 +18,11 @@ from colorama import Fore, Style
 from typing import Callable, TextIO, Any
 from datetime import datetime, timezone, timedelta
 import math
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Self
 import numbers
+from functools import total_ordering
 
 
-_range, _unich, _unicode, _basestring = range, chr, str, str
 CUR_OS = sys.platform
 IS_WIN = CUR_OS.startswith(("win32", "cygwin"))
 IS_NIX = CUR_OS.startswith(("aix", "linux", "darwin", "freebsd"))
@@ -127,12 +127,13 @@ class FormatReplace(object):
         return self.replace
 
 
+@total_ordering
 class Comparable(Generic[T]):
     """
     Compares `self._comparable` & `other._comparable` (fallback `self.iterable` & `other`)
     """
 
-    def __lt__(self, other):
+    def __lt__(self, other: Self) -> bool:
         if hasattr(other, "_comparable"):
             return self._comparable < other._comparable
         if not isinstance(self.iterable, other.__class__):
@@ -147,7 +148,7 @@ class Comparable(Generic[T]):
                 return i < j
         return len(self) < len(other)
 
-    def __le__(self, other):
+    def __le__(self, other: Self) -> bool:
         if hasattr(other, "_comparable"):
             return self._comparable <= other._comparable
         if not isinstance(self.iterable, other.__class__):
@@ -160,9 +161,10 @@ class Comparable(Generic[T]):
         for i, j in zip(self, other):
             if i != j:
                 return i <= j
+
         return len(self) <= len(other)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Self) -> bool:
         if hasattr(other, "_comparable"):
             return self._comparable == other._comparable
         if not isinstance(self.iterable, other.__class__):
@@ -176,15 +178,6 @@ class Comparable(Generic[T]):
             if i != j:
                 return False
         return len(self) == len(other)
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __gt__(self, other):
-        return not self <= other
-
-    def __ge__(self, other):
-        return not self < other
 
 
 class ObjectWrapper(object):
