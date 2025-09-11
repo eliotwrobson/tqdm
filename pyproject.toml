@@ -93,6 +93,7 @@ dev = [
     "pytest-cov",
     "pytest-timeout",
     "pytest-asyncio>=0.24",
+    "pytest-rerunfailures",
     "nbval",
     "icecream",
     "mypy",

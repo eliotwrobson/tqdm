@@ -11,14 +11,13 @@ from inspect import signature
 from warnings import warn
 from wcwidth import wcwidth
 from weakref import proxy
-from colorama import Fore, Style
+from colorama import Fore, Style, init, just_fix_windows_console
 
 from typing import Callable, TextIO, Any, cast
 from datetime import datetime, timezone, timedelta
 import math
-from typing import TypeVar, Generic, Self
+from typing import TypeVar
 import numbers
-import colorama
 
 
 CUR_OS = sys.platform
@@ -28,7 +27,8 @@ RE_ANSI = re.compile(r"\x1b\[[;\d]*[A-Za-z]")
 T = TypeVar("T")
 
 if IS_WIN:
-    colorama.just_fix_windows_console()
+    init()
+    just_fix_windows_console()
 
 
 def envwrap(

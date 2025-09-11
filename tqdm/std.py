@@ -9,6 +9,7 @@ Usage:
 """
 
 from colorama import init  # TODO move to utils??
+import os
 from icecream import ic
 
 import signal
@@ -268,7 +269,7 @@ class tqdm(Generic[T]):
 
     registered_classes: set[type[Self]] = set()
 
-    def __new__(cls, *args: tuple, **kwargs: dict[str, Any]) -> Self:
+    def __new__(cls, *args: Any, **kwargs: dict[str, Any]) -> Self:
         instance = object.__new__(cls)
         tqdm.registered_classes.add(cls)  # type: ignore[misc]
         with cls.get_lock():  # also constructs lock if non-existent
@@ -290,7 +291,7 @@ class tqdm(Generic[T]):
         return instance
 
     @classmethod
-    def _get_free_pos(cls, instance=None):
+    def _get_free_pos(cls, instance: "tqdm | None" = None) -> int:
         """Skips specified instance."""
         positions = {
             abs(inst.pos)
@@ -300,14 +301,13 @@ class tqdm(Generic[T]):
         return min(set(range(len(positions) + 1)).difference(positions))
 
     @classmethod
-    def _decr_instances(cls, instance):
+    def _decr_instances(cls, instance: "tqdm") -> None:
         """
         Remove from list and reposition another unfixed bar
         to fill the new gap.
 
         This means that by default (where all nested bars are unfixed),
         order is not maintained but screen flicker/blank space is minimised.
-        (tqdm<=4.44.1 moved ALL subsequent unfixed bars up.)
         """
         with cls._lock:
             try:
@@ -351,7 +351,13 @@ class tqdm(Generic[T]):
                     inst.display()
 
     @classmethod
-    def write(cls, s, file=None, end="\n", nolock=False):
+    def write(
+        cls,
+        s: str,
+        file: TextIO | None = None,
+        end: str = "\n",
+        nolock: bool = False,
+    ) -> None:
         """Print a message via tqdm (without overlap with bars)."""
         fp = file if file is not None else sys.stdout
         with cls.external_write_mode(file=file, nolock=nolock):
@@ -360,7 +366,14 @@ class tqdm(Generic[T]):
             fp.write(end)
 
     @classmethod
-    def print(cls, *values, file=None, sep=" ", end="\n", nolock=False):
+    def print(
+        cls,
+        *values: Any,
+        file: TextIO | None = None,
+        sep: str = " ",
+        end: str = "\n",
+        nolock: bool = False,
+    ) -> None:
         """Print several heterogeneous values via tqdm (without overlap with bars)."""
         cls.write(
             sep.join("{}".format(v) for v in values), file=file, end=end, nolock=nolock
@@ -368,7 +381,9 @@ class tqdm(Generic[T]):
 
     @classmethod
     @contextmanager
-    def external_write_mode(cls, file=None, nolock=False):
+    def external_write_mode(
+        cls, file: TextIO | None = None, nolock: bool = False
+    ) -> Iterator[None]:
         """
         Disable tqdm within context and refresh tqdm when exits.
         Useful when writing to standard output stream

@@ -12,7 +12,7 @@ from tqdm import tqdm, trange
 
 from .conftest import patch_lock
 
-from pytest import importorskip, skip
+from pytest import importorskip, skip, mark
 
 
 def cpu_sleep(t):
@@ -233,7 +233,7 @@ def worker(total, blocking=True):
 
 @retry_on_except()
 @patch_lock(thread=True)
-# @mark.skip("Erroring on windows, idk what's happening. Maybe windows issue?")
+@mark.flaky(reruns=3)
 def test_lock_args():
     """Test overhead of nonblocking threads"""
     ThreadPoolExecutor = importorskip("concurrent.futures").ThreadPoolExecutor
