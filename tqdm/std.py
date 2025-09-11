@@ -8,8 +8,6 @@ Usage:
 ...     ...
 """
 
-import math
-import numbers
 from colorama import init  # TODO move to utils??
 from icecream import ic
 
@@ -18,7 +16,6 @@ import sys
 from collections import OrderedDict, defaultdict
 from contextlib import contextmanager, AbstractContextManager
 import copy
-from datetime import datetime, timedelta, timezone
 from numbers import Number
 from operator import length_hint
 from time import time
@@ -46,7 +43,6 @@ from ._monitor import TMonitor
 from tqdm.utils import (
     CallbackIOWrapper,
     DisableOnWriteError,
-    FormatReplace,
     _is_ascii,
     _screen_shape_wrapper,
     _supports_unicode,

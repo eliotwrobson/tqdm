@@ -104,9 +104,6 @@ slack = ["slack-sdk"]
 telegram = ["requests"]
 notebook = ["ipywidgets>=6"]
 
-[project.scripts]
-tqdm = "tqdm.cli:main"
-
 [tool.flake8]
 max_line_length = 99
 exclude = [
