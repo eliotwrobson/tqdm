@@ -1,7 +1,11 @@
 import atexit
 from threading import Event, Thread, current_thread
 from time import time
+from typing import Callable, TYPE_CHECKING
 from warnings import warn
+
+if TYPE_CHECKING:
+    from tqdm.std import tqdm
 
 __all__ = ["TMonitor", "TqdmSynchronisationWarning"]
 
@@ -9,6 +13,7 @@ __all__ = ["TMonitor", "TqdmSynchronisationWarning"]
 class TqdmSynchronisationWarning(RuntimeWarning):
     """tqdm multi-thread/-process errors which may cause incorrect nesting
     but otherwise no adverse effects"""
+
     pass
 
 
@@ -25,33 +30,45 @@ class TMonitor(Thread):
     sleep_interval  : float
         Time to sleep between monitoring checks.
     """
-    _test = {}  # internal vars for unit testing
 
-    def __init__(self, tqdm_cls, sleep_interval):
+    _test: dict[str, Event] = {}  # internal vars for unit testing
+
+    name: str
+    daemon: bool
+    woken: float
+    tqdm_cls: type["tqdm"]
+    sleep_interval: float
+    _time: Callable[[], float]
+    was_killed: Event
+
+    def __init__(self, tqdm_cls: type["tqdm"], sleep_interval: float):
         Thread.__init__(self)
         self.name = "tqdm_monitor"
         self.daemon = True  # kill thread when main killed (KeyboardInterrupt)
         self.woken = 0  # last time woken up, to sync with monitor
         self.tqdm_cls = tqdm_cls
         self.sleep_interval = sleep_interval
-        self._time = self._test.get("time", time)
-        self.was_killed = self._test.get("Event", Event)()
+        self._time = self._test.get("time", time)  # type: ignore[assignment]
+        self.was_killed = self._test.get("Event", Event)()  # type: ignore[operator]
         atexit.register(self.exit)
         self.start()
 
-    def exit(self):
+    def exit(self) -> bool:
         self.was_killed.set()
         if self is not current_thread():
             self.join()
         return self.report()
 
-    def get_instances(self):
+    def get_instances(self) -> list["tqdm"]:
         # returns a copy of started `tqdm_cls` instances
-        return [i for i in self.tqdm_cls._instances.copy()
-                # Avoid race by checking that the instance started
-                if hasattr(i, 'start_t')]
+        return [
+            i
+            for i in self.tqdm_cls._instances.copy()
+            # Avoid race by checking that the instance started
+            if hasattr(i, "start_t")
+        ]
 
-    def run(self):
+    def run(self) -> None:
         cur_t = self._time()
         while True:
             # After processing and before sleeping, notify that we woke
@@ -86,11 +103,14 @@ class TMonitor(Thread):
                     # Remove accidental long-lived strong reference
                     del instance
                 if instances != self.get_instances():  # pragma: nocover
-                    warn("Set changed size during iteration" +
-                         " (see https://github.com/tqdm/tqdm/issues/481)",
-                         TqdmSynchronisationWarning, stacklevel=2)
+                    warn(
+                        "Set changed size during iteration"
+                        + " (see https://github.com/tqdm/tqdm/issues/481)",
+                        TqdmSynchronisationWarning,
+                        stacklevel=2,
+                    )
                 # Remove accidental long-lived strong references
                 del instances
 
-    def report(self):
+    def report(self) -> bool:
         return not self.was_killed.is_set()

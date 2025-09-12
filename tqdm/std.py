@@ -262,7 +262,7 @@ class tqdm(Generic[T]):
     out  : decorated iterator.
     """
 
-    monitor_interval: ClassVar[int] = 10  # set to 0 to disable the thread
+    monitor_interval: ClassVar[float] = 10  # set to 0 to disable the thread
     monitor: ClassVar[TMonitor | None] = None
     _instances: ClassVar[WeakSet["tqdm"]] = WeakSet()
     _lock: ClassVar[TqdmDefaultWriteLock]
