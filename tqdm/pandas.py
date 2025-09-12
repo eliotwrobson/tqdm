@@ -13,6 +13,7 @@ from typing import Any
 
 from .std import tqdm as std_tqdm
 
+
 def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
     """
     Registers the current `tqdm` class with
@@ -96,7 +97,7 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
     tqdm_kwargs = tqdm_kwargs.copy()
 
     def inner_generator(df_function="apply"):
-        def inner(df, func, *args, **kwargs):
+        def inner(df, func, **kwargs):
             """
             Parameters
             ----------
@@ -129,16 +130,6 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
 
             # Init bar
             t = std_tqdm(total=total, **tqdm_kwargs)
-
-            if len(args) > 0:
-                # *args intentionally not supported (see #244, #299)
-                TqdmDeprecationWarning(
-                    "Except func, normal arguments are intentionally"
-                    + " not supported by"
-                    + " `(DataFrame|Series|GroupBy).progress_apply`."
-                    + " Use keyword arguments instead.",
-                    fp_write=getattr(t.fp, "write", sys.stderr.write),
-                )
 
             try:  # pandas>=1.3.0
                 from pandas.core.common import is_builtin_func
