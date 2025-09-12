@@ -262,14 +262,14 @@ class tqdm(Generic[T]):
     out  : decorated iterator.
     """
 
-    monitor_interval = 10  # set to 0 to disable the thread
-    monitor = None
-    _instances: WeakSet["tqdm"] = WeakSet()
-    _lock: TqdmDefaultWriteLock
+    monitor_interval: ClassVar[int] = 10  # set to 0 to disable the thread
+    monitor: ClassVar[TMonitor | None] = None
+    _instances: ClassVar[WeakSet["tqdm"]] = WeakSet()
+    _lock: ClassVar[TqdmDefaultWriteLock]
 
-    registered_classes: set[type[Self]] = set()
+    registered_classes: ClassVar[set[type["tqdm"]]] = set()
 
-    def __new__(cls, *args: Any, **kwargs: dict[str, Any]) -> Self:
+    def __new__(cls, *args: Any, **kwargs: dict[str, Any]) -> "tqdm":
         instance = object.__new__(cls)
         tqdm.registered_classes.add(cls)  # type: ignore[misc]
         with cls.get_lock():  # also constructs lock if non-existent
