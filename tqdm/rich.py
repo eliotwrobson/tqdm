@@ -8,52 +8,64 @@ Usage:
 """
 
 from contextlib import nullcontext
-from typing import Iterable
+from typing import Any, Iterable, cast
 from warnings import warn
+from tqdm.utils import format_interval, format_sizeof
 
 from rich.console import Console
 from rich.progress import (
-    BarColumn, Progress, ProgressColumn, Table, Task, Text, TimeRemainingColumn)
+    BarColumn,
+    Progress,
+    ProgressColumn,
+    Table,
+    Task,
+    Text,
+    TimeRemainingColumn,
+)
 
-from .std import TqdmWarning
-from .std import tqdm as std_tqdm
-from .utils import format_sizeof
+from tqdm.std import TqdmWarning
+from tqdm.std import tqdm as std_tqdm
+
+RenderReturnType = Text | str
 
 __author__ = {"github.com/": ["casperdcl"]}
 __all__ = ["tqdm_rich", "trrange", "tqdm", "trange"]
 
 
 class UnitScaleColumn(ProgressColumn):
-    def __init__(self, unit_scale=False, unit_divisor=1000):
+    def __init__(self, unit_scale: bool = False, unit_divisor: int = 1000) -> None:
         self.unit_scale = unit_scale
         self.unit_divisor = unit_divisor
         super().__init__()
 
-    def unit_format(self, task: Task, num, fmt=""):
+    def unit_format(self, task: Task, num: float, fmt: str = "") -> str:
         if task.fields["unit_scale"]:
             return format_sizeof(num, divisor=task.fields["unit_divisor"])
         return f"{num:{fmt}}"
 
 
 class FractionColumn(UnitScaleColumn):
-    def render(self, task: Task):
+    def render(self, task: Task) -> RenderReturnType:
         has_total = task.total is not None
+
         if has_total:
-            n_fmt = self.unit_format(task, task.completed)
-            total_fmt = self.unit_format(task, task.total)
+            n_fmt = self.unit_format(task, cast(float, task.completed))
+            total_fmt = self.unit_format(task, cast(float, task.total))
             return Text(f"{n_fmt}/{total_fmt}", style="progress.download")
-        else:
-            return ""
+
+        return ""
 
 
 class RateColumn(UnitScaleColumn):
     """Renders human readable transfer speed."""
 
-    def __init__(self, unit="it", unit_scale=False, unit_divisor=1000):
+    def __init__(
+        self, unit: str = "it", unit_scale: bool = False, unit_divisor: int = 1000
+    ) -> None:
         super().__init__(unit_scale=unit_scale, unit_divisor=unit_divisor)
         self.unit = unit
 
-    def render(self, task: Task):
+    def render(self, task: Task) -> Text | str:
         """Show data transfer speed."""
         speed = task.fields["rate"]
         if task.fields["elapsed"] and speed is None:
@@ -76,34 +88,36 @@ class RateColumn(UnitScaleColumn):
 
 
 class UnitCompletedColumn(UnitScaleColumn):
-    def render(self, task: Task) -> Text:
+    def render(self, task: Task) -> RenderReturnType:
         if task.total is None:
             completed = self.unit_format(task, task.completed)
-            return Text(f"{completed:>3}{task.fields['unit']}", style="progress.percentage")
+            return Text(
+                f"{completed:>3}{task.fields['unit']}", style="progress.percentage"
+            )
         else:
             return Text(f"{task.percentage:>3.0f}%", style="progress.percentage")
 
 
 class CompactTimeElapsedColumn(ProgressColumn):
-    def render(self, task: Task) -> Text:
+    def render(self, task: Task) -> RenderReturnType:
         elapsed = task.fields["elapsed"]
-        formatted = std_tqdm.format_interval(int(elapsed)) if elapsed else "--:--"
+        formatted = format_interval(int(elapsed)) if elapsed else "--:--"
         return Text(formatted, style="progress.elapsed")
 
 
 class PrefixTimeRemainingColumn(TimeRemainingColumn):
-    def __init__(self, prefix_str: str = "<", *args, **kwargs):
+    def __init__(self, prefix_str: str = "<", *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.prefix_txt = Text(prefix_str)
 
-    def render(self, task: Task) -> Text:
+    def render(self, task: Task) -> RenderReturnType:  # type: ignore[override]
         return (
             (self.prefix_txt + super().render(task)) if task.total is not None else ""
         )
 
 
 class PostFixColumn(ProgressColumn):
-    def render(self, task: Task) -> Text:
+    def render(self, task: Task) -> RenderReturnType:
         postfix = task.fields.get("postfix")
         return Text(f", {postfix}", style="progress.percentage") if postfix else ""
 
@@ -117,7 +131,7 @@ class NoPaddingProgress(Progress):
 
 class ASCIIConsole(Console):
     @property
-    def encoding(self):
+    def encoding(self) -> str:
         return "ascii"
 
 
@@ -125,7 +139,7 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
     """Experimental rich.progress GUI version of tqdm!"""
 
     # TODO: @classmethod: write()?
-    _progress: Progress
+    _progress: Progress | None
 
     def __new__(cls, *_, **__):
         return object.__new__(cls)
@@ -134,7 +148,7 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
     def _get_free_pos(*_, **__):
         pass
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         This class accepts the following parameters *in addition* to
         the parameters accepted by `tqdm`.
@@ -162,10 +176,9 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
                     stacklevel=2,
                 )
 
-        self._lock = (
-            nullcontext()
-        )  # NOTE: temporary dummy_lock to reuse std_tqdm's __init__
-        self._instances = [self]
+        # NOTE: temporary dummy_lock to reuse std_tqdm's __init__
+        self._lock = nullcontext()  # type: ignore[misc, assignment]
+        self._instances = [self]  # type: ignore[misc, assignment]
         super().__init__(*args, **kwargs)
         del self._lock
         del self._instances
@@ -257,7 +270,7 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
             self._task = next(t for t in cls._progress.tasks if t.id == task_id)
             cls._progress.disable = _disable
 
-    def close(self):
+    def close(self) -> None:
         if self.disable:
             return
         cls = self.__class__
@@ -270,15 +283,17 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
                 self._task.finished_time = self._task.stop_time
             if not self.leave:
                 self._task.visible = False
-            self.display(refresh=cls._progress.console.is_jupyter)   # print 100%, vis #1306
+            self.display(
+                refresh=cls._progress.console.is_jupyter
+            )  # print 100%, vis #1306
             if all(t.finished for t in cls._progress.tasks):
                 cls._progress.__exit__(None, None, None)
                 cls._progress = None
 
-    def clear(self, *_, **__):
+    def clear(self, *_, **__) -> None:
         pass
 
-    def display(self, refresh=False, *_, **__):
+    def display(self, refresh: bool = False, *_, **__) -> None:  # type: ignore[override]
         cls = self.__class__
         if not hasattr(cls, "_progress") or cls._progress is None or self._task is None:
             return
@@ -301,10 +316,10 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
         cls._progress.console.height = d["nrows"]
         cls._progress.console.file = self.fp
 
-    def refresh(self, *_, **__):
+    def refresh(self, *_, **__) -> None:
         self.display()
 
-    def reset(self, total=None):
+    def reset(self, total: int | None = None) -> None:
         """
         Resets to 0 iterations for repeated use.
 

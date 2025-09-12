@@ -41,7 +41,7 @@ class TMonitor(Thread):
     _time: Callable[[], float]
     was_killed: Event
 
-    def __init__(self, tqdm_cls: type["tqdm"], sleep_interval: float):
+    def __init__(self, tqdm_cls: type["tqdm"], sleep_interval: float) -> None:
         Thread.__init__(self)
         self.name = "tqdm_monitor"
         self.daemon = True  # kill thread when main killed (KeyboardInterrupt)
