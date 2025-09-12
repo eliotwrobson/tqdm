@@ -101,6 +101,7 @@ dev = [
     "types-colorama",
     "wcwidth-stubs",
     "pandas",
+    "pandas-stubs",
     "rich",
 ]
 discord = ["requests"]
