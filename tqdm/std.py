@@ -31,8 +31,8 @@ from typing import (
     Self,
     Protocol,
     cast,
-    Callable,
     Generic,
+    ClassVar,
 )
 from weakref import WeakSet
 from functools import total_ordering
@@ -99,8 +99,8 @@ class TqdmDefaultWriteLock(object):
     # global thread lock so no setup required for multithreading.
     # NB: Do not create multiprocessing lock as it sets the multiprocessing
     # context, disallowing `spawn()`/`forkserver()`
-    th_lock: _LockType = TRLock()
-    mp_lock: _LockType | None
+    th_lock: ClassVar[_LockType] = TRLock()
+    mp_lock: ClassVar[_LockType | None]
 
     def __init__(self) -> None:
         # Create global parallelism locks to avoid racing issues with parallel
