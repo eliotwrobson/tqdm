@@ -221,7 +221,6 @@ def test_imap():
 
 
 @patch_lock(thread=True)
-@pytest.mark.skipif(reason="I think I messed this up somehow")
 def test_threadpool():
     """Test concurrent.futures.ThreadPoolExecutor"""
     ThreadPoolExecutor = importorskip("concurrent.futures").ThreadPoolExecutor
