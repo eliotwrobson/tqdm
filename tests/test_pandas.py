@@ -2,7 +2,7 @@ from tqdm import tqdm_pandas
 
 from io import StringIO
 from contextlib import closing
-from pytest import mark, importorskip, skip
+from pytest import mark, importorskip
 
 np = importorskip("numpy")
 random = importorskip("numpy.random")

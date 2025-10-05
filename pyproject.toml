@@ -9,7 +9,7 @@ name = "tqdm"
 dynamic = ["version"]
 maintainers = [{ name = "tqdm developers", email = "devs@tqdm.ml" }]
 description = "Fast, Extensible Progress Meter"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.11"
 keywords = [
     "progressbar",
@@ -100,13 +100,10 @@ dev = [
     "mypy",
     "types-colorama",
     "wcwidth-stubs",
-    "pandas",
+    "pandas>=2.0",
     "pandas-stubs",
     "rich",
 ]
-discord = ["requests"]
-slack = ["slack-sdk"]
-telegram = ["requests"]
 notebook = ["ipywidgets>=6"]
 
 [tool.flake8]
@@ -152,13 +149,6 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.coverage.run]
 branch = true
 include = ["tqdm/*"]
-omit = [
-    "tqdm/contrib/bells.py",
-    "tqdm/contrib/slack.py",
-    "tqdm/contrib/discord.py",
-    "tqdm/contrib/telegram.py",
-    "tqdm/contrib/utils_worker.py",
-]
 relative_files = true
 disable_warnings = ["include-ignored"]
 [tool.coverage.report]
