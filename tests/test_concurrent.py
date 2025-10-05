@@ -30,7 +30,6 @@ def test_thread_map():
         assert thread_map(incr, a, file=our_file) == b
 
 
-@mark.xfail(reason="Changed behavior")
 def test_process_map():
     """Test contrib.concurrent.process_map"""
     with closing(StringIO()) as our_file:
