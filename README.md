@@ -319,9 +319,24 @@ with trange(10) as t:
         sleep(0.1)
 ```
 
+### `print(*values, file=sys.stdout, sep=" ", end="\n")`
+
+Print messages via tqdm without overlapping with the progress bar. This works like the builtin `print()` function and is the recommended way to print messages.
+
+```python
+from tqdm import tqdm
+from time import sleep
+
+for i in tqdm(range(10)):
+    if i == 5:
+        tqdm.print("Half way there!")
+        tqdm.print("Progress:", i, "out of", 10)
+    sleep(0.1)
+```
+
 ### `write(s, file=sys.stdout, end="\n")`
 
-Print a message via tqdm without overlapping with the progress bar.
+Print a single string via tqdm without overlapping with the progress bar. For most use cases, `tqdm.print()` is more convenient.
 
 ```python
 from tqdm import tqdm
@@ -637,9 +652,26 @@ with tqdm.wrapattr(open(os.devnull, "wb"), "write",
 
 ### Writing Messages
 
-Since `tqdm` uses a simple printing mechanism to display progress bars, you should not write any message in the terminal using `print()` while a progressbar is open.
+Since `tqdm` uses a simple printing mechanism to display progress bars, you should not write any message in the terminal using the builtin `print()` function while a progressbar is open.
 
-To write messages in the terminal without any collision with `tqdm` bar display, a `.write()` method is provided:
+To write messages in the terminal without any collision with `tqdm` bar display, use the `tqdm.print()` method (recommended) or the `tqdm.write()` method:
+
+**Using `tqdm.print()` (recommended):**
+
+```python
+from tqdm import tqdm, trange
+from time import sleep
+
+bar = trange(10)
+for i in bar:
+    sleep(0.1)
+    if not (i % 3):
+        tqdm.print(f"Done task {i}")
+```
+
+The `tqdm.print()` function works just like the builtin `print()`, accepting multiple values and standard keyword arguments like `sep`, `end`, and `file`.
+
+**Using `tqdm.write()` (alternative):**
 
 ```python
 from tqdm import tqdm, trange
@@ -652,7 +684,7 @@ for i in bar:
         tqdm.write(f"Done task {i}")
 ```
 
-By default, this will print to standard output `sys.stdout`, but you can specify any file-like object using the `file` argument.
+Both methods will print to standard output `sys.stdout` by default, but you can specify any file-like object using the `file` argument.
 
 ---
 
