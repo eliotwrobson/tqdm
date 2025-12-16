@@ -95,6 +95,7 @@ dev = [
     "pytest-asyncio>=0.24",
     "pytest-rerunfailures",
     "pytest-mock",
+    "pytest-benchmark",
     "nbval",
     "icecream",
     "mypy",
@@ -103,6 +104,9 @@ dev = [
     "pandas>=2.0",
     "pandas-stubs",
     "rich",
+    # Used in benchmark comparisons (test_benchmark.py)
+    "progressbar2",
+    "alive-progress",
 ]
 notebook = ["ipywidgets>=6"]
 
