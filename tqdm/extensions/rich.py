@@ -1,10 +1,5 @@
 """
 `rich.progress` decorator for iterators.
-
-Usage:
->>> from tqdm.rich import trange, tqdm
->>> for i in trange(10):
-...     ...
 """
 
 from contextlib import nullcontext

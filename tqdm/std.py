@@ -429,6 +429,7 @@ class tqdm(Generic[T]):
     disable: bool
 
     # override defaults via env vars
+    # TODO get rid of this, only needed on the command line
     @envwrap(
         "TQDM_",
         is_method=True,
@@ -1120,11 +1121,6 @@ class tqdm(Generic[T]):
                 t.unit_scale = True
                 t.unit_divisor = 1024
             yield CallbackIOWrapper(t.update, stream, method)
-
-
-def trange(*args: Any, **kwargs: dict[str, Any]) -> tqdm:
-    """Shortcut for tqdm(range(*args), **kwargs)."""
-    return tqdm(range(*args), **kwargs)
 
 
 def resize_signal_handler(signalnum, frame):

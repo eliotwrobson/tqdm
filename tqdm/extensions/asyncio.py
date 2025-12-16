@@ -1,17 +1,11 @@
 """
 Asynchronous progressbar decorator for iterators.
-Includes a default `range` iterator printing to `stderr`.
-
-Usage:
->>> from tqdm.asyncio import trange, tqdm
->>> async for i in trange(10):
-...     ...
 """
 
 import asyncio
 from sys import version_info
 
-from .std import tqdm as std_tqdm
+from ..std import tqdm as std_tqdm
 
 
 class tqdm_asyncio(std_tqdm):

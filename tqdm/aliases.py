@@ -66,3 +66,8 @@ def tproduct(*iterables, **tqdm_kwargs):
         for i in it:
             yield i
             t.update()
+
+
+def trange(*args, **kwargs):
+    """Shortcut for tqdm(range(*args), **kwargs)."""
+    return tqdm(range(*args), **kwargs)

@@ -5,7 +5,7 @@ from functools import partial
 from sys import platform
 from time import time
 
-from tqdm.asyncio import tqdm_asyncio
+from tqdm.extensions.asyncio import tqdm_asyncio
 
 from io import StringIO
 from contextlib import closing

@@ -1,4 +1,4 @@
-from tqdm import tqdm_pandas
+from tqdm.extensions import tqdm_pandas
 
 from io import StringIO
 from contextlib import closing

@@ -1,17 +1,10 @@
 """
 Registration for `tqdm` to provide `pandas` progress indicators.
-
-Usage:
->>> import pandas as pd
->>> from tqdm import tqdm_pandas
->>> tqdm_pandas(...)
->>> df = pd.DataFrame(...)
->>> df.groupby(0).progress_apply(...)
 """
 
 from typing import Any
 
-from .std import tqdm as std_tqdm
+from ..std import tqdm as std_tqdm
 
 
 def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:

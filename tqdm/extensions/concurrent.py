@@ -9,9 +9,6 @@ from os import cpu_count
 from ..std import tqdm as std_tqdm
 from ..utils import TqdmWarning
 
-__author__ = {"github.com/": ["casperdcl"]}
-__all__ = ["thread_map", "process_map"]
-
 
 @contextmanager
 def ensure_lock(tqdm_class, lock_name=""):

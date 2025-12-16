@@ -7,8 +7,6 @@ from warnings import warn
 if TYPE_CHECKING:
     from tqdm.std import tqdm
 
-__all__ = ["TMonitor", "TqdmSynchronisationWarning"]
-
 
 class TqdmSynchronisationWarning(RuntimeWarning):
     """tqdm multi-thread/-process errors which may cause incorrect nesting
