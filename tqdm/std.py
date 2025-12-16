@@ -1,16 +1,9 @@
 """
 Customisable progressbar decorator for iterators.
 Includes a default `range` iterator printing to `stderr`.
-
-Usage:
->>> from tqdm import trange, tqdm
->>> for i in trange(10):
-...     ...
 """
 
 from colorama import init  # TODO move to utils??
-import os
-from icecream import ic
 
 import signal
 import sys
@@ -47,20 +40,12 @@ from tqdm.utils import (
     _is_ascii,
     _screen_shape_wrapper,
     _supports_unicode,
-    disp_len,
-    disp_trim,
-    envwrap,
     get_ema_func,
-    format_sizeof,
     format_meter,
     format_num,
     get_status_printer,
     TqdmWarning,
 )
-
-# Colorama initialization for windows
-# TODO skip on linux
-init()
 
 
 # TODO remove some of these errors and put them in a separate file
@@ -428,24 +413,11 @@ class tqdm(Generic[T]):
     # Type annotations for instance variables
     disable: bool
 
-    # override defaults via env vars
-    # TODO get rid of this, only needed on the command line
-    @envwrap(
-        "TQDM_",
-        is_method=True,
-        types={
-            "total": float,
-            "ncols": int,
-            "miniters": float,
-            "position": int,
-            "nrows": int,
-        },
-    )
     def __init__(
         self,
         iterable: Iterable[T] | None = None,
         desc: str | None = None,
-        total: int | None = None,
+        total: int | float | None = None,
         leave: bool = True,
         file: TextIO | None = None,
         ncols: int | None = None,
@@ -600,7 +572,7 @@ class tqdm(Generic[T]):
         elif hasattr(self.iterable, "__length_hint__"):
             return length_hint(self.iterable)
         elif self.total is not None:
-            return self.total
+            return int(self.total)
 
         return 0
 
@@ -934,7 +906,7 @@ class tqdm(Generic[T]):
         self.start_t += dt
         self.last_print_t += dt
 
-    def reset(self, total: int | None = None) -> None:
+    def reset(self, total: int | float | None = None) -> None:
         """
         Resets to 0 iterations for repeated use.
 
@@ -1101,7 +1073,7 @@ class tqdm(Generic[T]):
         method: Literal["read", "write"],
         total: int | float | None = None,
         bytes: bool = True,
-        **tqdm_kwargs: dict[str, Any],
+        **tqdm_kwargs: Any,
     ):
         # TODO add return type
         """
@@ -1136,6 +1108,6 @@ def resize_signal_handler(signalnum, frame):
 
 
 try:
-    signal.signal(signal.SIGWINCH, resize_signal_handler)
+    signal.signal(signal.SIGWINCH, resize_signal_handler)  # type: ignore[attr-defined]
 except AttributeError:
     pass  # Some systems, like Windows, do not have SIGWINCH

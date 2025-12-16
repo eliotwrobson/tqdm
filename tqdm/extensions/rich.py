@@ -23,9 +23,6 @@ from tqdm.std import tqdm as std_tqdm
 
 RenderReturnType = Text | str
 
-__author__ = {"github.com/": ["casperdcl"]}
-__all__ = ["tqdm_rich", "trrange", "tqdm", "trange"]
-
 
 class UnitScaleColumn(ProgressColumn):
     def __init__(self, unit_scale: bool = False, unit_divisor: int = 1000) -> None:
@@ -326,13 +323,3 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
         if cls._progress is not None:
             cls._progress.reset(task_id=self._task.id)  # see #1378
         super().reset(total=total)
-
-
-def trrange(*args, **kwargs):
-    """Shortcut for `tqdm.rich.tqdm(range(*args), **kwargs)`."""
-    return tqdm_rich(range(*args), **kwargs)
-
-
-# Aliases
-tqdm = tqdm_rich
-trange = trrange
