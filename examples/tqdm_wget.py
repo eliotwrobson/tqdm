@@ -88,23 +88,29 @@ class TqdmUpTo(tqdm):
 
 opts = docopt(__doc__)
 
-eg_link = opts['--url']
-eg_file = eg_link.replace('/', ' ').split()[-1]
-eg_out = opts['--output'].replace("/dev/null", devnull)
+eg_link = opts["--url"]
+eg_file = eg_link.replace("/", " ").split()[-1]
+eg_out = opts["--output"].replace("/dev/null", devnull)
 # with tqdm(unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
 #           desc=eg_file) as t:  # all optional kwargs
 #     urllib.urlretrieve(eg_link, filename=eg_out,
 #                        reporthook=my_hook(t), data=None)
-with TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
-              desc=eg_file) as t:  # all optional kwargs
+with TqdmUpTo(
+    unit="B", unit_scale=True, unit_divisor=1024, miniters=1, desc=eg_file
+) as t:  # all optional kwargs
     urllib.urlretrieve(  # nosec
-        eg_link, filename=eg_out, reporthook=t.update_to, data=None)
+        eg_link, filename=eg_out, reporthook=t.update_to, data=None
+    )
     t.total = t.n
 
 # Even simpler progress by wrapping the output file's `write()`
 response = urllib.urlopen(eg_link)  # nosec
-with tqdm.wrapattr(open(eg_out, "wb"), "write",
-                   miniters=1, desc=eg_file,
-                   total=getattr(response, 'length', None)) as fout:
+with tqdm.wrapattr(
+    open(eg_out, "wb"),
+    "write",
+    miniters=1,
+    desc=eg_file,
+    total=getattr(response, "length", None),
+) as fout:
     for chunk in response:
         fout.write(chunk)
