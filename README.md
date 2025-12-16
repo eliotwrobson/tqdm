@@ -26,7 +26,6 @@ Works across all major platforms (Linux, Windows, macOS) and in all major enviro
 - [Usage](#usage)
   - [Iterable-based](#iterable-based)
   - [Manual Control](#manual-control)
-  - [Module Usage (CLI)](#module-usage-cli)
 - [Examples](#examples)
 - [Parameters](#parameters)
 - [Methods](#methods)
@@ -65,7 +64,7 @@ pip install "git+https://github.com/tqdm/tqdm.git@devel#egg=tqdm"
 
 ## Usage
 
-`tqdm` is very versatile and can be used in a number of ways. The three main ones are given below.
+`tqdm` is very versatile and can be used in a number of ways. The two main ones are given below.
 
 ### Iterable-based
 
@@ -123,51 +122,6 @@ for i in range(10):
     sleep(0.1)
     pbar.update(10)
 pbar.close()
-```
-
-### Module Usage (CLI)
-
-Perhaps the most wonderful use of `tqdm` is in a script or on the command line. Simply inserting `tqdm` (or `python -m tqdm`) between pipes will pass through all `stdin` to `stdout` while printing progress to `stderr`.
-
-The example below demonstrates counting the number of lines in all Python files in the current directory:
-
-```bash
-# Without tqdm
-$ time find . -name '*.py' -type f -exec cat \{} \; | wc -l
-857365
-
-# With tqdm
-$ time find . -name '*.py' -type f -exec cat \{} \; | tqdm | wc -l
-857366it [00:03, 246471.31it/s]
-857365
-```
-
-Note that the usual arguments for `tqdm` can also be specified:
-
-```bash
-$ find . -name '*.py' -type f -exec cat \{} \; |
-    tqdm --unit loc --unit_scale --total 857366 >> /dev/null
-100%|█████████████████████████████████| 857K/857K [00:04<00:00, 246Kloc/s]
-```
-
-Backing up a large directory:
-
-```bash
-$ tar -zcf - docs/ | tqdm --bytes --total `du -sb docs/ | cut -f1` \
-  > backup.tgz
- 44%|██████████████▊                   | 153M/352M [00:14<00:18, 11.0MB/s]
-```
-
-This can be beautified further with multiple progress bars:
-
-```bash
-$ BYTES=$(du -sb docs/ | cut -f1)
-$ tar -cf - docs/ \
-  | tqdm --bytes --total "$BYTES" --desc Processing | gzip \
-  | tqdm --bytes --total "$BYTES" --desc Compressed --position 1 \
-  > ~/backup.tgz
-Processing: 100%|██████████████████████| 352M/352M [00:14<00:00, 30.2MB/s]
-Compressed:  42%|█████████▎            | 148M/352M [00:14<00:19, 10.9MB/s]
 ```
 
 ---
@@ -444,6 +398,8 @@ for combo in tproduct(range(10), range(10)):
 ---
 
 ## Extensions
+
+> **Note:** Extension support is still a work in progress. The core library focuses on command-line use cases.
 
 This tqdm implementation includes several extension modules located in `tqdm.extensions`:
 
