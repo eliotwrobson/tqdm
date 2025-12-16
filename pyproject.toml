@@ -1,14 +1,11 @@
 [project.urls]
-homepage = "https://tqdm.github.io"
-repository = "https://github.com/tqdm/tqdm"
-changelog = "https://tqdm.github.io/releases"
-wiki = "https://github.com/tqdm/tqdm/wiki"
+repository = "https://github.com/eliotwrobson/tqdm"
 
 [project]
 name = "tqdm"
 dynamic = ["version"]
 maintainers = [{ name = "tqdm developers", email = "devs@tqdm.ml" }]
-description = "Fast, Extensible Progress Meter"
+description = "A Python progress bar for a new era"
 readme = "README.md"
 requires-python = ">=3.11"
 keywords = [
@@ -23,7 +20,7 @@ keywords = [
     "terminal",
     "time",
 ]
-license = { text = "MPL-2.0 AND MIT" }
+license = { file = "LICENCE" }
 
 
 # Trove classifiers (https://pypi.org/pypi?%3Aaction=list_classifiers)
@@ -41,7 +38,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: Other Audience",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Operating System :: MacOS",
     "Operating System :: MacOS :: MacOS X",
