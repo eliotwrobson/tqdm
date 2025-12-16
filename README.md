@@ -157,7 +157,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from random import random
 from time import sleep
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 def worker(n):
     interval = random() * 0.01
@@ -648,6 +648,48 @@ with tqdm.wrapattr(open(os.devnull, "wb"), "write",
                    total=int(response.headers.get('content-length', 0))) as fout:
     for chunk in response.iter_content(chunk_size=4096):
         fout.write(chunk)
+```
+
+**Working with Zip Files**
+
+You can also wrap file operations within zipfiles to show progress during compression/decompression:
+
+```python
+import zipfile
+from tqdm import tqdm
+
+class ZipFile(zipfile.ZipFile):
+    """ZipFile subclass with progress bars for read/write operations."""
+
+    def open(self, name, mode="r", pwd=None, *, force_zip64=False):
+        f = super().open(name, mode, pwd=pwd, force_zip64=force_zip64)
+
+        if mode == "r":
+            if not isinstance(name, zipfile.ZipInfo):
+                name = self.getinfo(name)
+            return tqdm.wrapattr(
+                f, "read",
+                total=name.compress_size,
+                desc=f"Decompressing {name.filename}"
+            )
+        elif mode == "w":
+            if isinstance(name, zipfile.ZipInfo):
+                return tqdm.wrapattr(
+                    f, "write",
+                    total=name.file_size,
+                    desc=f"Compressing {name.filename}"
+                )
+            return f
+        else:
+            raise ValueError('open() requires mode "r" or "w"')
+
+# Usage example
+with ZipFile('archive.zip', 'r') as zf:
+    # Reading with progress bar
+    data = zf.open('largefile.txt').read()
+
+    # Extracting with progress bar
+    zf.extract('largefile.txt', 'output_dir/')
 ```
 
 ### Writing Messages
