@@ -4,7 +4,7 @@ Tests for `tqdm.contrib.concurrent`.
 
 from pytest import warns
 
-from tqdm.contrib.concurrent import process_map, thread_map
+from tqdm.extensions.concurrent import process_map, thread_map
 
 from tqdm.utils import TqdmWarning
 
@@ -53,9 +53,9 @@ def test_process_map():
     ],
 )
 def test_chunksize_warning(iterables, should_warn):
-    """Test contrib.concurrent.process_map chunksize warnings"""
+    """Test extensions.concurrent.process_map chunksize warnings"""
     patch = importorskip("unittest.mock").patch
-    with patch("tqdm.contrib.concurrent._executor_map"):
+    with patch("tqdm.extensions.concurrent._executor_map"):
         if should_warn:
             warns(TqdmWarning, process_map, incr, *iterables)
         else:

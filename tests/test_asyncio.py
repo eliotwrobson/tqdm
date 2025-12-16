@@ -5,14 +5,13 @@ from functools import partial
 from sys import platform
 from time import time
 
-from tqdm.asyncio import tarange, tqdm_asyncio
+from tqdm.asyncio import tqdm_asyncio
 
 from io import StringIO
 from contextlib import closing
 from pytest import mark, raises
 
 tqdm = partial(tqdm_asyncio, miniters=0, mininterval=0)
-trange = partial(tarange, miniters=0, mininterval=0)
 as_completed = partial(tqdm_asyncio.as_completed, miniters=0, mininterval=0)
 gather = partial(tqdm_asyncio.gather, miniters=0, mininterval=0)
 
@@ -61,33 +60,6 @@ async def test_generators(capsys):
         await acounter.aclose()
     _, err = capsys.readouterr()
     assert "9it" in err
-
-
-@mark.asyncio
-async def test_range():
-    """Test asyncio range"""
-    with closing(StringIO()) as our_file:
-        async for _ in tqdm(range(9), desc="range", file=our_file):
-            pass
-        assert "9/9" in our_file.getvalue()
-        our_file.seek(0)
-        our_file.truncate()
-
-        async for _ in trange(9, desc="trange", file=our_file):
-            pass
-        assert "9/9" in our_file.getvalue()
-
-
-@mark.asyncio
-async def test_nested():
-    """Test asyncio nested"""
-    with closing(StringIO()) as our_file:
-        async for _ in tqdm(
-            trange(9, desc="inner", file=our_file), desc="outer", file=our_file
-        ):
-            pass
-        assert "inner: 100%" in our_file.getvalue()
-        assert "outer: 100%" in our_file.getvalue()
 
 
 @mark.asyncio

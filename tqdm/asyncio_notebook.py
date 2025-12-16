@@ -1,4 +1,6 @@
 """
+NOTE Still in progress
+
 Asynchronous progressbar decorator for asyncio iterators in Jupyter notebooks.
 
 Usage:
@@ -6,11 +8,9 @@ Usage:
 >>> async for i in trange(10):
 ...     ...
 """
+
 from .asyncio import tqdm_asyncio
 from .notebook import tqdm_notebook
-
-__author__ = {"github.com/": ["grach0v"]}
-__all__ = ['tqdm_asyncio_notebook', 'tarange', 'tqdm', 'trange']
 
 
 class tqdm_asyncio_notebook(tqdm_asyncio, tqdm_notebook):
@@ -25,9 +25,3 @@ def tarange(*args, **kwargs):
     Shortcut for `tqdm.asyncio_notebook.tqdm(range(*args), **kwargs)`.
     """
     return tqdm_asyncio_notebook(range(*args), **kwargs)
-
-# Aliases
-
-
-tqdm = tqdm_asyncio_notebook
-trange = tarange

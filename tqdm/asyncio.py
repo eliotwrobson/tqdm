@@ -7,19 +7,18 @@ Usage:
 >>> async for i in trange(10):
 ...     ...
 """
+
 import asyncio
 from sys import version_info
 
 from .std import tqdm as std_tqdm
-
-__author__ = {"github.com/": ["casperdcl"]}
-__all__ = ['tqdm_asyncio', 'tarange', 'tqdm', 'trange']
 
 
 class tqdm_asyncio(std_tqdm):
     """
     Asynchronous-friendly version of tqdm.
     """
+
     def __init__(self, iterable=None, *args, **kwargs):
         super().__init__(iterable, *args, **kwargs)
         self.iterable_awaitable = False
@@ -46,7 +45,7 @@ class tqdm_asyncio(std_tqdm):
             if self.iterable_awaitable:
                 res = await self.iterable_next()
             else:
-                if not hasattr(self, 'iterable_iterator'):
+                if not hasattr(self, "iterable_iterator"):
                     self.iterable_iterator = iter(self.iterable)
                     self.iterable_next = self.iterable_iterator.__next__
                 res = self.iterable_next()
@@ -71,13 +70,23 @@ class tqdm_asyncio(std_tqdm):
             total = len(fs)
         kwargs = {}
         if version_info[:2] < (3, 10):
-            kwargs['loop'] = loop
-        yield from cls(asyncio.as_completed(fs, timeout=timeout, **kwargs),
-                       total=total, **tqdm_kwargs)
+            kwargs["loop"] = loop
+        yield from cls(
+            asyncio.as_completed(fs, timeout=timeout, **kwargs),
+            total=total,
+            **tqdm_kwargs,
+        )
 
     @classmethod
-    async def gather(cls, *fs, loop=None, timeout=None, total=None, return_exceptions=False,
-                     **tqdm_kwargs):
+    async def gather(
+        cls,
+        *fs,
+        loop=None,
+        timeout=None,
+        total=None,
+        return_exceptions=False,
+        **tqdm_kwargs,
+    ):
         """
         Wrapper for `asyncio.gather`.
         """
@@ -95,22 +104,10 @@ class tqdm_asyncio(std_tqdm):
         async def aiter_as_completed():
             kwargs = {}
             if version_info[:2] < (3, 10):
-                kwargs['loop'] = loop
+                kwargs["loop"] = loop
             ifs = [wrap_awaitable(i, f) for i, f in enumerate(fs)]
             for r in asyncio.as_completed(ifs, timeout=timeout, **kwargs):
                 yield await r
 
         res = [f async for f in cls(aiter_as_completed(), total=total, **tqdm_kwargs)]
         return [i for _, i in sorted(res)]
-
-
-def tarange(*args, **kwargs):
-    """
-    A shortcut for `tqdm.asyncio.tqdm(range(*args), **kwargs)`.
-    """
-    return tqdm_asyncio(range(*args), **kwargs)
-
-
-# Aliases
-tqdm = tqdm_asyncio
-trange = tarange

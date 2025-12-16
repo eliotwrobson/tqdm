@@ -1,6 +1,6 @@
 import numpy as np
 
-from tqdm.contrib import tenumerate, tmap, tzip
+from tqdm.extensions import tenumerate, tmap, tzip
 
 for _ in tenumerate(range(int(1e6)), desc="builtin enumerate"):
     pass

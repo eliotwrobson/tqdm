@@ -9,8 +9,7 @@ from pytest import importorskip, mark
 from .conftest import patch_lock
 
 from tqdm import tqdm, trange
-from tqdm.contrib import DummyTqdmFile
-from tqdm.utils import format_interval, TqdmWarning
+from tqdm.utils import format_interval, TqdmWarning, ObjectWrapper
 
 from io import StringIO
 
@@ -39,6 +38,37 @@ RE_rate = re.compile(r"[^\d](\d[.\d]+)it/s")
 RE_ctrlchr = re.compile("(%s)" % "|".join(CTRLCHR))  # Match control chars
 RE_ctrlchr_excl = re.compile("|".join(CTRLCHR))  # Match and exclude ctrl chars
 RE_pos = re.compile(r"([\r\n]+((pos\d+) bar:\s+\d+%|\s{3,6})?[^\r\n]*)")
+
+
+class DummyTqdmFile(ObjectWrapper):
+    """Dummy file-like that will write to tqdm"""
+
+    def __init__(self, wrapped):
+        super().__init__(wrapped)
+        self._buf = []
+
+    def write(self, x, nolock=False):
+        nl = b"\n" if isinstance(x, bytes) else "\n"
+        pre, sep, post = x.rpartition(nl)
+        if sep:
+            blank = type(nl)()
+            tqdm.write(
+                blank.join(self._buf + [pre, sep]),
+                end=blank,
+                file=self._wrapped,
+                nolock=nolock,
+            )
+            self._buf = [post]
+        else:
+            self._buf.append(x)
+
+    def __del__(self):
+        if self._buf:
+            blank = type(self._buf[0])()
+            try:
+                tqdm.write(blank.join(self._buf), end=blank, file=self._wrapped)
+            except (OSError, ValueError):
+                pass
 
 
 def pos_line_diff(res_list, expected_list, raise_nonempty=True):
@@ -1898,27 +1928,6 @@ def test_bool() -> None:
     with closing(StringIO()) as our_file:
         internal(our_file, False)
         internal(our_file, True)
-
-
-# NOTE no idea what these are checking but they act stupid so can probably ignore
-# def backendCheck(module):
-#     """Test tqdm-like module fallback"""
-#     tn = module.tqdm
-#     tr = module.trange
-
-#     with closing(StringIO()) as our_file:
-#         with tn(total=10, file=our_file) as t:
-#             assert len(t) == 10
-#         with tr(1337) as t:
-#             assert len(t) == 1337
-
-
-# def test_auto() -> None:
-#     """Test auto fallback"""
-#     from tqdm import auto, autonotebook
-
-#     backendCheck(autonotebook)
-#     backendCheck(auto)
 
 
 def test_wrapattr() -> None:
