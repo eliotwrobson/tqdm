@@ -66,7 +66,7 @@ async def test_generators(capsys):
 async def test_coroutines():
     """Test asyncio coroutine.send"""
     with closing(StringIO()) as our_file:
-        with tqdm(count(), file=our_file) as pbar:
+        with tldm(count(), file=our_file) as pbar:
             async for i in pbar:
                 if i == 9:
                     pbar.send(-10)

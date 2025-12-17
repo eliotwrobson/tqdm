@@ -17,13 +17,13 @@ def pretest_posttest():
     except AttributeError:
         sys.setcheckinterval(100)  # deprecated
 
-    if getattr(tqdm, "_instances", False):
+    if getattr(tldm, "_instances", False):
         n = len(tldm._instances)
         if n:
             tldm._instances.clear()
             raise EnvironmentError(f"{n} `tldm` instances still in existence PRE-test")
     yield
-    if getattr(tqdm, "_instances", False):
+    if getattr(tldm, "_instances", False):
         n = len(tldm._instances)
         if n:
             tldm._instances.clear()
@@ -31,7 +31,7 @@ def pretest_posttest():
 
 
 def patch_lock(thread=True):
-    """decorator replacing tqdm's lock with vanilla threading/multiprocessing"""
+    """decorator replacing tldm's lock with vanilla threading/multiprocessing"""
     try:
         if thread:
             from threading import RLock
@@ -57,5 +57,3 @@ def patch_lock(thread=True):
         return inner
 
     return outer
-
-
