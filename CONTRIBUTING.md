@@ -1,369 +1,136 @@
-# HOW TO CONTRIBUTE TO TQDM
+# Contributing to TL;DM
 
-**TL;DR: Skip to [QUICK DEV SUMMARY]**
+Thank you for your interest in contributing to TL;DM! This guide will help you get started with the development workflow.
 
-This file describes how to
+## Code of Conduct
 
-- contribute changes to the project, and
-- upload releases to the PyPI repository.
+When interacting with other users and maintainers, please be sure to abide by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Most of the management commands have been directly placed inside the
-Makefile:
+## Submitting an Issue
 
-```
-make [<alias>]  # on UNIX-like environments
-python -m pymake [<alias>]  # if make is unavailable
-```
+### Bug Reports
 
-The latter depends on [`py-make>=0.1.0`](https://github.com/tqdm/py-make).
+If you are submitting a bug report, please answer the following questions:
 
-Use the alias `help` (or leave blank) to list all available aliases.
+1. What version of TL;DM were you using?
+2. What were you doing?
+3. What did you expect to happen?
+4. What happened instead?
 
+Please provide any code to reproduce the issue, if possible.
 
-## HOW TO COMMIT CONTRIBUTIONS
+### Feature Requests
 
-Contributions to the project are made using the "Fork & Pull" model. The
-typical steps would be:
+If you are requesting a new feature or change in behavior, please describe what you are looking for, and what value it will add to your use case.
 
-1. create an account on [github](https://github.com)
-2. fork [`tqdm`](https://github.com/tqdm/tqdm)
-3. make a local clone: `git clone https://github.com/your_account/tqdm.git`
-4. make changes on the local copy
-5. test (see below) and commit changes `git commit -a -m "my message"`
-6. `push` to your GitHub account: `git push origin`
-7. create a Pull Request (PR) from your GitHub fork
-(go to your fork's webpage and click on "Pull Request."
-You can then add a message to describe your proposal.)
+## Modifying the Codebase
 
+TL;DM is an open-source project, so you are welcome and encouraged to modify the codebase with new fixes and enhancements. Please observe the following guidelines when submitting pull requests:
 
-## WHAT CODE LAYOUT SHOULD I FOLLOW?
+### Setting Up Your Environment
 
-Don't worry too much - maintainers can help reorganise contributions.
-However it would be helpful to bear in mind:
+The dependencies for the project are managed with [uv](https://github.com/astral-sh/uv). For instructions on how to install `uv`, see the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/).
 
-- The standard core of `tqdm`, i.e. [`tqdm.std.tqdm`](tqdm/std.py)
-    + must have no dependencies apart from pure python built-in standard libraries
-    + must have negligible impact on performance
-    + should have 100% coverage by unit tests
-    + should be appropriately commented
-    + should have well-formatted docstrings for functions
-        * under 76 chars (incl. initial spaces) to avoid linebreaks in terminal pagers
-        * use two spaces between variable name and colon, specify a type, and most likely state that it's optional: `VAR<space><space>:<space>TYPE[, optional]`
-        * use [default: ...] for default values of keyword arguments
-    + will not break backward compatibility unless there is a very good reason
-        * e.g. breaking py26 compatibility purely in favour of minor readability changes (such as converting `dict(a=1)` to `{'a': 1}`) is not a good enough reason
-    + API changes should be discussed carefully
-    + remember, with millions of downloads per month, `tqdm` must be extremely fast and reliable
-- Any other kind of change may be included in a (possibly new) submodule
-    + submodules are likely single python files under the main [tqdm/](tqdm/) directory
-    + submodules extending `tqdm.std.tqdm` or any other module (e.g. [`tqdm.notebook.tqdm`](tqdm/notebook.py), [`tqdm.gui.tqdm`](tqdm/gui.py))
-    + CLI wrapper `tqdm.cli`
-        * if a newly added `tqdm.std.tqdm` option is not supported by the CLI, append to `tqdm.cli.UNSUPPORTED_OPTS`
-    + can implement anything from experimental new features to support for third-party libraries such as `pandas`, `numpy`, etc.
-    + submodule maturity
-        * alpha: experimental; missing unit tests, comments, and/or feedback
-        * beta: well-used; commented, perhaps still missing tests
-        * stable: >10 users; commented, 80% coverage
-- `.meta/`
-    + A "hidden" folder containing helper utilities not strictly part of the `tqdm` distribution itself
+To create a virtual environment and install all project dependencies, run:
 
-
-## TESTING
-
-Once again, don't worry too much - tests are automated online, and maintainers
-can also help.
-
-To test functionality (such as before submitting a Pull
-Request), there are a number of unit tests.
-
-### Standard unit tests
-
-The standard way to run the tests:
-
-- install `tox`
-- `cd` to the root of the `tqdm` directory (in the same folder as this file)
-- run the following command:
-
-```
-[python -m py]make test
-# or:
-tox --skip-missing-interpreters
+```bash
+uv sync
 ```
 
-This will build the module and run the tests in a virtual environment.
-Errors and coverage rates will be output to the console/log. (Ignore missing
-interpreters errors - these are due to the local machine missing certain
-versions of Python.)
+### Code Quality Standards
 
-Note: to install all versions of the Python interpreter that are specified
-in [tox.ini](https://github.com/tqdm/tqdm/blob/master/tox.ini),
-you can use `MiniConda` to install a minimal setup. You must also ensure
-that each distribution has an alias to call the Python interpreter
-(e.g. `python312` for Python 3.12's interpreter).
+1. **Code Formatting and Linting**: All code must comply with the enabled ruff lint rules. If you have installed the development dependencies, the `ruff` package will be available with the config in `pyproject.toml`. Run the formatter with:
 
-### Alternative unit tests with pytest
-
-Alternatively, use `pytest` to run the tests just for the current Python version:
-
-- install test requirements: `[python -m py]make install_test`
-- run the following command:
-
-```
-[python -m py]make alltests
+```bash
+make format
+# or: uv run ruff format src/tldm tests
 ```
 
+2. **Type Checking**: All new code must include type annotations and pass type checking with [mypy](https://mypy.readthedocs.io/en/stable/). Run type checking with:
 
-
-# MANAGE A NEW RELEASE
-
-This section is intended for the project's maintainers and describes
-how to build and upload a new release. Once again,
-`[python -m py]make [<alias>]` will help.
-Also consider `pip install`ing development utilities:
-`[python -m py]make install_build` at a minimum, or a more thorough `conda env create`.
-
-
-## Pre-commit Hook
-
-It's probably a good idea to use the `pre-commit` (`pip install pre-commit`) helper.
-
-Run `pre-commit install` for convenient local sanity-checking.
-
-
-## Semantic Versioning
-
-The `tqdm` repository managers should:
-
-- follow the [Semantic Versioning](https://semver.org) convention for tagging
-
-
-## Checking `pyproject.toml`
-
-To check that the `pyproject.toml` file is compliant with PyPI
-requirements (e.g. version number; reStructuredText in `README.rst`) use:
-
-```
-[python -m py]make testsetup
+```bash
+make mypy
+# or: uv run mypy src/tldm/std.py src/tldm/utils.py src/tldm/aliases.py
 ```
 
-To upload just metadata (including overwriting mistakenly uploaded metadata)
-to PyPI, use:
+3. **Testing**: Whether you are introducing a bug fix or a new feature, you must add tests to verify that your code additions function correctly. Run tests with:
 
-```
-[python -m py]make pypimeta
-```
-
-
-## Merging Pull Requests
-
-This section describes how to cleanly merge PRs.
-
-### 1 Rebase
-
-From your project repository, merge and test
-(replace `pr-branch-name` as appropriate):
-
-```
-git fetch origin
-git checkout -b pr-branch-name origin/pr-branch-name
-git rebase master
+```bash
+make pytest
+# or: uv run pytest
 ```
 
-If there are conflicts:
+4. **Code Coverage**: Please ensure your changes are covered by tests. Run tests with coverage:
 
-```
-git mergetool
-git rebase --continue
-```
-
-### 2 Push
-
-Update branch with the rebased history:
-
-```
-git push origin pr-branch-name --force
+```bash
+make pytest-cov
+# or: uv run pytest --cov=tldm --cov-report=xml --cov-report=term --cov-report=html
 ```
 
-Non maintainers can stop here.
+If the coverage report needs detailed review, you can open the HTML coverage report:
 
-Note: NEVER just `git push --force` (this will push all local branches,
-overwriting remotes).
-
-### 3 Merge
-
-```
-git checkout master
-git merge --no-ff pr-branch-name
+```bash
+open htmlcov/index.html  # macOS/Linux
+start htmlcov\index.html  # Windows
 ```
 
-### 4 Test
+5. **Documentation**: If you are adding a new feature or changing behavior, please update the documentation appropriately. This includes updating docstrings for all functions in the public interface, using the [NumPy style](https://numpydoc.readthedocs.io/en/latest/format.html).
 
-```
-[python -m py]make alltests
-```
+### Running All Checks
 
-### 5 Push to master
+You can run all formatting, linting, and tests with a single command:
 
-```
-git push origin master
+```bash
+make all
 ```
 
+This will:
 
-## Building a Release and Uploading to PyPI
+1. Format code with ruff
+2. Run linting checks
+3. Run mypy type checking
+4. Run pytest with coverage
 
-Formally publishing requires additional steps: testing and tagging.
+### Available Make Commands
 
-### Test
+The project includes a Makefile with convenient shortcuts. Run `make help` to see all available commands:
 
-Ensure that all online CI tests have passed.
+- `make format` - Format code with ruff
+- `make lint` - Run ruff linting and mypy type checking
+- `make mypy` - Run mypy type checking only
+- `make pytest` - Run pytest without coverage
+- `make pytest-cov` - Run pytest with coverage reports
+- `make all` - Run formatting, linting, and tests with coverage
+- `make clean` - Clean up build artifacts and cache files
 
-### Tag
+## Pull Request Workflow
 
-- ensure the version has been tagged.
-The tag format is `v{major}.{minor}.{patch}`, for example: `v4.4.1`.
-The current commit's tag is used in the version checking process.
-If the current commit is not tagged appropriately, the version will
-display as `v{major}.{minor}.{patch}.dev{N}+g{commit_hash}`.
+Contributions to the project are made using the "Fork & Pull" model:
 
-### Upload
+1. Fork the [`tldm`](https://github.com/eliotwrobson/tldm) repository
+2. Clone your fork locally: `git clone https://github.com/your_account/tldm.git`
+3. Create a new branch for your changes: `git checkout -b my-feature-branch`
+4. Make your changes on the local copy
+5. Ensure all tests pass and code is formatted: `make all`
+6. Commit your changes: `git commit -m "Description of changes"`
+7. Push to your GitHub fork: `git push origin my-feature-branch`
+8. Create a Pull Request from your GitHub fork (go to your fork's webpage and click "Pull Request")
 
-GitHub Actions (GHA) CI should automatically do this after pushing tags.
-Manual instructions are given below in case of failure.
+### Before Submitting a Pull Request
 
-Build `tqdm` into a distributable python package:
+Please ensure:
 
-```
-[python -m py]make build
-```
+- All tests pass locally
+- Code is properly formatted (run `make format`)
+- Type checking passes (run `make mypy`)
+- Your changes include appropriate tests
+- Documentation is updated if needed
 
-This will generate several builds in the `dist/` folder. On non-windows
-machines the windows `exe` installer may fail to build. This is normal.
+## Questions or Issues?
 
-Finally, upload everything to PyPI. This can be done easily using the
-[twine](https://github.com/pypa/twine) module:
+If you have questions or run into issues while contributing, feel free to:
 
-```
-[python -m py]make pypi
-```
+- Open an issue on [GitHub](https://github.com/eliotwrobson/tldm/issues)
+- Check existing issues and pull requests for similar discussions
 
-Also, the new release can (should) be added to GitHub by creating a new
-release from the [web interface](https://github.com/tqdm/tqdm/releases);
-uploading packages from the `dist/` folder
-created by `[python -m py]make build`.
-The [wiki] can be automatically updated with GitHub release notes by
-running `make` within the wiki repository.
-
-[wiki]: https://github.com/tqdm/tqdm/wiki
-
-Docker images may be uploaded to <https://hub.docker.com/r/tqdm/tqdm>.
-Assuming `docker` is
-[installed](https://docs.docker.com/install/linux/docker-ce/ubuntu/):
-
-```
-make -B docker
-docker login
-docker push tqdm/tqdm:latest
-docker push tqdm/tqdm:$(docker run -i --rm tqdm/tqdm -v)
-```
-
-Snaps may be uploaded to <https://snapcraft.io/tqdm>.
-Assuming `snapcraft` is installed (`snap install snapcraft --classic --beta`):
-
-```
-make snap
-snapcraft login
-snapcraft push tqdm*.snap --release stable
-```
-
-### Notes
-
-- you can also test on the PyPI test servers `test.pypi.org`
-before the real deployment
-- in case of a mistake, you can delete an uploaded release on PyPI, but you
-cannot re-upload another with the same version number
-- in case of a mistake in the metadata on PyPI (e.g. bad README),
-updating just the metadata is possible: `[python -m py]make pypimeta`
-
-
-## Updating Websites
-
-The most important file is `.readme.rst`, which should always be kept up-to-date
-and in sync with the in-line source documentation. This will affect all of the
-following:
-
-- `README.rst` (generated by `mkdocs.py` during `make build`)
-- The [main repository site](https://github.com/tqdm/tqdm) which automatically
-  serves the latest `README.rst` as well as links to all of GitHub's features.
-  This is the preferred online referral link for `tqdm`.
-- The [PyPI mirror](https://pypi.org/project/tqdm) which automatically
-  serves the latest release built from `README.rst` as well as links to past
-  releases.
-- Many external web crawlers.
-
-Additionally (less maintained), there exists:
-
-- A [wiki] which is publicly editable.
-- The [gh-pages project] which is built from the
-  [gh-pages branch](https://github.com/tqdm/tqdm/tree/gh-pages), which is
-  built using [asv](https://github.com/airspeed-velocity/asv).
-- The [gh-pages root] which is built from a separate
-  [github.io repo](https://github.com/tqdm/tqdm.github.io).
-
-[gh-pages project]: https://tqdm.github.io/tqdm/
-[gh-pages root]: https://tqdm.github.io/
-
-
-## Helper Bots
-
-There are some helpers in
-[.github/workflows](https://github.com/tqdm/tqdm/tree/master/.github/workflows)
-to assist with maintenance.
-
-- Comment Bot
-    + allows maintainers to write `/tag vM.m.p commit_hash` in an issue/PR to create a tag
-- Post Release
-    + automatically updates the [wiki]
-    + automatically updates the [gh-pages root]
-- Benchmark
-    + automatically updates the [gh-pages project]
-
-
-## QUICK DEV SUMMARY
-
-For experienced devs, once happy with local master, follow the steps below.
-Much is automated so really it's steps 1-5, then 11(a).
-
-1. test (`[python -m py]make alltests` or rely on `pre-commit`)
-2. `git commit [--amend]  # -m "bump version"`
-3. `git push`
-4. wait for tests to pass
-    a) in case of failure, fix and go back to (1)
-5. `git tag vM.m.p && git push --tags` or comment `/tag vM.m.p commit_hash`
-6. **`[AUTO:GHA]`** `[python -m py]make distclean`
-7. **`[AUTO:GHA]`** `[python -m py]make build`
-8. **`[AUTO:GHA]`** upload to PyPI. either:
-    a) `[python -m py]make pypi`, or
-    b) `twine upload -s -i $(git config user.signingkey) dist/tqdm-*`
-9. **`[AUTO:GHA]`** upload to docker hub:
-    a) `make -B docker`
-    b) `docker push tqdm/tqdm:latest`
-    c) `docker push tqdm/tqdm:$(docker run -i --rm tqdm/tqdm -v)`
-10. **`[AUTO:GHA]`** upload to snapcraft:
-    a) `make snap`, and
-    b) `snapcraft push tqdm*.snap --release stable`
-11. Wait for GHA to draft a new release on <https://github.com/tqdm/tqdm/releases>
-    a) replace the commit history with helpful release notes, and click publish
-    b) **`[AUTO:GHA]`** attach `dist/tqdm-*` binaries
-       (usually only `*.whl*`)
-12. **`[SUB][AUTO:GHA-rel]`** run `make` in the `wiki` submodule to update release notes
-13. **`[SUB][AUTO:GHA-rel]`** run `make deploy` in the `docs` submodule to update website
-14. **`[SUB][AUTO:GHA-rel]`** accept the automated PR in the `feedstock` submodule to update conda
-15. **`[AUTO:GHA-rel]`** update the [gh-pages project] benchmarks
-    a) `[python -m py]make testasvfull`
-    b) `asv gh-pages`
-
-Key:
-
-- **`[AUTO:GHA]`**: GitHub Actions CI should automatically do this after `git push --tags` (5)
-- **`[AUTO:GHA-rel]`**: GitHub Actions CI should automatically do this after release (11a)
-- **`[SUB]`**:  Requires one-time `make submodules` to clone `docs`, `wiki`, and `feedstock`
+Thank you for contributing to TL;DM!
