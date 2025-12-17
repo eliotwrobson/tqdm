@@ -253,7 +253,7 @@ class tldm(Generic[T]):
 
     def __new__(cls, *args: Any, **kwargs: dict[str, Any]) -> "tldm":
         instance = object.__new__(cls)
-        tldm.registered_classes.add(cls)  # type: ignore[misc]
+        tldm.registered_classes.add(cls)
         with cls.get_lock():  # also constructs lock if non-existent
             cls._instances.add(instance)
             # create monitoring thread
@@ -554,11 +554,11 @@ class tldm(Generic[T]):
 
     def __len__(self) -> int:
         if hasattr(self.iterable, "shape"):
-            return self.iterable.shape[0]  # type: ignore[union-attr]
+            return int(self.iterable.shape[0])  # type: ignore[union-attr]
         elif hasattr(self.iterable, "__len__"):
-            return len(self.iterable)  # type: ignore[arg-type]
+            return int(len(self.iterable))  # type: ignore[arg-type]
         elif hasattr(self.iterable, "__length_hint__"):
-            return length_hint(self.iterable)
+            return int(length_hint(self.iterable))
         elif self.total is not None:
             return int(self.total)
 
@@ -602,15 +602,15 @@ class tldm(Generic[T]):
     #             tldm.monitor.exit()
 
     def __str__(self) -> str:
-        return format_meter(**self.format_dict)
+        return str(format_meter(**self.format_dict))
 
     @property
     def _comparable(self) -> int:
-        return abs(getattr(self, "pos", 1 << 31))
+        return int(abs(getattr(self, "pos", 1 << 31)))
 
     def __lt__(self, other: Self) -> bool:
         if hasattr(other, "_comparable"):
-            return self._comparable < other._comparable
+            return bool(self._comparable < other._comparable)
         if not isinstance(self.iterable, other.__class__):
             raise TypeError(
                 "'<' not supported between instances of"
@@ -618,12 +618,12 @@ class tldm(Generic[T]):
             )
         for i, j in zip(self, other):
             if i != j:
-                return i < j  # type: ignore[operator]
-        return len(self) < len(other)
+                return bool(i < j)  # type: ignore[operator]
+        return bool(len(self) < len(other))
 
     def __le__(self, other: Self) -> bool:
         if hasattr(other, "_comparable"):
-            return self._comparable <= other._comparable
+            return bool(self._comparable <= other._comparable)
         if not isinstance(self.iterable, other.__class__):
             raise TypeError(
                 "'<=' not supported between instances of"
@@ -631,9 +631,9 @@ class tldm(Generic[T]):
             )
         for i, j in zip(self, other):
             if i != j:
-                return i <= j  # type: ignore[operator]
+                return bool(i <= j)  # type: ignore[operator]
 
-        return len(self) <= len(other)
+        return bool(len(self) <= len(other))
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, tldm):
@@ -1076,8 +1076,8 @@ def resize_signal_handler(signalnum, frame):
     for cls in tldm.registered_classes:
         with cls.get_lock():
             for instance in cls._instances:
-                if instance.dynamic_ncols:
-                    ncols, nrows = instance.dynamic_ncols(instance.fp)
+                if instance.dynamic_ncols_func:
+                    ncols, nrows = instance.dynamic_ncols_func(instance.fp)
                     if not instance.keep_original_size[0]:
                         instance.ncols = ncols
                     if not instance.keep_original_size[1]:

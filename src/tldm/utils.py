@@ -103,7 +103,7 @@ class DisableOnWriteError(ObjectWrapper):
             self.wrapper_setattr("flush", self.disable_on_exception(tldm_instance, wrapped.flush))
 
     def __eq__(self, other: Any) -> bool:
-        return self._wrapped == getattr(other, "_wrapped", other)
+        return bool(self._wrapped == getattr(other, "_wrapped", other))
 
 
 class CallbackIOWrapper(ObjectWrapper):
@@ -185,7 +185,7 @@ def _screen_shape_windows(
 ) -> tuple[int, int] | tuple[None, None]:  # pragma: no cover
     try:
         import struct
-        from ctypes import create_string_buffer, windll  # type: ignore[attr-defined]
+        from ctypes import create_string_buffer, windll
         from sys import stdin, stdout
 
         io_handle = -12  # assume stderr
