@@ -787,7 +787,7 @@ See the [CONTRIBUTING](CONTRIBUTING.md) file for more information.
 
 ### Acknowledgments
 
-TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Raphael. We gratefully acknowledge the contributions of all tldm contributors, especially:
+TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Raphael. We gratefully acknowledge the contributions of all tqdm contributors, especially:
 
 - **Casper da Costa-Luis** - Lead maintainer and major contributor
 - **Stephen L** - Significant feature development and maintenance
@@ -795,7 +795,7 @@ TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Ra
 - **Hadrien Mary** - Notable contributions
 - **Richard Sheridan** - Notable contributions
 
-And all other contributors to the original tldm project.
+And all other contributors to the original tqdm project.
 
 ---
 
