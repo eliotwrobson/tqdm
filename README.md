@@ -57,7 +57,7 @@ pip install tldm
 Latest development release:
 
 ```bash
-pip install "git+https://github.com/tqdm/tldm.git@devel#egg=tldm"
+pip install "git+https://github.com/eliotwrobson/tldm.git@devel#egg=tldm"
 ```
 
 ---
@@ -321,7 +321,7 @@ with trange(10) as t:
 
 ### `print(*values, file=sys.stdout, sep=" ", end="\n")`
 
-Print messages via tqdm without overlapping with the progress bar. This works like the builtin `print()` function and is the recommended way to print messages.
+Print messages via tldm without overlapping with the progress bar. This works like the builtin `print()` function and is the recommended way to print messages.
 
 ```python
 from tldm import tldm
@@ -336,7 +336,7 @@ for i in tldm(range(10)):
 
 ### `write(s, file=sys.stdout, end="\n")`
 
-Print a single string via tqdm without overlapping with the progress bar. For most use cases, `tldm.print()` is more convenient.
+Print a single string via tldm without overlapping with the progress bar. For most use cases, `tldm.print()` is more convenient.
 
 ```python
 from tldm import tldm
@@ -367,7 +367,7 @@ for i in trange(100):
     pass
 ```
 
-### `tenumerate(iterable, start=0, total=None, tqdm_class=tqdm, **tqdm_kwargs)`
+### `tenumerate(iterable, start=0, total=None, tldm_class=tldm, **tldm_kwargs)`
 
 Equivalent of builtin `enumerate` with a progress bar.
 
@@ -378,7 +378,7 @@ for i, item in tenumerate(['a', 'b', 'c']):
     print(f"{i}: {item}")
 ```
 
-### `tzip(iter1, *iter2plus, **tqdm_kwargs)`
+### `tzip(iter1, *iter2plus, **tldm_kwargs)`
 
 Equivalent of builtin `zip` with a progress bar.
 
@@ -389,7 +389,7 @@ for a, b in tzip(range(100), range(100, 200)):
     pass
 ```
 
-### `tmap(function, *sequences, **tqdm_kwargs)`
+### `tmap(function, *sequences, **tldm_kwargs)`
 
 Equivalent of builtin `map` with a progress bar.
 
@@ -399,7 +399,7 @@ from tldm import tmap
 results = list(tmap(lambda x: x**2, range(100)))
 ```
 
-### `tproduct(*iterables, **tqdm_kwargs)`
+### `tproduct(*iterables, **tldm_kwargs)`
 
 Equivalent of `itertools.product` with a progress bar.
 
@@ -416,18 +416,18 @@ for combo in tproduct(range(10), range(10)):
 
 > **Note:** Extension support is still a work in progress. The core library focuses on command-line use cases.
 
-This tqdm implementation includes several extension modules located in `tldm.extensions`:
+This tldm implementation includes several extension modules located in `tldm.extensions`:
 
 ### Asyncio
 
-Asynchronous-friendly version of tqdm for use with `async`/`await`:
+Asynchronous-friendly version of tldm for use with `async`/`await`:
 
 ```python
 from tldm.extensions.asyncio import tldm_asyncio
 import asyncio
 
 async def main():
-    async for i in tqdm_asyncio(range(100)):
+    async for i in tldm_asyncio(range(100)):
         await asyncio.sleep(0.01)
 
 asyncio.run(main())
@@ -438,7 +438,7 @@ asyncio.run(main())
 ```python
 from tldm.extensions.asyncio import tldm_asyncio
 
-with tqdm_asyncio(range(100)) as pbar:
+with tldm_asyncio(range(100)) as pbar:
     async for i in pbar:
         if i == 50:
             break
@@ -446,7 +446,7 @@ with tqdm_asyncio(range(100)) as pbar:
 
 ### Pandas Integration
 
-Apply tqdm to pandas operations:
+Apply tldm to pandas operations:
 
 ```python
 import pandas as pd
@@ -543,7 +543,7 @@ For manual control over positioning (e.g., for multi-processing), you may specif
 
 ```python
 from time import sleep
-from tldm import trange, tqdm
+from tldm import trange, tldm
 from multiprocessing import Pool, RLock, freeze_support
 
 L = list(range(9))
@@ -595,23 +595,23 @@ import urllib.request
 import os
 from tldm import tldm
 
-class TqdmUpTo(tqdm):
+class TldmUpTo(tldm):
     """Provides `update_to(n)` which uses `tldm.update(delta_n)`."""
     def update_to(self, b=1, bsize=1, tsize=None):
         """
         b  : int, optional
             Number of blocks transferred so far [default: 1].
         bsize  : int, optional
-            Size of each block (in tqdm units) [default: 1].
+            Size of each block (in tldm units) [default: 1].
         tsize  : int, optional
-            Total size (in tqdm units). If [default: None] remains unchanged.
+            Total size (in tldm units). If [default: None] remains unchanged.
         """
         if tsize is not None:
             self.total = tsize
         return self.update(b * bsize - self.n)
 
 eg_link = "https://example.com/file.zip"
-with TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
+with TldmUpTo(unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
               desc=eg_link.split('/')[-1]) as t:
     urllib.request.urlretrieve(eg_link, filename=os.devnull,
                                reporthook=t.update_to, data=None)
@@ -737,7 +737,7 @@ The most common issues relate to excessive output on multiple lines, instead of 
 ### Console Issues
 
 - **Consoles in general**: require support for carriage return (`CR`, `\r`).
-  - Some cloud logging consoles which don't support `\r` properly (cloudwatch, K8s) may benefit from `export TQDM_POSITION=-1`.
+  - Some cloud logging consoles which don't support `\r` properly (cloudwatch, K8s) may benefit from `export TLDM_POSITION=-1`.
 
 ### Nested Progress Bars
 
@@ -781,13 +781,13 @@ The monitoring thread should not have a noticeable overhead, and guarantees upda
 
 ## Contributing
 
-All source code is hosted on [GitHub](https://github.com/tqdm/tqdm). Contributions are welcome.
+All source code is hosted on [GitHub](https://github.com/eliotwrobson/tldm). Contributions are welcome.
 
 See the [CONTRIBUTING](CONTRIBUTING.md) file for more information.
 
 ### Acknowledgments
 
-TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Raphael. We gratefully acknowledge the contributions of all tqdm contributors, especially:
+TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Raphael. We gratefully acknowledge the contributions of all tldm contributors, especially:
 
 - **Casper da Costa-Luis** - Lead maintainer and major contributor
 - **Stephen L** - Significant feature development and maintenance
@@ -795,7 +795,7 @@ TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Ra
 - **Hadrien Mary** - Notable contributions
 - **Richard Sheridan** - Notable contributions
 
-And all other contributors to the original tqdm project.
+And all other contributors to the original tldm project.
 
 ---
 
