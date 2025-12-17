@@ -185,7 +185,7 @@ def _screen_shape_windows(
 ) -> tuple[int, int] | tuple[None, None]:  # pragma: no cover
     try:
         import struct
-        from ctypes import create_string_buffer, windll  # type: ignore[attr-defined]
+        from ctypes import create_string_buffer, windll  # type: ignore[misc,unused-ignore]
         from sys import stdin, stdout
 
         io_handle = -12  # assume stderr
@@ -239,8 +239,8 @@ def _screen_shape_linux(
 ) -> tuple[int, int] | tuple[None, None]:
     try:
         from array import array
-        from fcntl import ioctl
-        from termios import TIOCGWINSZ
+        from fcntl import ioctl  # type: ignore[import,attr-defined,unused-ignore]
+        from termios import TIOCGWINSZ  # type: ignore[import,attr-defined,unused-ignore]
     except ImportError:
         return None, None
     else:
