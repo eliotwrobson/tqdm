@@ -95,7 +95,7 @@ def simple_progress(
     mininterval=0.1,
     width=60,
 ):
-    """Simple progress bar reproducing tqdm's major features"""
+    """Simple progress bar reproducing tldm's major features"""
     n = [0]  # use a closure
     start_t = [time()]
     last_n = [0]
@@ -176,12 +176,12 @@ def assert_performance(thresh, name_left, time_left, name_right, time_right):
 
 @retry_on_except()
 def test_iter_basic_overhead():
-    """Test overhead of iteration based tqdm"""
+    """Test overhead of iteration based tldm"""
     total = int(1e6)
 
     a = 0
     with trange(total) as t:
-        with relative_timer() as time_tqdm:
+        with relative_timer() as time_tldm:
             for i in t:
                 a += i
     assert a == (total**2 - total) / 2.0
@@ -192,17 +192,17 @@ def test_iter_basic_overhead():
             a += i
             sys.stdout.write(str(a))
 
-    assert_performance(3, "trange", time_tqdm(), "range", time_bench())
+    assert_performance(3, "trange", time_tldm(), "range", time_bench())
 
 
 @retry_on_except()
 def test_manual_basic_overhead():
-    """Test overhead of manual tqdm"""
+    """Test overhead of manual tldm"""
     total = int(1e6)
 
-    with tqdm(total=total * 10, leave=True) as t:
+    with tldm(total=total * 10, leave=True) as t:
         a = 0
-        with relative_timer() as time_tqdm:
+        with relative_timer() as time_tldm:
             for i in range(total):
                 a += i
                 t.update(10)
@@ -213,7 +213,7 @@ def test_manual_basic_overhead():
             a += i
             sys.stdout.write(str(a))
 
-    assert_performance(5, "tqdm", time_tqdm(), "range", time_bench())
+    assert_performance(5, "tldm", time_tldm(), "range", time_bench())
 
 
 def worker(total, blocking=True):
@@ -245,7 +245,7 @@ def test_lock_args():
     with ThreadPoolExecutor() as pool:
         sys.stderr.write("block ... ")
         sys.stderr.flush()
-        with relative_timer() as time_tqdm:
+        with relative_timer() as time_tldm:
             res = list(pool.map(worker(subtotal, True), range(total)))
             assert sum(res) == sum(range(total)) + total
         sys.stderr.write("noblock ... ")
@@ -254,17 +254,17 @@ def test_lock_args():
             res = list(pool.map(worker(subtotal, False), range(total)))
             assert sum(res) == sum(range(total)) + total
 
-    assert_performance(0.5, "noblock", time_noblock(), "tqdm", time_tqdm())
+    assert_performance(0.5, "noblock", time_noblock(), "tldm", time_tldm())
 
 
 @retry_on_except(10)
 def test_iter_overhead_hard():
-    """Test overhead of iteration based tqdm (hard)"""
+    """Test overhead of iteration based tldm (hard)"""
     total = int(1e5)
 
     a = 0
     with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
-        with relative_timer() as time_tqdm:
+        with relative_timer() as time_tldm:
             for i in t:
                 a += i
     assert a == (total**2 - total) / 2.0
@@ -275,19 +275,19 @@ def test_iter_overhead_hard():
             a += i
             sys.stdout.write(("%i" % a) * 40)
 
-    assert_performance(130, "trange", time_tqdm(), "range", time_bench())
+    assert_performance(130, "trange", time_tldm(), "range", time_bench())
 
 
 @retry_on_except(10)
 def test_manual_overhead_hard():
-    """Test overhead of manual tqdm (hard)"""
+    """Test overhead of manual tldm (hard)"""
     total = int(1e5)
 
-    with tqdm(
+    with tldm(
         total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0
     ) as t:
         a = 0
-        with relative_timer() as time_tqdm:
+        with relative_timer() as time_tldm:
             for i in range(total):
                 a += i
                 t.update(10)
@@ -298,17 +298,17 @@ def test_manual_overhead_hard():
             a += i
             sys.stdout.write(("%i" % a) * 40)
 
-    assert_performance(130, "tqdm", time_tqdm(), "range", time_bench())
+    assert_performance(130, "tldm", time_tldm(), "range", time_bench())
 
 
 @retry_on_except(10)
 def test_iter_overhead_simplebar_hard():
-    """Test overhead of iteration based tqdm vs simple progress bar (hard)"""
+    """Test overhead of iteration based tldm vs simple progress bar (hard)"""
     total = int(1e4)
 
     a = 0
     with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
-        with relative_timer() as time_tqdm:
+        with relative_timer() as time_tldm:
             for i in t:
                 a += i
     assert a == (total**2 - total) / 2.0
@@ -319,19 +319,19 @@ def test_iter_overhead_simplebar_hard():
         for i in s:
             a += i
 
-    assert_performance(10, "trange", time_tqdm(), "simple_progress", time_bench())
+    assert_performance(10, "trange", time_tldm(), "simple_progress", time_bench())
 
 
 @retry_on_except(10)
 def test_manual_overhead_simplebar_hard():
-    """Test overhead of manual tqdm vs simple progress bar (hard)"""
+    """Test overhead of manual tldm vs simple progress bar (hard)"""
     total = int(1e4)
 
-    with tqdm(
+    with tldm(
         total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0
     ) as t:
         a = 0
-        with relative_timer() as time_tqdm:
+        with relative_timer() as time_tldm:
             for i in range(total):
                 a += i
                 t.update(10)
@@ -345,6 +345,4 @@ def test_manual_overhead_simplebar_hard():
             a += i
             simplebar_update(10)
 
-    assert_performance(10, "tqdm", time_tqdm(), "simple_progress", time_bench())
-
-
+    assert_performance(10, "tldm", time_tldm(), "simple_progress", time_bench())

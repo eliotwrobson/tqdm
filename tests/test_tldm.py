@@ -41,7 +41,7 @@ RE_pos = re.compile(r"([\r\n]+((pos\d+) bar:\s+\d+%|\s{3,6})?[^\r\n]*)")
 
 
 class DummyTldmFile(ObjectWrapper):
-    """Dummy file-like that will write to tqdm"""
+    """Dummy file-like that will write to tldm"""
 
     def __init__(self, wrapped):
         super().__init__(wrapped)
@@ -124,7 +124,7 @@ class DiscreteTimer(object):
 
 
 def cpu_timify(t, timer=None):
-    """Force tqdm to use the specified timer instead of system-wide time()"""
+    """Force tldm to use the specified timer instead of system-wide time()"""
     if timer is None:
         timer = DiscreteTimer()
     t._time = timer.time
@@ -206,7 +206,7 @@ def squash_ctrlchars(s):
 def test_all_defaults() -> None:
     """Test default kwargs"""
     with closing(UnicodeIO()) as our_file:
-        with tqdm(range(10), file=our_file) as progressbar:
+        with tldm(range(10), file=our_file) as progressbar:
             assert len(progressbar) == 10
             for _ in progressbar:
                 pass
@@ -234,10 +234,10 @@ def test_native_string_io_for_default_file() -> None:
     stderr = sys.stderr
     try:
         sys.stderr = WriteTypeChecker(expected_type=type(""))
-        for _ in tqdm(range(3)):
+        for _ in tldm(range(3)):
             pass
         sys.stderr.encoding = None  # py2 behaviour
-        for _ in tqdm(range(3)):
+        for _ in tldm(range(3)):
             pass
     finally:
         sys.stderr = stderr
@@ -245,7 +245,7 @@ def test_native_string_io_for_default_file() -> None:
 
 def test_unicode_string_io_for_specified_file() -> None:
     """Unicode strings written to specified files"""
-    for _ in tqdm(range(3), file=WriteTypeChecker(expected_type=type(""))):
+    for _ in tldm(range(3), file=WriteTypeChecker(expected_type=type(""))):
         pass
 
 
@@ -261,14 +261,14 @@ def test_iterate_over_csv_rows() -> None:
         # Test that nothing fails if we iterate over rows
         reader = csv.DictReader(test_csv_file, fieldnames=("row1", "row2", "row3"))
         with closing(StringIO()) as our_file:
-            for _ in tqdm(reader, file=our_file):
+            for _ in tldm(reader, file=our_file):
                 pass
 
 
 def test_file_output() -> None:
     """Test output to arbitrary file-like objects"""
     with closing(StringIO()) as our_file:
-        for i in tqdm(range(3), file=our_file):
+        for i in tldm(range(3), file=our_file):
             if i == 1:
                 our_file.seek(0)
                 assert "0/3" in our_file.read()
@@ -277,14 +277,14 @@ def test_file_output() -> None:
 def test_leave_option() -> None:
     """Test `leave=True` always prints info about the last iteration"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(3), file=our_file, leave=True):
+        for _ in tldm(range(3), file=our_file, leave=True):
             pass
         res = our_file.getvalue()
         assert "| 3/3 " in res
         assert "\n" == res[-1]  # not '\r'
 
     with closing(StringIO()) as our_file2:
-        for _ in tqdm(range(3), file=our_file2, leave=False):
+        for _ in tldm(range(3), file=our_file2, leave=False):
             pass
         assert "| 3/3 " not in our_file2.getvalue()
 
@@ -305,7 +305,7 @@ def test_trange() -> None:
 def test_min_interval() -> None:
     """Test mininterval"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(3), file=our_file, mininterval=1e-10):
+        for _ in tldm(range(3), file=our_file, mininterval=1e-10):
             pass
         assert "  0%|          | 0/3 [00:00<" in our_file.getvalue()
 
@@ -321,7 +321,7 @@ def test_max_interval() -> None:
     with closing(StringIO()) as our_file:
         with closing(StringIO()) as our_file2:
             # with maxinterval but higher than loop sleep time
-            t = tqdm(
+            t = tldm(
                 total=total,
                 file=our_file,
                 miniters=None,
@@ -332,7 +332,7 @@ def test_max_interval() -> None:
             cpu_timify(t, timer)
 
             # without maxinterval
-            t2 = tqdm(
+            t2 = tldm(
                 total=total,
                 file=our_file2,
                 miniters=None,
@@ -362,7 +362,7 @@ def test_max_interval() -> None:
     # Test with maxinterval effect
     timer = DiscreteTimer()
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=total,
             file=our_file,
             miniters=None,
@@ -381,10 +381,10 @@ def test_max_interval() -> None:
 
             assert "25%" in our_file.getvalue()
 
-    # Test iteration based tqdm with maxinterval effect
+    # Test iteration based tldm with maxinterval effect
     timer = DiscreteTimer()
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             range(total),
             file=our_file,
             miniters=None,
@@ -408,7 +408,7 @@ def test_max_interval() -> None:
     mininterval = 0.1
     maxinterval = 10
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=total,
             file=our_file,
             miniters=None,
@@ -416,7 +416,7 @@ def test_max_interval() -> None:
             mininterval=mininterval,
             maxinterval=maxinterval,
         ) as tm1:
-            with tqdm(
+            with tldm(
                 total=total,
                 file=our_file,
                 miniters=None,
@@ -443,14 +443,14 @@ def test_max_interval() -> None:
                     (total / 2) * maxinterval / (maxinterval * 2),
                 ]
 
-    # Same with iterable based tqdm
+    # Same with iterable based tldm
     timer1 = DiscreteTimer()  # need 2 timers for each bar because zip not work
     timer2 = DiscreteTimer()
     total = 100
     mininterval = 0.1
     maxinterval = 10
     with closing(StringIO()) as our_file:
-        t1 = tqdm(
+        t1 = tldm(
             range(total),
             file=our_file,
             miniters=None,
@@ -458,7 +458,7 @@ def test_max_interval() -> None:
             mininterval=mininterval,
             maxinterval=maxinterval,
         )
-        t2 = tqdm(
+        t2 = tldm(
             range(total),
             file=our_file,
             miniters=None,
@@ -493,7 +493,7 @@ def test_delay() -> None:
     """Test delay"""
     timer = DiscreteTimer()
     with closing(StringIO()) as our_file:
-        t = tqdm(total=2, file=our_file, leave=True, delay=3)
+        t = tldm(total=2, file=our_file, leave=True, delay=3)
         cpu_timify(t, timer)
         timer.sleep(2)
         t.update(1)
@@ -507,7 +507,7 @@ def test_delay() -> None:
 def test_min_iters() -> None:
     """Test miniters"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(3), file=our_file, leave=True, mininterval=0, miniters=2):
+        for _ in tldm(range(3), file=our_file, leave=True, mininterval=0, miniters=2):
             pass
 
         out = our_file.getvalue()
@@ -517,7 +517,7 @@ def test_min_iters() -> None:
         assert "| 3/3 " in out
 
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(3), file=our_file, leave=True, mininterval=0, miniters=1):
+        for _ in tldm(range(3), file=our_file, leave=True, mininterval=0, miniters=1):
             pass
 
         out = our_file.getvalue()
@@ -531,7 +531,7 @@ def test_dynamic_min_iters() -> None:
     """Test purely dynamic miniters (and manual updates and __del__)"""
     with closing(StringIO()) as our_file:
         total = 10
-        t = tqdm(total=total, file=our_file, miniters=None, mininterval=0, smoothing=1)
+        t = tldm(total=total, file=our_file, miniters=None, mininterval=0, smoothing=1)
 
         t.update()
         # Increase 3 iterations
@@ -555,7 +555,7 @@ def test_dynamic_min_iters() -> None:
     # Check with smoothing=0, miniters should be set to max update seen so far
     with closing(StringIO()) as our_file:
         total = 10
-        t = tqdm(total=total, file=our_file, miniters=None, mininterval=0, smoothing=0)
+        t = tldm(total=total, file=our_file, miniters=None, mininterval=0, smoothing=0)
 
         t.update()
         t.update(2)
@@ -569,23 +569,23 @@ def test_dynamic_min_iters() -> None:
         assert t.miniters == 5
         t.close()
 
-    # Check iterable based tqdm
+    # Check iterable based tldm
     with closing(StringIO()) as our_file:
-        t = tqdm(range(10), file=our_file, miniters=None, mininterval=0, smoothing=0.5)
+        t = tldm(range(10), file=our_file, miniters=None, mininterval=0, smoothing=0.5)
         for _ in t:
             pass
         assert t.dynamic_miniters
 
     # No smoothing
     with closing(StringIO()) as our_file:
-        t = tqdm(range(10), file=our_file, miniters=None, mininterval=0, smoothing=0)
+        t = tldm(range(10), file=our_file, miniters=None, mininterval=0, smoothing=0)
         for _ in t:
             pass
         assert t.dynamic_miniters
 
     # No dynamic_miniters (miniters is fixed manually)
     with closing(StringIO()) as our_file:
-        t = tqdm(range(10), file=our_file, miniters=1, mininterval=0)
+        t = tldm(range(10), file=our_file, miniters=1, mininterval=0)
         for _ in t:
             pass
         assert not t.dynamic_miniters
@@ -594,12 +594,12 @@ def test_dynamic_min_iters() -> None:
 def test_big_min_interval() -> None:
     """Test large mininterval"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(2), file=our_file, mininterval=1e10):
+        for _ in tldm(range(2), file=our_file, mininterval=1e10):
             pass
         assert "50%" not in our_file.getvalue()
 
     with closing(StringIO()) as our_file:
-        with tqdm(range(2), file=our_file, mininterval=1e10) as t:
+        with tldm(range(2), file=our_file, mininterval=1e10) as t:
             t.update()
             t.update()
             assert "50%" not in our_file.getvalue()
@@ -610,7 +610,7 @@ def test_smoothed_dynamic_min_iters() -> None:
     timer = DiscreteTimer()
 
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=100,
             file=our_file,
             miniters=None,
@@ -649,8 +649,8 @@ def test_smoothed_dynamic_min_iters_with_min_interval() -> None:
     total = 100
 
     with closing(StringIO()) as our_file:
-        # Test manual updating tqdm
-        with tqdm(
+        # Test manual updating tldm
+        with tldm(
             total=total,
             file=our_file,
             miniters=None,
@@ -669,8 +669,8 @@ def test_smoothed_dynamic_min_iters_with_min_interval() -> None:
             assert t.dynamic_miniters
 
     with closing(StringIO()) as our_file:
-        # Test iteration-based tqdm
-        with tqdm(
+        # Test iteration-based tldm
+        with tldm(
             range(total),
             file=our_file,
             miniters=None,
@@ -697,7 +697,7 @@ def test_smoothed_dynamic_min_iters_with_min_interval() -> None:
 
 @mark.slow
 def test_lock_creation(mocker) -> None:
-    """Test that importing tqdm does not create multiprocessing objects."""
+    """Test that importing tldm does not create multiprocessing objects."""
 
     lock_mock = mocker.patch("multiprocessing.RLock")
 
@@ -707,7 +707,7 @@ def test_lock_creation(mocker) -> None:
     assert lock_mock.call_count == 0
     # Creating a progress bar should use existing lock
     with closing(StringIO()) as our_file:
-        with tqdm(file=our_file) as _:  # NOQA
+        with tldm(file=our_file) as _:  # NOQA
             pass
 
     assert lock_mock.call_count == 0
@@ -716,12 +716,12 @@ def test_lock_creation(mocker) -> None:
 def test_disable() -> None:
     """Test disable"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(3), file=our_file, disable=True):
+        for _ in tldm(range(3), file=our_file, disable=True):
             pass
         assert our_file.getvalue() == ""
 
     with closing(StringIO()) as our_file:
-        progressbar = tqdm(total=3, file=our_file, miniters=1, disable=True)
+        progressbar = tldm(total=3, file=our_file, miniters=1, disable=True)
         progressbar.update(3)
         progressbar.close()
         assert our_file.getvalue() == ""
@@ -735,14 +735,14 @@ def test_nototal() -> None:
             yield i
 
     with closing(StringIO()) as our_file:
-        for _ in tqdm(iter(unknown_length_run()), file=our_file, unit_scale=10):
+        for _ in tldm(iter(unknown_length_run()), file=our_file, unit_scale=10):
             pass
 
         assert "100it" in our_file.getvalue()
 
     # TODO this is printing 0 as the total number of iters, but should be a ?
     with closing(StringIO()) as our_file:
-        for _ in tqdm(
+        for _ in tldm(
             iter(unknown_length_run()), file=our_file, bar_format="{l_bar}{bar}{r_bar}"
         ):
             pass
@@ -753,7 +753,7 @@ def test_nototal() -> None:
 def test_unit() -> None:
     """Test SI unit prefix"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(3), file=our_file, miniters=1, unit="bytes"):
+        for _ in tldm(range(3), file=our_file, miniters=1, unit="bytes"):
             pass
         assert "bytes/s" in our_file.getvalue()
 
@@ -762,12 +762,12 @@ def test_ascii() -> None:
     """Test ascii/unicode bar"""
     # Test ascii autodetection
     with closing(StringIO()) as our_file:
-        with tqdm(total=10, file=our_file, ascii=None) as t:
+        with tldm(total=10, file=our_file, ascii=None) as t:
             assert t.ascii  # TODO: this may fail in the future
 
     # Test ascii bar
     with closing(StringIO()) as our_file:
-        for _ in tqdm(
+        for _ in tldm(
             range(3), total=15, file=our_file, miniters=1, mininterval=0, ascii=True
         ):
             pass
@@ -778,7 +778,7 @@ def test_ascii() -> None:
 
     # Test unicode bar
     with closing(UnicodeIO()) as our_file:
-        with tqdm(total=15, file=our_file, ascii=False, mininterval=0) as t:
+        with tldm(total=15, file=our_file, ascii=False, mininterval=0) as t:
             for _ in range(3):
                 t.update()
         res = our_file.getvalue().strip("\r").split("\r")
@@ -789,7 +789,7 @@ def test_ascii() -> None:
     # Test custom bar
     for bars in [" .oO0", " #"]:
         with closing(StringIO()) as our_file:
-            for _ in tqdm(
+            for _ in tldm(
                 range(len(bars) - 1),
                 file=our_file,
                 miniters=1,
@@ -807,7 +807,7 @@ def test_update() -> None:
     """Test manual creation and updates"""
     res = None
     with closing(StringIO()) as our_file:
-        with tqdm(total=2, file=our_file, miniters=1, mininterval=0) as progressbar:
+        with tldm(total=2, file=our_file, miniters=1, mininterval=0) as progressbar:
             assert len(progressbar) == 2
             progressbar.update(2)
             assert "| 2/2" in our_file.getvalue()
@@ -825,7 +825,7 @@ def test_close() -> None:
 
     # With `leave` option
     with closing(StringIO()) as our_file:
-        progressbar = tqdm(total=3, file=our_file, miniters=10)
+        progressbar = tldm(total=3, file=our_file, miniters=10)
         progressbar.update(3)
         assert "| 3/3 " not in our_file.getvalue()  # Should be blank
         assert len(tldm._instances) == 1
@@ -835,7 +835,7 @@ def test_close() -> None:
 
     # Without `leave` option
     with closing(StringIO()) as our_file:
-        progressbar = tqdm(total=3, file=our_file, miniters=10, leave=False)
+        progressbar = tldm(total=3, file=our_file, miniters=10, leave=False)
         progressbar.update(3)
         progressbar.close()
         assert "| 3/3 " not in our_file.getvalue()  # Should be blank
@@ -843,7 +843,7 @@ def test_close() -> None:
     # With all updates
     with closing(StringIO()) as our_file:
         assert len(tldm._instances) == 0
-        with tqdm(
+        with tldm(
             total=3, file=our_file, miniters=0, mininterval=0, leave=True
         ) as progressbar:
             assert len(tldm._instances) == 1
@@ -864,7 +864,7 @@ def test_close() -> None:
 
     # Closing after the output stream has closed
     with closing(StringIO()) as our_file:
-        t = tqdm(total=2, file=our_file)
+        t = tldm(total=2, file=our_file)
         t.update()
         t.update()
     t.close()
@@ -876,7 +876,7 @@ def test_smoothing() -> None:
 
     # -- Test disabling smoothing
     with closing(StringIO()) as our_file:
-        with tqdm(range(3), file=our_file, smoothing=0, leave=True) as t:
+        with tldm(range(3), file=our_file, smoothing=0, leave=True) as t:
             cpu_timify(t, timer)
 
             for _ in t:
@@ -887,7 +887,7 @@ def test_smoothing() -> None:
     # 1st case: no smoothing (only use average)
     with closing(StringIO()) as our_file2:
         with closing(StringIO()) as our_file:
-            t = tqdm(
+            t = tldm(
                 range(3),
                 file=our_file2,
                 smoothing=0,
@@ -897,7 +897,7 @@ def test_smoothing() -> None:
             )
             cpu_timify(t, timer)
 
-            with tqdm(
+            with tldm(
                 range(3),
                 file=our_file,
                 smoothing=0,
@@ -929,7 +929,7 @@ def test_smoothing() -> None:
     # 2nd case: use max smoothing (= instant rate)
     with closing(StringIO()) as our_file2:
         with closing(StringIO()) as our_file:
-            t = tqdm(
+            t = tldm(
                 range(3),
                 file=our_file2,
                 smoothing=1,
@@ -939,7 +939,7 @@ def test_smoothing() -> None:
             )
             cpu_timify(t, timer)
 
-            with tqdm(
+            with tldm(
                 range(3),
                 file=our_file,
                 smoothing=1,
@@ -964,7 +964,7 @@ def test_smoothing() -> None:
     # 3rd case: use medium smoothing
     with closing(StringIO()) as our_file2:
         with closing(StringIO()) as our_file:
-            t = tqdm(
+            t = tldm(
                 range(3),
                 file=our_file2,
                 smoothing=0.5,
@@ -974,7 +974,7 @@ def test_smoothing() -> None:
             )
             cpu_timify(t, timer)
 
-            t2 = tqdm(
+            t2 = tldm(
                 range(3),
                 file=our_file,
                 smoothing=0.5,
@@ -1017,14 +1017,14 @@ def test_bar_format() -> None:
     # Test unicode string auto conversion
     with closing(StringIO()) as our_file:
         bar_format = r"hello world"
-        with tqdm(ascii=False, bar_format=bar_format, file=our_file) as t:
+        with tldm(ascii=False, bar_format=bar_format, file=our_file) as t:
             assert isinstance(t.bar_format, str)
 
 
 def test_custom_format() -> None:
     """Test adding additional derived format arguments"""
 
-    class TqdmExtraFormat(tqdm):
+    class TldmExtraFormat(tldm):
         """Provides a `total_time` format parameter"""
 
         @property
@@ -1035,7 +1035,7 @@ def test_custom_format() -> None:
             return d
 
     with closing(StringIO()) as our_file:
-        for _ in TqdmExtraFormat(
+        for _ in TldmExtraFormat(
             range(10),
             file=our_file,
             bar_format="{total_time}: {percentage:.0f}%|{bar}{r_bar}",
@@ -1083,7 +1083,7 @@ def test_unpause() -> None:
 
 def test_disabled_unpause(capsys):
     """Test disabled unpause"""
-    with tqdm(total=10, disable=True) as t:
+    with tldm(total=10, disable=True) as t:
         t.update()
         t.unpause()
         t.update()
@@ -1096,7 +1096,7 @@ def test_disabled_unpause(capsys):
 def test_reset() -> None:
     """Test resetting a bar for re-use"""
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=10, file=our_file, miniters=1, mininterval=0, maxinterval=0
         ) as t:
             t.update(9)
@@ -1110,7 +1110,7 @@ def test_reset() -> None:
 
 def test_disabled_reset(capsys):
     """Test disabled reset"""
-    with tqdm(total=10, disable=True) as t:
+    with tldm(total=10, disable=True) as t:
         t.update(9)
         t.reset()
         t.update()
@@ -1129,7 +1129,7 @@ def test_position() -> None:
     # Without leave
     our_file = StringIO()
     kwargs = {"file": our_file, "miniters": 1, "mininterval": 0, "maxinterval": 0}
-    t = tqdm(total=2, desc="pos2 bar", leave=False, position=2, **kwargs)
+    t = tldm(total=2, desc="pos2 bar", leave=False, position=2, **kwargs)
     t.update()
     t.close()
     out = our_file.getvalue()
@@ -1138,7 +1138,7 @@ def test_position() -> None:
 
     pos_line_diff(res, exres)
 
-    # Test iteration-based tqdm positioning
+    # Test iteration-based tldm positioning
     our_file = StringIO()
     kwargs["file"] = our_file
     for _ in trange(2, desc="pos0 bar", position=0, **kwargs):
@@ -1180,13 +1180,13 @@ def test_position() -> None:
     ]
     pos_line_diff(res, exres)
 
-    # Test manual tqdm positioning
+    # Test manual tldm positioning
     our_file = StringIO()
     kwargs["file"] = our_file
     kwargs["total"] = 2
-    t1 = tqdm(desc="pos0 bar", position=0, **kwargs)
-    t2 = tqdm(desc="pos1 bar", position=1, **kwargs)
-    t3 = tqdm(desc="pos2 bar", position=2, **kwargs)
+    t1 = tldm(desc="pos0 bar", position=0, **kwargs)
+    t2 = tldm(desc="pos1 bar", position=1, **kwargs)
+    t3 = tldm(desc="pos2 bar", position=2, **kwargs)
     for _ in range(2):
         t1.update()
         t3.update()
@@ -1212,15 +1212,15 @@ def test_position() -> None:
     # Test auto repositioning of bars when a bar is prematurely closed
     # tldm._instances.clear()  # reset number of instances
     with closing(StringIO()) as our_file:
-        t1 = tqdm(total=10, file=our_file, desc="1.pos0 bar", mininterval=0)
-        t2 = tqdm(total=10, file=our_file, desc="2.pos1 bar", mininterval=0)
-        t3 = tqdm(total=10, file=our_file, desc="3.pos2 bar", mininterval=0)
+        t1 = tldm(total=10, file=our_file, desc="1.pos0 bar", mininterval=0)
+        t2 = tldm(total=10, file=our_file, desc="2.pos1 bar", mininterval=0)
+        t3 = tldm(total=10, file=our_file, desc="3.pos2 bar", mininterval=0)
         res = [m[0] for m in RE_pos.findall(our_file.getvalue())]
         exres = ["\r1.pos0 bar:   0%", "\n\r2.pos1 bar:   0%", "\n\n\r3.pos2 bar:   0%"]
         pos_line_diff(res, exres)
 
         t2.close()
-        t4 = tqdm(total=10, file=our_file, desc="4.pos2 bar", mininterval=0)
+        t4 = tldm(total=10, file=our_file, desc="4.pos2 bar", mininterval=0)
         t1.update(1)
         t3.update(1)
         t4.update(1)
@@ -1260,9 +1260,9 @@ def test_position_leave(leave: bool):
         "leave": leave,
     }
     for _ in trange(2, desc="pos0 bar", position=0, **kwargs):
-        t2 = tqdm(total=2, desc="pos1 bar", position=1, **kwargs)
+        t2 = tldm(total=2, desc="pos1 bar", position=1, **kwargs)
         t2.update()
-        t3 = tqdm(total=2, desc="pos2 bar", position=2, **kwargs)
+        t3 = tldm(total=2, desc="pos2 bar", position=2, **kwargs)
         t3.update()
         # complete t2 before t3
         t2.update()
@@ -1309,7 +1309,7 @@ def test_position_leave(leave: bool):
 def test_set_description() -> None:
     """Test set description"""
     with closing(StringIO()) as our_file:
-        with tqdm(desc="Hello", file=our_file) as t:
+        with tldm(desc="Hello", file=our_file) as t:
             assert t.desc == "Hello"
             t.set_description_str("World")
             assert t.desc == "World"
@@ -1321,7 +1321,7 @@ def test_set_description() -> None:
 
     # without refresh
     with closing(StringIO()) as our_file:
-        with tqdm(desc="Hello", file=our_file) as t:
+        with tldm(desc="Hello", file=our_file) as t:
             assert t.desc == "Hello"
             t.set_description_str("World", False)
             assert t.desc == "World"
@@ -1331,25 +1331,25 @@ def test_set_description() -> None:
 
     # unicode
     with closing(StringIO()) as our_file:
-        with tqdm(total=10, file=our_file) as t:
+        with tldm(total=10, file=our_file) as t:
             t.set_description("\xe1\xe9\xed\xf3\xfa")
 
 
 def test_cmp(capsys):
     """Test comparison functions"""
-    t0 = tqdm(total=10)
-    t1 = tqdm(total=10)
-    t2 = tqdm(total=10)
+    t0 = tldm(total=10)
+    t1 = tldm(total=10)
+    t2 = tldm(total=10)
 
     assert t0 < t1
     assert t2 >= t0
     assert t0 <= t2
 
-    t3 = tqdm(total=10)
-    t4 = tqdm(total=10)
-    t5 = tqdm(total=10)
+    t3 = tldm(total=10)
+    t4 = tldm(total=10)
+    t5 = tldm(total=10)
     t5.close()
-    t6 = tqdm(total=10)
+    t6 = tldm(total=10)
 
     assert t3 != t4
     assert t3 > t2
@@ -1381,9 +1381,9 @@ def test_cmp(capsys):
 )
 def test_cmp_iterables(capsys, left, right):
     """Test iterable comparison"""
-    assert (left < right) == (tqdm(left) < right)
-    assert (left == right) == (tqdm(left) == right)
-    assert (left > right) == (tqdm(left) > right)
+    assert (left < right) == (tldm(left) < right)
+    assert (left == right) == (tldm(left) == right)
+    assert (left > right) == (tldm(left) > right)
     out, err = capsys.readouterr()
     assert not out
     assert "/{0:d} ".format(len(left)) in err
@@ -1392,14 +1392,14 @@ def test_cmp_iterables(capsys, left, right):
 def test_repr() -> None:
     """Test representation"""
     with closing(StringIO()) as our_file:
-        with tqdm(total=10, ascii=True, file=our_file) as t:
+        with tldm(total=10, ascii=True, file=our_file) as t:
             assert str(t) == "  0%|          | 0/10 [00:00<?, ?it/s]"
 
 
 def test_clear() -> None:
     """Test clearing bar display"""
     with closing(StringIO()) as our_file:
-        t1 = tqdm(total=10, file=our_file, desc="pos0 bar", bar_format="{l_bar}")
+        t1 = tldm(total=10, file=our_file, desc="pos0 bar", bar_format="{l_bar}")
         t2 = trange(10, file=our_file, desc="pos1 bar", bar_format="{l_bar}")
         before = squash_ctrlchars(our_file.getvalue())
         t2.clear()
@@ -1414,7 +1414,7 @@ def test_clear() -> None:
 def test_clear_disabled() -> None:
     """Test disabled clear"""
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=10, file=our_file, desc="pos0 bar", disable=True, bar_format="{l_bar}"
         ) as t:
             t.clear()
@@ -1424,7 +1424,7 @@ def test_clear_disabled() -> None:
 def test_refresh() -> None:
     """Test refresh bar display"""
     with closing(StringIO()) as our_file:
-        t1 = tqdm(
+        t1 = tldm(
             total=10,
             file=our_file,
             desc="pos0 bar",
@@ -1432,7 +1432,7 @@ def test_refresh() -> None:
             mininterval=999,
             miniters=999,
         )
-        t2 = tqdm(
+        t2 = tldm(
             total=10,
             file=our_file,
             desc="pos1 bar",
@@ -1456,7 +1456,7 @@ def test_refresh() -> None:
 
 def test_disabled_repr(capsys):
     """Test disabled repr"""
-    with tqdm(total=10, disable=True) as t:
+    with tldm(total=10, disable=True) as t:
         str(t)
         t.update()
         print(t)
@@ -1468,7 +1468,7 @@ def test_disabled_repr(capsys):
 def test_disabled_refresh() -> None:
     """Test disabled refresh"""
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=10,
             file=our_file,
             desc="pos0 bar",
@@ -1488,7 +1488,7 @@ def test_write() -> None:
     s = "Hello world"
     with closing(StringIO()) as our_file:
         # Change format to keep only left part w/o bar and it/s rate
-        t1 = tqdm(
+        t1 = tldm(
             total=10,
             file=our_file,
             desc="pos0 bar",
@@ -1504,7 +1504,7 @@ def test_write() -> None:
             mininterval=0,
             miniters=1,
         )
-        t3 = tqdm(
+        t3 = tldm(
             total=10,
             file=our_file,
             desc="pos2 bar",
@@ -1534,7 +1534,7 @@ def test_write() -> None:
     # Check that no bar clearing if different file
     with closing(StringIO()) as our_file_bar:
         with closing(StringIO()) as our_file_write:
-            t1 = tqdm(
+            t1 = tldm(
                 total=10,
                 file=our_file_bar,
                 desc="pos0 bar",
@@ -1562,7 +1562,7 @@ def test_write() -> None:
         with closing(StringIO()) as our_stdout:
             sys.stderr = our_stderr
             sys.stdout = our_stdout
-            t1 = tqdm(
+            t1 = tldm(
                 total=10,
                 file=sys.stderr,
                 desc="pos0 bar",
@@ -1602,7 +1602,7 @@ def test_print() -> None:
     values = ["Hello", "world", 123, 3.141592653589793, set("Python"), dict]
     with closing(StringIO()) as our_file:
         # Change format to keep only left part w/o bar and it/s rate
-        t1 = tqdm(
+        t1 = tldm(
             total=10,
             file=our_file,
             desc="pos0 bar",
@@ -1618,7 +1618,7 @@ def test_print() -> None:
             mininterval=0,
             miniters=1,
         )
-        t3 = tqdm(
+        t3 = tldm(
             total=10,
             file=our_file,
             desc="pos2 bar",
@@ -1651,7 +1651,7 @@ def test_print() -> None:
     # Check that no bar clearing if different file
     with closing(StringIO()) as our_file_bar:
         with closing(StringIO()) as our_file_write:
-            t1 = tqdm(
+            t1 = tldm(
                 total=10,
                 file=our_file_bar,
                 desc="pos0 bar",
@@ -1679,7 +1679,7 @@ def test_print() -> None:
         with closing(StringIO()) as our_stdout:
             sys.stderr = our_stderr
             sys.stdout = our_stdout
-            t1 = tqdm(
+            t1 = tldm(
                 total=10,
                 file=sys.stderr,
                 desc="pos0 bar",
@@ -1718,14 +1718,14 @@ def test_len() -> None:
     """Test advance len (numpy array shape)"""
     np = importorskip("numpy")
     with closing(StringIO()) as f:
-        with tqdm(np.zeros((3, 4)), file=f) as t:
+        with tldm(np.zeros((3, 4)), file=f) as t:
             assert len(t) == 3
 
 
 def test_autodisable_disable() -> None:
     """Test autodisable will disable on non-TTY"""
     with closing(StringIO()) as our_file:
-        with tqdm(total=10, disable=True, file=our_file) as t:
+        with tldm(total=10, disable=True, file=our_file) as t:
             t.update(3)
         assert our_file.getvalue() == ""
 
@@ -1733,7 +1733,7 @@ def test_autodisable_disable() -> None:
 def test_autodisable_enable() -> None:
     """Test autodisable will not disable on TTY"""
     with closing(StringIO()) as our_file:
-        with tqdm(total=10, disable=False, file=our_file) as t:
+        with tldm(total=10, disable=False, file=our_file) as t:
             t.update()
         assert our_file.getvalue() != ""
 
@@ -1747,7 +1747,7 @@ def test_postfix() -> None:
 
     # Test postfix set at init
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=10,
             file=our_file,
             desc="pos0 bar",
@@ -1812,7 +1812,7 @@ def test_postfix() -> None:
 def test_postfix_direct() -> None:
     """Test directly assigning non-str objects to postfix"""
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=10,
             file=our_file,
             miniters=1,
@@ -1834,10 +1834,10 @@ def test_postfix_direct() -> None:
 
 
 @contextmanager
-def std_out_err_redirect_tqdm(tqdm_file=sys.stderr):
+def std_out_err_redirect_tldm(tldm_file=sys.stderr):
     orig_out_err = sys.stdout, sys.stderr
     try:
-        sys.stdout = sys.stderr = DummyTldmFile(tqdm_file)
+        sys.stdout = sys.stderr = DummyTldmFile(tldm_file)
         yield orig_out_err[0]
     # Relay exceptions
     except Exception as exc:
@@ -1851,8 +1851,8 @@ def test_file_redirection() -> None:
     """Test redirection of output"""
     with closing(StringIO()) as our_file:
         # Redirect stdout to tldm.write()
-        with std_out_err_redirect_tqdm(tqdm_file=our_file):
-            with tqdm(total=3) as pbar:
+        with std_out_err_redirect_tldm(tldm_file=our_file):
+            with tldm(total=3) as pbar:
                 print("Such fun")
                 pbar.update(1)
                 print("Such", "fun")
@@ -1883,7 +1883,7 @@ def test_external_write() -> None:
 def test_unit_scale() -> None:
     """Test numeric `unit_scale`"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(9), unit_scale=9, file=our_file, miniters=1, mininterval=0):
+        for _ in tldm(range(9), unit_scale=9, file=our_file, miniters=1, mininterval=0):
             pass
         out = our_file.getvalue()
         assert "81/81" in out
@@ -1904,25 +1904,25 @@ def test_bool() -> None:
             assert t
         with trange(0, **kwargs) as t:
             assert not t
-        with tqdm(total=10, **kwargs) as t:
+        with tldm(total=10, **kwargs) as t:
             assert bool(t)
-        with tqdm(total=0, **kwargs) as t:
+        with tldm(total=0, **kwargs) as t:
             assert not bool(t)
-        with tqdm([], **kwargs) as t:
+        with tldm([], **kwargs) as t:
             assert not t
-        with tqdm([0], **kwargs) as t:
+        with tldm([0], **kwargs) as t:
             assert t
-        with tqdm(iter([]), **kwargs) as t:
+        with tldm(iter([]), **kwargs) as t:
             assert t
-        with tqdm(iter([1, 2, 3]), **kwargs) as t:
+        with tldm(iter([1, 2, 3]), **kwargs) as t:
             assert t
-        with tqdm(**kwargs) as t:
+        with tldm(**kwargs) as t:
             try:
                 print(bool(t))
             except TypeError:
                 pass
             else:
-                raise TypeError("Expected bool(tqdm()) to fail")
+                raise TypeError("Expected bool(tldm()) to fail")
 
     # test with and without disable
     with closing(StringIO()) as our_file:
@@ -2040,8 +2040,8 @@ def test_screen_shape() -> None:
             "mininterval": 0,
             "leave": False,
         }
-        t1 = tqdm(total=10, desc="one", **kwargs)
-        with tqdm(total=10, desc="two", **kwargs) as t2:
+        t1 = tldm(total=10, desc="one", **kwargs)
+        with tldm(total=10, desc="two", **kwargs) as t2:
             t1.update()
             t2.update()
             t1.close()
@@ -2058,7 +2058,7 @@ def test_screen_shape() -> None:
 def test_initial() -> None:
     """Test `initial`"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(
+        for _ in tldm(
             range(9), initial=10, total=19, file=our_file, miniters=1, mininterval=0
         ):
             pass
@@ -2070,20 +2070,20 @@ def test_initial() -> None:
 def test_colour() -> None:
     """Test `colour`"""
     with closing(StringIO()) as our_file:
-        for _ in tqdm(range(9), file=our_file, colour="#beefed"):
+        for _ in tldm(range(9), file=our_file, colour="#beefed"):
             pass
         out = our_file.getvalue()
         assert "\x1b[38;2;%d;%d;%dm" % (0xBE, 0xEF, 0xED) in out
 
         with catch_warnings(record=True) as w:
             simplefilter("always", category=TldmWarning)
-            with tqdm(total=1, file=our_file, colour="charm") as t:
+            with tldm(total=1, file=our_file, colour="charm") as t:
                 assert w
                 t.update()
             assert "Unknown colour" in str(w[-1].message)
 
     with closing(StringIO()) as our_file2:
-        for _ in tqdm(range(9), file=our_file2, colour="blue"):
+        for _ in tldm(range(9), file=our_file2, colour="blue"):
             pass
         out = our_file2.getvalue()
         assert "\x1b[34m" in out
@@ -2100,7 +2100,7 @@ def test_closed() -> None:
 def test_reversed(capsys):
     """Test reversed()"""
     expected_result = list(reversed(range(9)))
-    real_result = list(reversed(tqdm(range(9))))
+    real_result = list(reversed(tldm(range(9))))
 
     assert expected_result == real_result
 
@@ -2112,12 +2112,10 @@ def test_reversed(capsys):
 
 def test_contains(capsys):
     """Test __contains__ doesn't iterate"""
-    with tqdm(list(range(9))) as t:
+    with tldm(list(range(9))) as t:
         assert 9 not in t
         assert all(i in t for i in range(9))
     out, err = capsys.readouterr()
     assert not out
     assert "  0%" in err
     assert "100%" not in err
-
-

@@ -12,9 +12,9 @@ pd = importorskip("pandas")
 
 
 def test_pandas_setup():
-    """Test tqdm_pandas()"""
+    """Test tldm_pandas()"""
     with closing(StringIO()) as our_file:
-        tqdm_pandas(file=our_file, leave=True, ascii=True, total=123)
+        tldm_pandas(file=our_file, leave=True, ascii=True, total=123)
         series = pd.Series(randint(0, 50, (100,)))
         series.progress_apply(lambda x: x + 10)
         res = our_file.getvalue()
@@ -24,7 +24,7 @@ def test_pandas_setup():
 def test_pandas_rolling_expanding():
     """Test pandas.(Series|DataFrame).(rolling|expanding)"""
     with closing(StringIO()) as our_file:
-        tqdm_pandas(file=our_file, leave=True, ascii=True)
+        tldm_pandas(file=our_file, leave=True, ascii=True)
 
         series = pd.Series(randint(0, 50, (123,)))
         res1 = series.rolling(10).progress_apply(lambda x: 1, raw=True)
@@ -48,7 +48,7 @@ def test_pandas_rolling_expanding():
 def test_pandas_series():
     """Test pandas.Series.progress_apply and .progress_map"""
     with closing(StringIO()) as our_file:
-        tqdm_pandas(file=our_file, leave=True, ascii=True)
+        tldm_pandas(file=our_file, leave=True, ascii=True)
 
         series = pd.Series(randint(0, 50, (123,)))
         res1 = series.progress_apply(lambda x: x + 10)
@@ -73,7 +73,7 @@ def test_pandas_series():
 def test_pandas_data_frame():
     """Test pandas.DataFrame.progress_apply and .progress_applymap"""
     with closing(StringIO()) as our_file:
-        tqdm_pandas(file=our_file, leave=True, ascii=True)
+        tldm_pandas(file=our_file, leave=True, ascii=True)
         df = pd.DataFrame(randint(0, 50, (100, 200)))
 
         def task_func(x):
@@ -125,7 +125,7 @@ def test_pandas_data_frame():
 def test_pandas_groupby_apply():
     """Test pandas.DataFrame.groupby(...).progress_apply"""
     with closing(StringIO()) as our_file:
-        tqdm_pandas(file=our_file, leave=False, ascii=True)
+        tldm_pandas(file=our_file, leave=False, ascii=True)
 
         df = pd.DataFrame(randint(0, 50, (500, 3)))
         df.groupby(0).progress_apply(lambda x: None)
@@ -148,7 +148,7 @@ def test_pandas_groupby_apply():
             raise AssertionError(f"\nDid not expect:\n{nexres}\nIn:{our_file.read()}\n")
 
     with closing(StringIO()) as our_file:
-        tqdm_pandas(file=our_file, leave=True, ascii=True)
+        tldm_pandas(file=our_file, leave=True, ascii=True)
 
         dfs = pd.DataFrame(randint(0, 50, (500, 3)), columns=list("abc"))
         dfs.loc[0] = [2, 1, 1]
@@ -183,7 +183,7 @@ def test_pandas_leave():
     """Test pandas with `leave=True`"""
     with closing(StringIO()) as our_file:
         df = pd.DataFrame(randint(0, 100, (1000, 6)))
-        tqdm_pandas(file=our_file, leave=True, ascii=True)
+        tldm_pandas(file=our_file, leave=True, ascii=True)
         df.groupby(0).progress_apply(lambda x: None)
 
         our_file.seek(0)
@@ -192,5 +192,3 @@ def test_pandas_leave():
         if exres not in our_file.read():
             our_file.seek(0)
             raise AssertionError(f"\nExpected:\n{exres}\nIn:{our_file.read()}\n")
-
-
