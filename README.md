@@ -1,6 +1,6 @@
-# tldm
+# TL;DM
 
-**tldm** derives from the Arabic word _taqaddum_ (تقدّم) which can mean "progress," and is an abbreviation for "I love you so much" in Spanish (_te quiero demasiado_).
+**TL;DM** (too long; didn't monitor) is a fast, extensible progress bar for Python, based on [tqdm](https://github.com/tqdm/tqdm).
 
 Instantly make your loops show a smart progress meter - just wrap any iterable with `tldm(iterable)`, and you're done!
 
@@ -785,9 +785,20 @@ All source code is hosted on [GitHub](https://github.com/tqdm/tqdm). Contributio
 
 See the [CONTRIBUTING](CONTRIBUTING.md) file for more information.
 
+### Acknowledgments
+
+TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Raphael. We gratefully acknowledge the contributions of all tqdm contributors, especially:
+
+- **Casper da Costa-Luis** - Lead maintainer and major contributor
+- **Stephen L** - Significant feature development and maintenance
+- **Kyle Altendorf** - Notable contributions
+- **Hadrien Mary** - Notable contributions
+- **Richard Sheridan** - Notable contributions
+
+And all other contributors to the original tqdm project.
+
 ---
 
 ## License
 
 This project is licensed under the MPL-2.0 AND MIT licenses. See the [LICENCE](LICENCE) file for details.
-
