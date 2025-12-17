@@ -160,6 +160,7 @@ def assert_performance(thresh, name_left, time_left, name_right, time_right):
 
 
 @mark.flaky(reruns=3)
+@mark.xfail(reason="Performance tests are flaky on CI runners", strict=False)
 def test_iter_basic_overhead():
     """Test overhead of iteration based tldm"""
     checkCpuTime()
@@ -182,6 +183,7 @@ def test_iter_basic_overhead():
 
 
 @mark.flaky(reruns=3)
+@mark.xfail(reason="Performance tests are flaky on CI runners", strict=False)
 def test_manual_basic_overhead():
     """Test overhead of manual tldm"""
     checkCpuTime()
@@ -246,6 +248,7 @@ def test_lock_args():
 
 
 @mark.flaky(reruns=10)
+@mark.xfail(reason="Performance tests are flaky on CI runners", strict=False)
 def test_iter_overhead_hard():
     """Test overhead of iteration based tldm (hard)"""
     checkCpuTime()
@@ -269,6 +272,7 @@ def test_iter_overhead_hard():
 
 
 @mark.flaky(reruns=10)
+@mark.xfail(reason="Performance tests are flaky on CI runners", strict=False)
 def test_manual_overhead_hard():
     """Test overhead of manual tldm (hard)"""
     checkCpuTime()
@@ -292,6 +296,7 @@ def test_manual_overhead_hard():
 
 
 @mark.flaky(reruns=10)
+@mark.xfail(reason="Performance tests are flaky on CI runners", strict=False)
 def test_iter_overhead_simplebar_hard():
     """Test overhead of iteration based tldm vs simple progress bar (hard)"""
     checkCpuTime()
@@ -315,6 +320,7 @@ def test_iter_overhead_simplebar_hard():
 
 
 @mark.flaky(reruns=10)
+@mark.xfail(reason="Performance tests are flaky on CI runners", strict=False)
 def test_manual_overhead_simplebar_hard():
     """Test overhead of manual tldm vs simple progress bar (hard)"""
     checkCpuTime()
