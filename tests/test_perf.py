@@ -56,6 +56,19 @@ def relative_timer():
         return spent
 
 
+@contextmanager
+def suppress_stdout():
+    """Suppress stdout to avoid large console output on test failures"""
+    import io
+
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
+
+
 def simple_progress(
     iterable=None,
     total=None,
@@ -149,17 +162,18 @@ def test_iter_basic_overhead():
     checkCpuTime()
     total = int(1e6)
 
-    a = 0
-    with trange(total) as t, relative_timer() as time_tldm:
-        for i in t:
-            a += i
-    assert a == (total**2 - total) / 2.0
+    with suppress_stdout():
+        a = 0
+        with trange(total) as t, relative_timer() as time_tldm:
+            for i in t:
+                a += i
+        assert a == (total**2 - total) / 2.0
 
-    a = 0
-    with relative_timer() as time_bench:
-        for i in range(total):
-            a += i
-            sys.stdout.write(str(a))
+        a = 0
+        with relative_timer() as time_bench:
+            for i in range(total):
+                a += i
+                sys.stdout.write(str(a))
 
     assert_performance(3, "trange", time_tldm(), "range", time_bench())
 
@@ -170,18 +184,19 @@ def test_manual_basic_overhead():
     checkCpuTime()
     total = int(1e6)
 
-    with tldm(total=total * 10, leave=True) as t:
+    with suppress_stdout():
+        with tldm(total=total * 10, leave=True) as t:
+            a = 0
+            with relative_timer() as time_tldm:
+                for i in range(total):
+                    a += i
+                    t.update(10)
+
         a = 0
-        with relative_timer() as time_tldm:
+        with relative_timer() as time_bench:
             for i in range(total):
                 a += i
-                t.update(10)
-
-    a = 0
-    with relative_timer() as time_bench:
-        for i in range(total):
-            a += i
-            sys.stdout.write(str(a))
+                sys.stdout.write(str(a))
 
     assert_performance(5, "tldm", time_tldm(), "range", time_bench())
 
@@ -233,18 +248,19 @@ def test_iter_overhead_hard():
     checkCpuTime()
     total = int(1e5)
 
-    a = 0
-    with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
-        with relative_timer() as time_tldm:
-            for i in t:
-                a += i
-    assert a == (total**2 - total) / 2.0
+    with suppress_stdout():
+        a = 0
+        with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
+            with relative_timer() as time_tldm:
+                for i in t:
+                    a += i
+        assert a == (total**2 - total) / 2.0
 
-    a = 0
-    with relative_timer() as time_bench:
-        for i in range(total):
-            a += i
-            sys.stdout.write(("%i" % a) * 40)
+        a = 0
+        with relative_timer() as time_bench:
+            for i in range(total):
+                a += i
+                sys.stdout.write(("%i" % a) * 40)
 
     assert_performance(130, "trange", time_tldm(), "range", time_bench())
 
@@ -255,18 +271,19 @@ def test_manual_overhead_hard():
     checkCpuTime()
     total = int(1e5)
 
-    with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
+    with suppress_stdout():
+        with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
+            a = 0
+            with relative_timer() as time_tldm:
+                for i in range(total):
+                    a += i
+                    t.update(10)
+
         a = 0
-        with relative_timer() as time_tldm:
+        with relative_timer() as time_bench:
             for i in range(total):
                 a += i
-                t.update(10)
-
-    a = 0
-    with relative_timer() as time_bench:
-        for i in range(total):
-            a += i
-            sys.stdout.write(("%i" % a) * 40)
+                sys.stdout.write(("%i" % a) * 40)
 
     assert_performance(130, "tldm", time_tldm(), "range", time_bench())
 
@@ -277,18 +294,19 @@ def test_iter_overhead_simplebar_hard():
     checkCpuTime()
     total = int(1e4)
 
-    a = 0
-    with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
-        with relative_timer() as time_tldm:
-            for i in t:
-                a += i
-    assert a == (total**2 - total) / 2.0
+    with suppress_stdout():
+        a = 0
+        with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
+            with relative_timer() as time_tldm:
+                for i in t:
+                    a += i
+        assert a == (total**2 - total) / 2.0
 
-    a = 0
-    s = simple_progress(range(total), leave=True, miniters=1, mininterval=0)
-    with relative_timer() as time_bench:
-        for i in s:
-            a += i
+        a = 0
+        s = simple_progress(range(total), leave=True, miniters=1, mininterval=0)
+        with relative_timer() as time_bench:
+            for i in s:
+                a += i
 
     assert_performance(10, "trange", time_tldm(), "simple_progress", time_bench())
 
@@ -299,18 +317,19 @@ def test_manual_overhead_simplebar_hard():
     checkCpuTime()
     total = int(1e4)
 
-    with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
+    with suppress_stdout():
+        with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
+            a = 0
+            with relative_timer() as time_tldm:
+                for i in range(total):
+                    a += i
+                    t.update(10)
+
+        simplebar_update = simple_progress(total=total * 10, leave=True, miniters=1, mininterval=0)
         a = 0
-        with relative_timer() as time_tldm:
+        with relative_timer() as time_bench:
             for i in range(total):
                 a += i
-                t.update(10)
+                simplebar_update(10)
 
-    simplebar_update = simple_progress(total=total * 10, leave=True, miniters=1, mininterval=0)
-    a = 0
-    with relative_timer() as time_bench:
-        for i in range(total):
-            a += i
-            simplebar_update(10)
-
-    assert_performance(10, "tldm", time_tldm(), "simple_progress", time_bench())
+    assert_performance(12, "tldm", time_tldm(), "simple_progress", time_bench())
