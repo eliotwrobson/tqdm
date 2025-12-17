@@ -1,6 +1,5 @@
 import sys
 from contextlib import contextmanager
-from functools import wraps
 
 # Use relative/cpu timer to have reliable timings when there is a sudden load
 from time import process_time, sleep, time
@@ -55,31 +54,6 @@ def relative_timer():
 
     def elapser():  # NOQA
         return spent
-
-
-def retry_on_except(n=3, check_cpu_time=True):
-    """decroator for retrying `n` times before raising Exceptions"""
-
-    def wrapper(func):
-        """actual decorator"""
-
-        @wraps(func)
-        def test_inner(*args, **kwargs):
-            """may skip if `check_cpu_time` fails"""
-            for i in range(1, n + 1):
-                try:
-                    if check_cpu_time:
-                        checkCpuTime()
-                    func(*args, **kwargs)
-                except Exception:
-                    if i >= n:
-                        raise
-                else:
-                    return
-
-        return test_inner
-
-    return wrapper
 
 
 def simple_progress(
@@ -169,9 +143,10 @@ def assert_performance(thresh, name_left, time_left, name_right, time_right):
         )
 
 
-@retry_on_except()
+@mark.flaky(reruns=3)
 def test_iter_basic_overhead():
     """Test overhead of iteration based tldm"""
+    checkCpuTime()
     total = int(1e6)
 
     a = 0
@@ -189,9 +164,10 @@ def test_iter_basic_overhead():
     assert_performance(3, "trange", time_tldm(), "range", time_bench())
 
 
-@retry_on_except()
+@mark.flaky(reruns=3)
 def test_manual_basic_overhead():
     """Test overhead of manual tldm"""
+    checkCpuTime()
     total = int(1e6)
 
     with tldm(total=total * 10, leave=True) as t:
@@ -225,12 +201,12 @@ def worker(total, blocking=True):
     return incr_bar
 
 
-@retry_on_except()
 @patch_lock(thread=True)
 @mark.flaky(reruns=3)
 @mark.skip(reason="flaky test, needs investigation")
 def test_lock_args():
     """Test overhead of nonblocking threads"""
+    checkCpuTime()
     ThreadPoolExecutor = importorskip("concurrent.futures").ThreadPoolExecutor
 
     total = 16
@@ -251,9 +227,10 @@ def test_lock_args():
     assert_performance(0.5, "noblock", time_noblock(), "tldm", time_tldm())
 
 
-@retry_on_except(10)
+@mark.flaky(reruns=10)
 def test_iter_overhead_hard():
     """Test overhead of iteration based tldm (hard)"""
+    checkCpuTime()
     total = int(1e5)
 
     a = 0
@@ -272,9 +249,10 @@ def test_iter_overhead_hard():
     assert_performance(130, "trange", time_tldm(), "range", time_bench())
 
 
-@retry_on_except(10)
+@mark.flaky(reruns=10)
 def test_manual_overhead_hard():
     """Test overhead of manual tldm (hard)"""
+    checkCpuTime()
     total = int(1e5)
 
     with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
@@ -293,9 +271,10 @@ def test_manual_overhead_hard():
     assert_performance(130, "tldm", time_tldm(), "range", time_bench())
 
 
-@retry_on_except(10)
+@mark.flaky(reruns=10)
 def test_iter_overhead_simplebar_hard():
     """Test overhead of iteration based tldm vs simple progress bar (hard)"""
+    checkCpuTime()
     total = int(1e4)
 
     a = 0
@@ -314,9 +293,10 @@ def test_iter_overhead_simplebar_hard():
     assert_performance(10, "trange", time_tldm(), "simple_progress", time_bench())
 
 
-@retry_on_except(10)
+@mark.flaky(reruns=10)
 def test_manual_overhead_simplebar_hard():
     """Test overhead of manual tldm vs simple progress bar (hard)"""
+    checkCpuTime()
     total = int(1e4)
 
     with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
@@ -333,4 +313,4 @@ def test_manual_overhead_simplebar_hard():
             a += i
             simplebar_update(10)
 
-    assert_performance(12, "tldm", time_tldm(), "simple_progress", time_bench())
+    assert_performance(10, "tldm", time_tldm(), "simple_progress", time_bench())
