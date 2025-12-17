@@ -1,7 +1,9 @@
-from typing import Any, Callable, Iterable, Iterator, TypeVar
-from .std import tldm
 import itertools
+from collections.abc import Callable, Iterable, Iterator
 from operator import length_hint
+from typing import Any, TypeVar
+
+from .std import tldm
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -40,9 +42,7 @@ def tzip(
         yield i
 
 
-def tmap(
-    function: Callable[..., R], *sequences: Iterable[Any], **tldm_kwargs: Any
-) -> Iterator[R]:
+def tmap(function: Callable[..., R], *sequences: Iterable[Any], **tldm_kwargs: Any) -> Iterator[R]:
     """
     Equivalent of builtin `map`.
 

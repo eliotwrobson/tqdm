@@ -1,8 +1,9 @@
-from tldm.extensions import tldm_pandas
-
-from io import StringIO
 from contextlib import closing
-from pytest import mark, importorskip
+from io import StringIO
+
+from pytest import importorskip, mark
+
+from tldm.extensions import tldm_pandas
 
 np = importorskip("numpy")
 random = importorskip("numpy.random")

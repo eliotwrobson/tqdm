@@ -1,7 +1,8 @@
 import atexit
+from collections.abc import Callable
 from threading import Event, Thread, current_thread
 from time import time
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from warnings import warn
 
 if TYPE_CHECKING:

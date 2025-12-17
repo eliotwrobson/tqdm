@@ -1,12 +1,11 @@
 """Shared pytest config."""
 
 import sys
+from functools import wraps
 
 from pytest import fixture, skip
 
 from tldm import tldm
-
-from functools import wraps
 
 
 @fixture(autouse=True)
@@ -21,13 +20,13 @@ def pretest_posttest():
         n = len(tldm._instances)
         if n:
             tldm._instances.clear()
-            raise EnvironmentError(f"{n} `tldm` instances still in existence PRE-test")
+            raise OSError(f"{n} `tldm` instances still in existence PRE-test")
     yield
     if getattr(tldm, "_instances", False):
         n = len(tldm._instances)
         if n:
             tldm._instances.clear()
-            raise EnvironmentError(f"{n} `tldm` instances still in existence POST-test")
+            raise OSError(f"{n} `tldm` instances still in existence POST-test")
 
 
 def patch_lock(thread=True):

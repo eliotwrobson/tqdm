@@ -3,15 +3,16 @@ Tests for `tldm.contrib.itertools`.
 """
 
 import itertools as it
-
-from tldm.std import tldm
-from tldm.aliases import tproduct, tenumerate, tmap, tzip
-import pytest
-from io import StringIO
 from contextlib import closing
+from io import StringIO
+
+import pytest
+
+from tldm.aliases import tenumerate, tmap, tproduct, tzip
+from tldm.std import tldm
 
 
-class NoLenIter(object):
+class NoLenIter:
     def __init__(self, iterable):
         self._it = iterable
 
@@ -26,18 +27,14 @@ def test_product():
         a = range(9)
         assert list(tproduct(a, a[::-1], file=our_file)) == list(it.product(a, a[::-1]))
 
-        assert list(tproduct(a, NoLenIter(a), file=our_file)) == list(
-            it.product(a, NoLenIter(a))
-        )
+        assert list(tproduct(a, NoLenIter(a), file=our_file)) == list(it.product(a, NoLenIter(a)))
 
 
 def test_product_with_repeat():
     """Test the case where a repeat argument has been set"""
     with closing(StringIO()) as our_file:
         a = range(9)
-        assert list(tproduct(a, repeat=2, file=our_file)) == list(
-            it.product(a, repeat=2)
-        )
+        assert list(tproduct(a, repeat=2, file=our_file)) == list(it.product(a, repeat=2))
 
 
 @pytest.mark.parametrize("tldm_kwargs", [{}, {"tldm_class": tldm}])
@@ -47,9 +44,7 @@ def test_enumerate(tldm_kwargs):
 
     with closing(StringIO()) as our_file:
         assert list(tenumerate(a, file=our_file, **tldm_kwargs)) == list(enumerate(a))
-        assert list(tenumerate(a, 42, file=our_file, **tldm_kwargs)) == list(
-            enumerate(a, 42)
-        )
+        assert list(tenumerate(a, 42, file=our_file, **tldm_kwargs)) == list(enumerate(a, 42))
     with closing(StringIO()) as our_file:
         _ = tenumerate(iter(a), file=our_file, **tldm_kwargs)
         assert "100%" not in our_file.getvalue()

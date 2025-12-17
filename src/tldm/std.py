@@ -3,49 +3,46 @@ Customisable progressbar decorator for iterators.
 Includes a default `range` iterator printing to `stderr`.
 """
 
-from colorama import init  # TODO move to utils??
-
+import copy
 import signal
 import sys
 from collections import OrderedDict, defaultdict
-from contextlib import contextmanager, AbstractContextManager
-import copy
+from collections.abc import Iterable, Iterator
+from contextlib import AbstractContextManager, contextmanager
+from functools import total_ordering
+from multiprocessing import RLock
 from numbers import Number
 from operator import length_hint
+from threading import RLock as TRLock
 from time import time
-from warnings import warn
 from typing import (
     Any,
-    TypeVar,
-    Iterable,
-    Iterator,
-    Literal,
-    TextIO,
-    Self,
-    Protocol,
-    cast,
-    Generic,
     ClassVar,
+    Generic,
+    Literal,
+    Protocol,
+    Self,
+    TextIO,
+    TypeVar,
+    cast,
 )
+from warnings import warn
 from weakref import WeakSet
-from functools import total_ordering
 
-from multiprocessing import RLock
-from threading import RLock as TRLock
-
-from ._monitor import TMonitor
 from tldm.utils import (
     CallbackIOWrapper,
     DisableOnWriteError,
+    TldmWarning,
     _is_ascii,
     _screen_shape_wrapper,
     _supports_unicode,
-    get_ema_func,
     format_meter,
     format_num,
+    get_ema_func,
     get_status_printer,
-    TldmWarning,
 )
+
+from ._monitor import TMonitor
 
 
 # TODO remove some of these errors and put them in a separate file
@@ -71,7 +68,7 @@ class _LockType(AbstractContextManager, Protocol):
     def release(self) -> None: ...
 
 
-class TldmDefaultWriteLock(object):
+class TldmDefaultWriteLock:
     """
     Provide a default write lock for thread and multiprocessing safety.
     Works only on platforms supporting `fork` (so Windows is excluded).
@@ -260,15 +257,12 @@ class tldm(Generic[T]):
         with cls.get_lock():  # also constructs lock if non-existent
             cls._instances.add(instance)
             # create monitoring thread
-            if cls.monitor_interval and (
-                cls.monitor is None or not cls.monitor.report()
-            ):
+            if cls.monitor_interval and (cls.monitor is None or not cls.monitor.report()):
                 try:
                     cls.monitor = TMonitor(cls, cls.monitor_interval)
                 except Exception as e:  # pragma: nocover
                     warn(
-                        "tldm:disabling monitor support"
-                        " (monitor_interval = 0) due to:\n" + str(e),
+                        "tldm:disabling monitor support (monitor_interval = 0) due to:\n" + str(e),
                         TldmMonitorWarning,
                         stacklevel=2,
                     )
@@ -305,9 +299,7 @@ class tldm(Generic[T]):
 
             last = (instance.nrows or 20) - 1
             # find unfixed (`pos >= 0`) overflow (`pos >= nrows - 1`)
-            instances = list(
-                filter(lambda i: hasattr(i, "pos") and last <= i.pos, cls._instances)
-            )
+            instances = list(filter(lambda i: hasattr(i, "pos") and last <= i.pos, cls._instances))
             # set first found to current `pos`
             if instances:
                 inst = min(instances, key=lambda i: i.pos)
@@ -360,9 +352,7 @@ class tldm(Generic[T]):
         nolock: bool = False,
     ) -> None:
         """Print several heterogeneous values via tldm (without overlap with bars)."""
-        cls.write(
-            sep.join("{}".format(v) for v in values), file=file, end=end, nolock=nolock
-        )
+        cls.write(sep.join(f"{v}" for v in values), file=file, end=end, nolock=nolock)
 
     @classmethod
     @contextmanager
@@ -385,8 +375,7 @@ class tldm(Generic[T]):
                 # or if write output + tldm output are both either
                 # sys.stdout or sys.stderr (because both are mixed in terminal)
                 if hasattr(inst, "start_t") and (
-                    inst.fp == fp
-                    or all(f in (sys.stdout, sys.stderr) for f in (fp, inst.fp))
+                    inst.fp == fp or all(f in (sys.stdout, sys.stderr) for f in (fp, inst.fp))
                 ):
                     inst.clear(nolock=True)
                     inst_cleared.append(inst)
@@ -625,10 +614,8 @@ class tldm(Generic[T]):
             return self._comparable < other._comparable
         if not isinstance(self.iterable, other.__class__):
             raise TypeError(
-                (
-                    "'<' not supported between instances of"
-                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
-                ).format(i=self.iterable, j=other)
+                "'<' not supported between instances of"
+                f" {self.iterable.__class__.__name__!r} and {other.__class__.__name__!r}"
             )
         for i, j in zip(self, other):
             if i != j:
@@ -640,10 +627,8 @@ class tldm(Generic[T]):
             return self._comparable <= other._comparable
         if not isinstance(self.iterable, other.__class__):
             raise TypeError(
-                (
-                    "'<=' not supported between instances of"
-                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
-                ).format(i=self.iterable, j=other)
+                "'<=' not supported between instances of"
+                f" {self.iterable.__class__.__name__!r} and {other.__class__.__name__!r}"
             )
         for i, j in zip(self, other):
             if i != j:
@@ -659,10 +644,8 @@ class tldm(Generic[T]):
             return self._comparable == other._comparable
         if not isinstance(self.iterable, other.__class__):
             raise TypeError(
-                (
-                    "'==' not supported between instances of"
-                    " {i.__class__.__name__!r} and {j.__class__.__name__!r}"
-                ).format(i=self.iterable, j=other)
+                "'==' not supported between instances of"
+                f" {self.iterable.__class__.__name__!r} and {other.__class__.__name__!r}"
             )
         for i, j in zip(self, other):
             if i != j:
@@ -768,8 +751,7 @@ class tldm(Generic[T]):
                     elif self.smoothing:
                         # EMA miniters update
                         self.miniters = self._ema_miniters(
-                            dn
-                            * (self.mininterval / dt if self.mininterval and dt else 1)
+                            dn * (self.mininterval / dt if self.mininterval and dt else 1)
                         )
                     else:
                         # max iters between two prints
@@ -942,9 +924,7 @@ class tldm(Generic[T]):
         if refresh:
             self.refresh()
 
-    def set_description_str(
-        self, desc: str | None = None, refresh: bool = True
-    ) -> None:
+    def set_description_str(self, desc: str | None = None, refresh: bool = True) -> None:
         """Set/modify description without ': ' appended."""
         self.desc = desc or ""
         if refresh:
@@ -981,9 +961,7 @@ class tldm(Generic[T]):
                 postfix[key] = str(postfix[key])
             # Else if it's a string, don't need to preprocess anything
         # Stitch together to get the final postfix
-        self.postfix = ", ".join(
-            key + "=" + postfix[key].strip() for key in postfix.keys()
-        )
+        self.postfix = ", ".join(key + "=" + postfix[key].strip() for key in postfix.keys())
         if refresh:
             self.refresh()
 

@@ -2,22 +2,20 @@
 General helpers required for `tldm.std`.
 """
 
+import math
+import numbers
 import os
 import re
 import sys
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from functools import wraps
-
+from typing import Any, TextIO, TypeVar, cast
 from warnings import warn
-from wcwidth import wcwidth
 from weakref import proxy
+
 from colorama import Fore, Style, init, just_fix_windows_console
-
-from typing import Callable, TextIO, Any, cast
-from datetime import datetime, timezone, timedelta
-import math
-from typing import TypeVar
-import numbers
-
+from wcwidth import wcwidth
 
 CUR_OS = sys.platform
 IS_WIN = CUR_OS.startswith(("win32", "cygwin"))
@@ -74,9 +72,7 @@ class DisableOnWriteError(ObjectWrapper):
     """
 
     @staticmethod
-    def disable_on_exception(
-        tldm_instance: Any, func: Callable[..., Any]
-    ) -> Callable[..., Any]:
+    def disable_on_exception(tldm_instance: Any, func: Callable[..., Any]) -> Callable[..., Any]:
         """
         Quietly set `tldm_instance.miniters=inf` if `func` raises `errno=5`.
         """
@@ -105,13 +101,9 @@ class DisableOnWriteError(ObjectWrapper):
     def __init__(self, wrapped: TextIO, tldm_instance: Any) -> None:
         super().__init__(wrapped)
         if hasattr(wrapped, "write"):
-            self.wrapper_setattr(
-                "write", self.disable_on_exception(tldm_instance, wrapped.write)
-            )
+            self.wrapper_setattr("write", self.disable_on_exception(tldm_instance, wrapped.write))
         if hasattr(wrapped, "flush"):
-            self.wrapper_setattr(
-                "flush", self.disable_on_exception(tldm_instance, wrapped.flush)
-            )
+            self.wrapper_setattr("flush", self.disable_on_exception(tldm_instance, wrapped.flush))
 
     def __eq__(self, other: Any) -> bool:
         return self._wrapped == getattr(other, "_wrapped", other)
@@ -156,7 +148,7 @@ def _is_utf(encoding: str) -> bool:
         return False
     except Exception:
         try:
-            return encoding.lower().startswith("utf-") or ("U8" == encoding)
+            return encoding.lower().startswith("utf-") or (encoding == "U8")
         except Exception:
             return False
     else:
@@ -179,9 +171,7 @@ def _is_ascii(s: Any) -> bool:
     return _supports_unicode(s)
 
 
-def _screen_shape_wrapper() -> (
-    Callable[[TextIO], tuple[int, int] | tuple[None, None]] | None
-):
+def _screen_shape_wrapper() -> Callable[[TextIO], tuple[int, int] | tuple[None, None]] | None:
     """
     Return a function which returns console dimensions (width, height).
     Supported: linux, osx, windows, cygwin.
@@ -243,9 +233,7 @@ def _screen_shape_tput(
 
         return cast(
             tuple[int, int],
-            tuple(
-                int(check_call(shlex.split("tput " + i))) - 1 for i in ("cols", "lines")
-            ),
+            tuple(int(check_call(shlex.split("tput " + i))) - 1 for i in ("cols", "lines")),
         )
     except Exception:  # nosec
         pass
@@ -275,9 +263,7 @@ def _screen_shape_linux(
                 return None, None
 
 
-def _wcswidth_tolerant(
-    pwcs: str, n: int | None = None, unicode_version: str = "auto"
-) -> int:
+def _wcswidth_tolerant(pwcs: str, n: int | None = None, unicode_version: str = "auto") -> int:
     """
     Given a unicode string, return its printable length on a terminal.
 
@@ -386,7 +372,7 @@ class TldmWarning(Warning):
             super().__init__(msg, *args, **kwargs)
 
 
-class Bar(object):
+class Bar:
     """
     `str.format`-able bar with format specifiers: `[width][type]`
 
@@ -486,9 +472,7 @@ class Bar(object):
 
         res = charset[-1] * bar_length
         if bar_length < n_bars:  # whitespace padding
-            res = (
-                res + charset[frac_bar_length] + charset[0] * (n_bars - bar_length - 1)
-            )
+            res = res + charset[frac_bar_length] + charset[0] * (n_bars - bar_length - 1)
         return self.colour + res + self.COLOUR_RESET if self.colour else res
 
 
@@ -551,11 +535,11 @@ def format_interval(t: float) -> str:
     h, m = divmod(mins, 60)
     days, h = divmod(h, 24)
     if days:
-        return "{0:d}d {1:d}:{2:02d}:{3:02d}".format(days, h, m, s)
+        return f"{days:d}d {h:d}:{m:02d}:{s:02d}"
     elif h:
-        return "{0:d}:{1:02d}:{2:02d}".format(h, m, s)
+        return f"{h:d}:{m:02d}:{s:02d}"
     else:
-        return "{0:02d}:{1:02d}".format(m, s)
+        return f"{m:02d}:{s:02d}"
 
 
 def format_num(n: numbers.Real) -> str:
@@ -709,16 +693,10 @@ def format_meter(
     inv_rate = 1 / rate if rate else None
 
     rate_noinv_fmt = (
-        ((format_sizeof(rate) if unit_scale else f"{rate:5.2f}") if rate else "?")
-        + unit
-        + "/s"
+        ((format_sizeof(rate) if unit_scale else f"{rate:5.2f}") if rate else "?") + unit + "/s"
     )
     rate_inv_fmt = (
-        (
-            (format_sizeof(inv_rate) if unit_scale else f"{inv_rate:5.2f}")
-            if inv_rate
-            else "?"
-        )
+        ((format_sizeof(inv_rate) if unit_scale else f"{inv_rate:5.2f}") if inv_rate else "?")
         + "s/"
         + unit
     )
@@ -726,9 +704,7 @@ def format_meter(
 
     if unit_scale:
         n_fmt = format_sizeof(n, divisor=unit_divisor)
-        total_fmt = (
-            format_sizeof(total, divisor=unit_divisor) if total is not None else "?"
-        )
+        total_fmt = format_sizeof(total, divisor=unit_divisor) if total is not None else "?"
     else:
         n_fmt = str(n)
         total_fmt = str(total) if total is not None else "?"
@@ -744,7 +720,7 @@ def format_meter(
         eta_dt = (
             datetime.now() + timedelta(seconds=remaining)
             if rate and total
-            else datetime.fromtimestamp(0, timezone.utc)
+            else datetime.fromtimestamp(0, UTC)
         )
     except OverflowError:
         eta_dt = datetime.max
@@ -757,9 +733,7 @@ def format_meter(
     else:
         l_bar = ""
 
-    r_bar = (
-        f"| {n_fmt}/{total_fmt} [{elapsed_str}<{remaining_str}, {rate_fmt}{postfix}]"
-    )
+    r_bar = f"| {n_fmt}/{total_fmt} [{elapsed_str}<{remaining_str}, {rate_fmt}{postfix}]"
 
     # Custom bar formatting
     # Populate a dict with all available progress indicators

@@ -1,18 +1,17 @@
+from contextlib import closing
 from functools import wraps
+from io import StringIO
 from threading import Event
 from time import sleep, time
 
+from pytest import importorskip, skip
+
 from tldm import TMonitor, tldm, trange
-import pytest
 
 from .conftest import patch_lock
 
-from io import StringIO
-from contextlib import closing
-from pytest import importorskip, skip
 
-
-class Time(object):
+class Time:
     """Fake time class class providing an offset"""
 
     offset = 0
@@ -86,7 +85,7 @@ def cpu_timify(t, timer=Time):
     return timer
 
 
-class FakeTldm(object):
+class FakeTldm:
     _instances = set()
     get_lock = tldm.get_lock
 
@@ -123,42 +122,44 @@ def test_monitoring_and_cleanup():
     assert maxinterval == 10
     total = 1000
 
-    with closing(StringIO()) as our_file:
-        with tldm(
+    with (
+        closing(StringIO()) as our_file,
+        tldm(
             total=total,
             file=our_file,
             miniters=500,
             mininterval=0.1,
             maxinterval=maxinterval,
-        ) as t:
-            cpu_timify(t, Time)
-            # Do a lot of iterations in a small timeframe
-            # (smaller than monitor interval)
-            Time.fake_sleep(maxinterval / 10)  # monitor won't wake up
-            t.update(500)
-            # check that our fixed miniters is still there
-            assert t.miniters <= 500  # TODO: should really be == 500
-            # Then do 1 it after monitor interval, so that monitor kicks in
-            Time.fake_sleep(maxinterval)
-            t.update(1)
-            # Wait for the monitor to get out of sleep's loop and update tldm.
-            timeend = Time.time()
-            while not (t.monitor.woken >= timeend and t.miniters == 1):
-                Time.fake_sleep(1)  # Force awake up if it woken too soon
-            assert t.miniters == 1  # check that monitor corrected miniters
-            # Note: at this point, there may be a race condition: monitor saved
-            # current woken time but Time.sleep() happen just before monitor
-            # sleep. To fix that, either sleep here or increase time in a loop
-            # to ensure that monitor wakes up at some point.
+        ) as t,
+    ):
+        cpu_timify(t, Time)
+        # Do a lot of iterations in a small timeframe
+        # (smaller than monitor interval)
+        Time.fake_sleep(maxinterval / 10)  # monitor won't wake up
+        t.update(500)
+        # check that our fixed miniters is still there
+        assert t.miniters <= 500  # TODO: should really be == 500
+        # Then do 1 it after monitor interval, so that monitor kicks in
+        Time.fake_sleep(maxinterval)
+        t.update(1)
+        # Wait for the monitor to get out of sleep's loop and update tldm.
+        timeend = Time.time()
+        while not (t.monitor.woken >= timeend and t.miniters == 1):
+            Time.fake_sleep(1)  # Force awake up if it woken too soon
+        assert t.miniters == 1  # check that monitor corrected miniters
+        # Note: at this point, there may be a race condition: monitor saved
+        # current woken time but Time.sleep() happen just before monitor
+        # sleep. To fix that, either sleep here or increase time in a loop
+        # to ensure that monitor wakes up at some point.
 
-            # Try again but already at miniters = 1 so nothing will be done
-            Time.fake_sleep(maxinterval)
-            t.update(2)
-            timeend = Time.time()
-            while t.monitor.woken < timeend:
-                Time.fake_sleep(1)  # Force awake if it woken too soon
-            # Wait for the monitor to get out of sleep's loop and update
-            assert t.miniters == 1  # check that monitor corrected miniters
+        # Try again but already at miniters = 1 so nothing will be done
+        Time.fake_sleep(maxinterval)
+        t.update(2)
+        timeend = Time.time()
+        while t.monitor.woken < timeend:
+            Time.fake_sleep(1)  # Force awake if it woken too soon
+        # Wait for the monitor to get out of sleep's loop and update
+        assert t.miniters == 1  # check that monitor corrected miniters
 
 
 @patch_sleep
@@ -170,40 +171,42 @@ def test_monitoring_multi():
     assert maxinterval == 10
     total = 1000
 
-    with closing(StringIO()) as our_file:
-        with tldm(
+    with (
+        closing(StringIO()) as our_file,
+        tldm(
             total=total,
             file=our_file,
             miniters=500,
             mininterval=0.1,
             maxinterval=maxinterval,
-        ) as t1:
-            # Set high maxinterval for t2 so monitor does not need to adjust it
-            with tldm(
-                total=total,
-                file=our_file,
-                miniters=500,
-                mininterval=0.1,
-                maxinterval=1e5,
-            ) as t2:
-                cpu_timify(t1, Time)
-                cpu_timify(t2, Time)
-                # Do a lot of iterations in a small timeframe
-                Time.fake_sleep(maxinterval / 10)
-                t1.update(500)
-                t2.update(500)
-                assert t1.miniters <= 500  # TODO: should really be == 500
-                assert t2.miniters == 500
-                # Then do 1 it after monitor interval, so that monitor kicks in
-                Time.fake_sleep(maxinterval)
-                t1.update(1)
-                t2.update(1)
-                # Wait for the monitor to get out of sleep and update
-                timeend = Time.time()
-                while not (t1.monitor.woken >= timeend and t1.miniters == 1):
-                    Time.fake_sleep(1)
-                assert t1.miniters == 1  # check that monitor corrected miniters
-                assert t2.miniters == 500  # check that t2 was not adjusted
+        ) as t1,
+    ):
+        # Set high maxinterval for t2 so monitor does not need to adjust it
+        with tldm(
+            total=total,
+            file=our_file,
+            miniters=500,
+            mininterval=0.1,
+            maxinterval=1e5,
+        ) as t2:
+            cpu_timify(t1, Time)
+            cpu_timify(t2, Time)
+            # Do a lot of iterations in a small timeframe
+            Time.fake_sleep(maxinterval / 10)
+            t1.update(500)
+            t2.update(500)
+            assert t1.miniters <= 500  # TODO: should really be == 500
+            assert t2.miniters == 500
+            # Then do 1 it after monitor interval, so that monitor kicks in
+            Time.fake_sleep(maxinterval)
+            t1.update(1)
+            t2.update(1)
+            # Wait for the monitor to get out of sleep and update
+            timeend = Time.time()
+            while not (t1.monitor.woken >= timeend and t1.miniters == 1):
+                Time.fake_sleep(1)
+            assert t1.miniters == 1  # check that monitor corrected miniters
+            assert t2.miniters == 500  # check that t2 was not adjusted
 
 
 def test_imap():

@@ -1,13 +1,9 @@
-from ast import literal_eval
-from collections import defaultdict
-from typing import Union  # py<3.10
-
 from tldm.utils import (
-    get_ema_func,
+    Bar,
+    format_interval,
     format_meter,
     format_num,
-    format_interval,
-    Bar,
+    get_ema_func,
 )
 
 
@@ -48,18 +44,10 @@ def test_si_format() -> None:
     assert "1.00Z " in format_meter(1, 999999999999999999999, 1, unit_scale=True)
     assert "1.00Y " in format_meter(1, 999999999999999999999999, 1, unit_scale=True)
     assert "1.00R " in format_meter(1, 999999999999999999999999999, 1, unit_scale=True)
-    assert "1.00Q " in format_meter(
-        1, 999999999999999999999999999999, 1, unit_scale=True
-    )
-    assert "10.0Q " in format_meter(
-        1, 9999999999999999999999999999999, 1, unit_scale=True
-    )
-    assert "100Q " in format_meter(
-        1, 99999999999999999999999999999999, 1, unit_scale=True
-    )
-    assert "1000Q " in format_meter(
-        1, 999999999999999999999999999999999, 1, unit_scale=True
-    )
+    assert "1.00Q " in format_meter(1, 999999999999999999999999999999, 1, unit_scale=True)
+    assert "10.0Q " in format_meter(1, 9999999999999999999999999999999, 1, unit_scale=True)
+    assert "100Q " in format_meter(1, 99999999999999999999999999999999, 1, unit_scale=True)
+    assert "1000Q " in format_meter(1, 999999999999999999999999999999999, 1, unit_scale=True)
 
 
 def test_ansi_escape_codes() -> None:
@@ -89,22 +77,17 @@ def test_format_meter() -> None:
         "desc:   0%|                                | 0/1000 [00:13<?, ?it/s]"
     )
     assert format_meter(231, 1000, 392) == (
-        " 23%|"
-        + chr(0x2588) * 2
-        + chr(0x258E)
-        + "       | 231/1000 [06:32<21:44,  1.70s/it]"
+        " 23%|" + chr(0x2588) * 2 + chr(0x258E) + "       | 231/1000 [06:32<21:44,  1.70s/it]"
     )
     assert format_meter(10000, 1000, 13) == "10000it [00:13, 769.23it/s]"
-    assert format_meter(
-        231, 1000, 392, ncols=56, ascii=True
-    ) == " 23%|" + "#" * 3 + "6" + ("            | 231/1000 [06:32<21:44,  1.70s/it]")
-    assert (
-        format_meter(100000, 1000, 13, unit_scale=True, unit="iB")
-        == "100kiB [00:13, 7.69kiB/s]"
+    assert format_meter(231, 1000, 392, ncols=56, ascii=True) == " 23%|" + "#" * 3 + "6" + (
+        "            | 231/1000 [06:32<21:44,  1.70s/it]"
     )
     assert (
-        format_meter(100, 1000, 12, ncols=0, rate=7.33)
-        == " 10% 100/1000 [00:12<01:48,  7.33it/s]"
+        format_meter(100000, 1000, 13, unit_scale=True, unit="iB") == "100kiB [00:13, 7.69kiB/s]"
+    )
+    assert (
+        format_meter(100, 1000, 12, ncols=0, rate=7.33) == " 10% 100/1000 [00:12<01:48,  7.33it/s]"
     )
     # ncols is small, l_bar is too large
     # l_bar gets chopped
@@ -198,10 +181,7 @@ def test_format_meter() -> None:
         "ニッポン [ﾆｯﾎﾟﾝ]:   0%|                    | 0/1000 [00:13<?, ?it/s]"
     )
     # Check that bar_format can print only {bar} or just one side
-    assert (
-        format_meter(20, 100, 12, ncols=2, rate=8.1, bar_format=r"{bar}")
-        == chr(0x258D) + " "
-    )
+    assert format_meter(20, 100, 12, ncols=2, rate=8.1, bar_format=r"{bar}") == chr(0x258D) + " "
     assert (
         format_meter(20, 100, 12, ncols=7, rate=8.1, bar_format=r"{l_bar}{bar}")
         == " 20%|" + chr(0x258D) + " "
@@ -228,5 +208,3 @@ def test_format_interval() -> None:
     assert format_interval(60) == "01:00"
     assert format_interval(6160) == "1:42:40"
     assert format_interval(238113) == "2d 18:08:33"
-
-

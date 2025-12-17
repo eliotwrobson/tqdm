@@ -105,6 +105,3 @@ class tldm_asyncio(std_tldm):
 
         res = [f async for f in cls(aiter_as_completed(), total=total, **tldm_kwargs)]
         return [i for _, i in sorted(res)]
-
-
-

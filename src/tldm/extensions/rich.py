@@ -2,10 +2,10 @@
 `rich.progress` decorator for iterators.
 """
 
+from collections.abc import Iterable
 from contextlib import nullcontext
-from typing import Any, Iterable, cast
+from typing import Any, cast
 from warnings import warn
-from tldm.utils import format_interval, format_sizeof
 
 from rich.console import Console
 from rich.progress import (
@@ -20,6 +20,7 @@ from rich.progress import (
 
 from tldm.std import TldmWarning
 from tldm.std import tldm as std_tldm
+from tldm.utils import format_interval, format_sizeof
 
 RenderReturnType = Text | str
 
@@ -83,9 +84,7 @@ class UnitCompletedColumn(UnitScaleColumn):
     def render(self, task: Task) -> RenderReturnType:
         if task.total is None:
             completed = self.unit_format(task, task.completed)
-            return Text(
-                f"{completed:>3}{task.fields['unit']}", style="progress.percentage"
-            )
+            return Text(f"{completed:>3}{task.fields['unit']}", style="progress.percentage")
         else:
             return Text(f"{task.percentage:>3.0f}%", style="progress.percentage")
 
@@ -103,9 +102,7 @@ class PrefixTimeRemainingColumn(TimeRemainingColumn):
         self.prefix_txt = Text(prefix_str)
 
     def render(self, task: Task) -> RenderReturnType:  # type: ignore[override]
-        return (
-            (self.prefix_txt + super().render(task)) if task.total is not None else ""
-        )
+        return (self.prefix_txt + super().render(task)) if task.total is not None else ""
 
 
 class PostFixColumn(ProgressColumn):
@@ -180,9 +177,7 @@ class tldm_rich(std_tldm):  # pragma: no cover
 
         d = self.format_dict
         if progress_columns is None:
-            description = (
-                "[progress.description]{task.description}: " if self.desc else ""
-            )
+            description = "[progress.description]{task.description}: " if self.desc else ""
             completed = UnitCompletedColumn(
                 unit_scale=d["unit_scale"], unit_divisor=d["unit_divisor"]
             )
@@ -197,9 +192,7 @@ class tldm_rich(std_tldm):  # pragma: no cover
                 " ",
                 BarColumn(**bar_options),
                 " ",
-                FractionColumn(
-                    unit_scale=d["unit_scale"], unit_divisor=d["unit_divisor"]
-                ),
+                FractionColumn(unit_scale=d["unit_scale"], unit_divisor=d["unit_divisor"]),
                 " [",
                 CompactTimeElapsedColumn(),
                 PrefixTimeRemainingColumn(compact=True),
@@ -231,9 +224,7 @@ class tldm_rich(std_tldm):  # pragma: no cover
                     )
             else:
                 console_cls = ASCIIConsole if d["ascii"] else Console
-                options["console"] = console_cls(
-                    width=d["ncols"], height=d["nrows"], file=self.fp
-                )
+                options["console"] = console_cls(width=d["ncols"], height=d["nrows"], file=self.fp)
 
             cls._progress = NoPaddingProgress(*progress_columns, **options)
             cls._progress.__enter__()
@@ -245,9 +236,7 @@ class tldm_rich(std_tldm):  # pragma: no cover
                     stacklevel=2,
                 )
 
-            if kwargs.get("ascii") is True and not isinstance(
-                cls._progress.console, ASCIIConsole
-            ):
+            if kwargs.get("ascii") is True and not isinstance(cls._progress.console, ASCIIConsole):
                 warn(
                     "ascii=True but global console is not ASCIIConsole. "
                     "Using (non-ascii) global console.",
@@ -275,9 +264,7 @@ class tldm_rich(std_tldm):  # pragma: no cover
                 self._task.finished_time = self._task.stop_time
             if not self.leave:
                 self._task.visible = False
-            self.display(
-                refresh=cls._progress.console.is_jupyter
-            )  # print 100%, vis #1306
+            self.display(refresh=cls._progress.console.is_jupyter)  # print 100%, vis #1306
             if all(t.finished for t in cls._progress.tasks):
                 cls._progress.__exit__(None, None, None)
                 cls._progress = None

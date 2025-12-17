@@ -7,11 +7,11 @@ These tests serve two purposes:
 """
 
 import pytest
+from alive_progress import alive_bar
+from progressbar import progressbar
+from rich.progress import track
 
 from tldm import tldm
-from rich.progress import track
-from progressbar import progressbar
-from alive_progress import alive_bar
 
 
 class TestTldmPerformance:

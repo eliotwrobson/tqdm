@@ -27,6 +27,8 @@ ruff-format:
 ruff-check:
 	@echo "Running ruff linter..."
 	uv run ruff check src/tldm tests
+	@echo "Checking ruff formatting..."
+	uv run ruff format --check src/tldm tests
 
 ruff: ruff-format ruff-check
 

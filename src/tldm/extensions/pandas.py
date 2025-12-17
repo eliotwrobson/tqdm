@@ -67,8 +67,10 @@ def tldm_pandas(**tldm_kwargs: dict[str, Any]) -> None:
             except ImportError:  # pragma: no cover
                 _Rolling_and_Expanding = None
     try:  # pandas>=0.25.0
-        from pandas.core.groupby.generic import SeriesGroupBy  # , NDFrameGroupBy
-        from pandas.core.groupby.generic import DataFrameGroupBy
+        from pandas.core.groupby.generic import (
+            DataFrameGroupBy,
+            SeriesGroupBy,  # , NDFrameGroupBy
+        )
     except ImportError:  # pragma: no cover
         try:  # pandas>=0.23.0
             from pandas.core.groupby.groupby import DataFrameGroupBy, SeriesGroupBy
@@ -109,9 +111,7 @@ def tldm_pandas(**tldm_kwargs: dict[str, Any]) -> None:
                     total = df.size
                 elif isinstance(df, Series):
                     total = len(df)
-                elif _Rolling_and_Expanding is None or not isinstance(
-                    df, _Rolling_and_Expanding
-                ):
+                elif _Rolling_and_Expanding is None or not isinstance(df, _Rolling_and_Expanding):
                     # DataFrame or Panel
                     axis = kwargs.get("axis", 0)
                     if axis == "index":
@@ -178,6 +178,3 @@ def tldm_pandas(**tldm_kwargs: dict[str, Any]) -> None:
         Expanding.progress_apply = inner_generator()
     elif _Rolling_and_Expanding is not None:
         _Rolling_and_Expanding.progress_apply = inner_generator()
-
-
-

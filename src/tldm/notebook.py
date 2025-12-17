@@ -13,7 +13,6 @@ from weakref import proxy
 # to inherit from the tldm class
 from .std import tldm as std_tldm
 
-
 # TODO get rid of legacy imports
 
 if True:  # pragma: no cover
@@ -38,15 +37,13 @@ if True:  # pragma: no cover
 
     try:  # IPython 4.x / 3.x
         if IPY == 32:
-            from IPython.html.widgets import HTML
+            from IPython.html.widgets import HTML, HBox, VBox
             from IPython.html.widgets import FloatProgress as IProgress
-            from IPython.html.widgets import HBox, VBox
 
             IPY = 3
         else:
-            from ipywidgets import HTML
+            from ipywidgets import HTML, HBox, VBox
             from ipywidgets import FloatProgress as IProgress
-            from ipywidgets import HBox, VBox
     except ImportError:
         try:  # IPython 2.x
             from IPython.html.widgets import HTML
@@ -201,9 +198,7 @@ class tldm_notebook(std_tldm):
         if close and pbar.bar_style != "danger":  # hide only if no error
             # Remove self.container from the list of children of outer_container
             tldm_notebook.outer_container.children = tuple(
-                c
-                for c in tldm_notebook.outer_container.children
-                if c is not self.container
+                c for c in tldm_notebook.outer_container.children if c is not self.container
             )
             try:
                 self.container.close()

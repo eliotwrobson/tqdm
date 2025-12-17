@@ -2,15 +2,13 @@
 Tests for `tldm.contrib.concurrent`.
 """
 
-from pytest import warns
+from contextlib import closing
+from io import StringIO
+
+from pytest import importorskip, mark, skip, warns
 
 from tldm.extensions.concurrent import process_map, thread_map
-
 from tldm.utils import TldmWarning
-
-from io import StringIO
-from contextlib import closing
-from pytest import mark, importorskip, skip
 
 
 def incr(x):

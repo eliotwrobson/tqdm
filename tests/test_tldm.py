@@ -2,21 +2,20 @@ import csv
 import os
 import re
 import sys
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
+from io import (
+    BytesIO,
+    IOBase,  # to support unicode strings
+    StringIO,
+)
 from warnings import catch_warnings, simplefilter
 
 from pytest import importorskip, mark
-from .conftest import patch_lock
 
 from tldm import tldm, trange
-from tldm.utils import format_interval, TldmWarning, ObjectWrapper
+from tldm.utils import ObjectWrapper, TldmWarning, format_interval
 
-from io import StringIO
-
-from io import IOBase  # to support unicode strings
-from io import BytesIO
-
-from contextlib import closing
+from .conftest import patch_lock
 
 
 class DeprecationError(Exception):
@@ -102,13 +101,11 @@ def pos_line_diff(res_list, expected_list, raise_nonempty=True):
             res.extend([(None, e) for e in expected_list[len(res_list) :]])
         elif len(res_list) > len(expected_list):
             res.extend([(r, None) for r in res_list[len(expected_list) :]])
-        raise AssertionError(
-            "Got => Expected\n" + "\n".join("%r => %r" % i for i in res)
-        )
+        raise AssertionError("Got => Expected\n" + "\n".join("%r => %r" % i for i in res))
     return res
 
 
-class DiscreteTimer(object):
+class DiscreteTimer:
     """Virtual discrete time manager, to precisely control time for tests"""
 
     def __init__(self):
@@ -205,11 +202,10 @@ def squash_ctrlchars(s):
 
 def test_all_defaults() -> None:
     """Test default kwargs"""
-    with closing(UnicodeIO()) as our_file:
-        with tldm(range(10), file=our_file) as progressbar:
-            assert len(progressbar) == 10
-            for _ in progressbar:
-                pass
+    with closing(UnicodeIO()) as our_file, tldm(range(10), file=our_file) as progressbar:
+        assert len(progressbar) == 10
+        for _ in progressbar:
+            pass
     # restore stdout/stderr output for `nosetest` interface
     # try:
     #     sys.stderr.write('\x1b[A')
@@ -233,7 +229,7 @@ def test_native_string_io_for_default_file() -> None:
     """Native strings written to unspecified files"""
     stderr = sys.stderr
     try:
-        sys.stderr = WriteTypeChecker(expected_type=type(""))
+        sys.stderr = WriteTypeChecker(expected_type=str)
         for _ in tldm(range(3)):
             pass
         sys.stderr.encoding = None  # py2 behaviour
@@ -245,7 +241,7 @@ def test_native_string_io_for_default_file() -> None:
 
 def test_unicode_string_io_for_specified_file() -> None:
     """Unicode strings written to specified files"""
-    for _ in tldm(range(3), file=WriteTypeChecker(expected_type=type(""))):
+    for _ in tldm(range(3), file=WriteTypeChecker(expected_type=str)):
         pass
 
 
@@ -281,7 +277,7 @@ def test_leave_option() -> None:
             pass
         res = our_file.getvalue()
         assert "| 3/3 " in res
-        assert "\n" == res[-1]  # not '\r'
+        assert res[-1] == "\n"  # not '\r'
 
     with closing(StringIO()) as our_file2:
         for _ in tldm(range(3), file=our_file2, leave=False):
@@ -361,25 +357,27 @@ def test_max_interval() -> None:
 
     # Test with maxinterval effect
     timer = DiscreteTimer()
-    with closing(StringIO()) as our_file:
-        with tldm(
+    with (
+        closing(StringIO()) as our_file,
+        tldm(
             total=total,
             file=our_file,
             miniters=None,
             mininterval=0,
             smoothing=1,
             maxinterval=1e-4,
-        ) as t:
-            cpu_timify(t, timer)
+        ) as t,
+    ):
+        cpu_timify(t, timer)
 
-            # Increase 10 iterations at once
-            t.update(bigstep)
-            # The next iterations should trigger maxinterval (step 5)
-            for _ in range(4):
-                t.update(smallstep)
-                timer.sleep(1e-2)
+        # Increase 10 iterations at once
+        t.update(bigstep)
+        # The next iterations should trigger maxinterval (step 5)
+        for _ in range(4):
+            t.update(smallstep)
+            timer.sleep(1e-2)
 
-            assert "25%" in our_file.getvalue()
+        assert "25%" in our_file.getvalue()
 
     # Test iteration based tldm with maxinterval effect
     timer = DiscreteTimer()
@@ -407,41 +405,43 @@ def test_max_interval() -> None:
     total = 1000
     mininterval = 0.1
     maxinterval = 10
-    with closing(StringIO()) as our_file:
-        with tldm(
+    with (
+        closing(StringIO()) as our_file,
+        tldm(
             total=total,
             file=our_file,
             miniters=None,
             smoothing=1,
             mininterval=mininterval,
             maxinterval=maxinterval,
-        ) as tm1:
-            with tldm(
-                total=total,
-                file=our_file,
-                miniters=None,
-                smoothing=1,
-                mininterval=0,
-                maxinterval=maxinterval,
-            ) as tm2:
-                cpu_timify(tm1, timer)
-                cpu_timify(tm2, timer)
+        ) as tm1,
+        tldm(
+            total=total,
+            file=our_file,
+            miniters=None,
+            smoothing=1,
+            mininterval=0,
+            maxinterval=maxinterval,
+        ) as tm2,
+    ):
+        cpu_timify(tm1, timer)
+        cpu_timify(tm2, timer)
 
-                # Fast iterations, check if dynamic_miniters triggers
-                timer.sleep(mininterval)  # to force update for t1
-                tm1.update(total / 2)
-                tm2.update(total / 2)
-                assert int(tm1.miniters) == tm2.miniters == total / 2
+        # Fast iterations, check if dynamic_miniters triggers
+        timer.sleep(mininterval)  # to force update for t1
+        tm1.update(total / 2)
+        tm2.update(total / 2)
+        assert int(tm1.miniters) == tm2.miniters == total / 2
 
-                # Slow iterations, check different miniters if mininterval
-                timer.sleep(maxinterval * 2)
-                tm1.update(total / 2)
-                tm2.update(total / 2)
-                res = [tm1.miniters, tm2.miniters]
-                assert res == [
-                    (total / 2) * mininterval / (maxinterval * 2),
-                    (total / 2) * maxinterval / (maxinterval * 2),
-                ]
+        # Slow iterations, check different miniters if mininterval
+        timer.sleep(maxinterval * 2)
+        tm1.update(total / 2)
+        tm2.update(total / 2)
+        res = [tm1.miniters, tm2.miniters]
+        assert res == [
+            (total / 2) * mininterval / (maxinterval * 2),
+            (total / 2) * maxinterval / (maxinterval * 2),
+        ]
 
     # Same with iterable based tldm
     timer1 = DiscreteTimer()  # need 2 timers for each bar because zip not work
@@ -598,11 +598,10 @@ def test_big_min_interval() -> None:
             pass
         assert "50%" not in our_file.getvalue()
 
-    with closing(StringIO()) as our_file:
-        with tldm(range(2), file=our_file, mininterval=1e10) as t:
-            t.update()
-            t.update()
-            assert "50%" not in our_file.getvalue()
+    with closing(StringIO()) as our_file, tldm(range(2), file=our_file, mininterval=1e10) as t:
+        t.update()
+        t.update()
+        assert "50%" not in our_file.getvalue()
 
 
 def test_smoothed_dynamic_min_iters() -> None:
@@ -706,9 +705,8 @@ def test_lock_creation(mocker) -> None:
 
     assert lock_mock.call_count == 0
     # Creating a progress bar should use existing lock
-    with closing(StringIO()) as our_file:
-        with tldm(file=our_file) as _:  # NOQA
-            pass
+    with closing(StringIO()) as our_file, tldm(file=our_file) as _:  # NOQA
+        pass
 
     assert lock_mock.call_count == 0
 
@@ -742,9 +740,7 @@ def test_nototal() -> None:
 
     # TODO this is printing 0 as the total number of iters, but should be a ?
     with closing(StringIO()) as our_file:
-        for _ in tldm(
-            iter(unknown_length_run()), file=our_file, bar_format="{l_bar}{bar}{r_bar}"
-        ):
+        for _ in tldm(iter(unknown_length_run()), file=our_file, bar_format="{l_bar}{bar}{r_bar}"):
             pass
         print(our_file.getvalue())
         assert "10/?" in our_file.getvalue()
@@ -761,15 +757,12 @@ def test_unit() -> None:
 def test_ascii() -> None:
     """Test ascii/unicode bar"""
     # Test ascii autodetection
-    with closing(StringIO()) as our_file:
-        with tldm(total=10, file=our_file, ascii=None) as t:
-            assert t.ascii  # TODO: this may fail in the future
+    with closing(StringIO()) as our_file, tldm(total=10, file=our_file, ascii=None) as t:
+        assert t.ascii  # TODO: this may fail in the future
 
     # Test ascii bar
     with closing(StringIO()) as our_file:
-        for _ in tldm(
-            range(3), total=15, file=our_file, miniters=1, mininterval=0, ascii=True
-        ):
+        for _ in tldm(range(3), total=15, file=our_file, miniters=1, mininterval=0, ascii=True):
             pass
         res = our_file.getvalue().strip("\r").split("\r")
     assert "7%|6" in res[1]
@@ -843,9 +836,7 @@ def test_close() -> None:
     # With all updates
     with closing(StringIO()) as our_file:
         assert len(tldm._instances) == 0
-        with tldm(
-            total=3, file=our_file, miniters=0, mininterval=0, leave=True
-        ) as progressbar:
+        with tldm(total=3, file=our_file, miniters=0, mininterval=0, leave=True) as progressbar:
             assert len(tldm._instances) == 1
             progressbar.update(3)
             res = our_file.getvalue()
@@ -858,9 +849,7 @@ def test_close() -> None:
         res = our_file.getvalue()
         assert res[-1] == "\n"
         if not res.startswith(exres):
-            raise AssertionError(
-                f"\n<<< Expected:\n{exres}, ...it/s]\n>>> Got:\n{res}\n==="
-            )
+            raise AssertionError(f"\n<<< Expected:\n{exres}, ...it/s]\n>>> Got:\n{res}\n===")
 
     # Closing after the output stream has closed
     with closing(StringIO()) as our_file:
@@ -1096,9 +1085,7 @@ def test_disabled_unpause(capsys):
 def test_reset() -> None:
     """Test resetting a bar for re-use"""
     with closing(StringIO()) as our_file:
-        with tldm(
-            total=10, file=our_file, miniters=1, mininterval=0, maxinterval=0
-        ) as t:
+        with tldm(total=10, file=our_file, miniters=1, mininterval=0, maxinterval=0) as t:
             t.update(9)
             t.reset()
             t.update()
@@ -1330,9 +1317,8 @@ def test_set_description() -> None:
         assert "World" not in our_file.getvalue()
 
     # unicode
-    with closing(StringIO()) as our_file:
-        with tldm(total=10, file=our_file) as t:
-            t.set_description("\xe1\xe9\xed\xf3\xfa")
+    with closing(StringIO()) as our_file, tldm(total=10, file=our_file) as t:
+        t.set_description("\xe1\xe9\xed\xf3\xfa")
 
 
 def test_cmp(capsys):
@@ -1386,14 +1372,13 @@ def test_cmp_iterables(capsys, left, right):
     assert (left > right) == (tldm(left) > right)
     out, err = capsys.readouterr()
     assert not out
-    assert "/{0:d} ".format(len(left)) in err
+    assert f"/{len(left):d} " in err
 
 
 def test_repr() -> None:
     """Test representation"""
-    with closing(StringIO()) as our_file:
-        with tldm(total=10, ascii=True, file=our_file) as t:
-            assert str(t) == "  0%|          | 0/10 [00:00<?, ?it/s]"
+    with closing(StringIO()) as our_file, tldm(total=10, ascii=True, file=our_file) as t:
+        assert str(t) == "  0%|          | 0/10 [00:00<?, ?it/s]"
 
 
 def test_clear() -> None:
@@ -1532,66 +1517,64 @@ def test_write() -> None:
         assert after_squashed == [s, s] + before_squashed
 
     # Check that no bar clearing if different file
-    with closing(StringIO()) as our_file_bar:
-        with closing(StringIO()) as our_file_write:
-            t1 = tldm(
-                total=10,
-                file=our_file_bar,
-                desc="pos0 bar",
-                bar_format="{l_bar}",
-                mininterval=0,
-                miniters=1,
-            )
+    with closing(StringIO()) as our_file_bar, closing(StringIO()) as our_file_write:
+        t1 = tldm(
+            total=10,
+            file=our_file_bar,
+            desc="pos0 bar",
+            bar_format="{l_bar}",
+            mininterval=0,
+            miniters=1,
+        )
 
-            t1.update()
-            before_bar = our_file_bar.getvalue()
+        t1.update()
+        before_bar = our_file_bar.getvalue()
 
-            tldm.write(s, file=our_file_write)
+        tldm.write(s, file=our_file_write)
 
-            after_bar = our_file_bar.getvalue()
-            t1.close()
+        after_bar = our_file_bar.getvalue()
+        t1.close()
 
-            assert before_bar == after_bar
+        assert before_bar == after_bar
 
     # Test stdout/stderr anti-mixup strategy
     # Backup stdout/stderr
     stde = sys.stderr
     stdo = sys.stdout
     # Mock stdout/stderr
-    with closing(StringIO()) as our_stderr:
-        with closing(StringIO()) as our_stdout:
-            sys.stderr = our_stderr
-            sys.stdout = our_stdout
-            t1 = tldm(
-                total=10,
-                file=sys.stderr,
-                desc="pos0 bar",
-                bar_format="{l_bar}",
-                mininterval=0,
-                miniters=1,
-            )
+    with closing(StringIO()) as our_stderr, closing(StringIO()) as our_stdout:
+        sys.stderr = our_stderr
+        sys.stdout = our_stdout
+        t1 = tldm(
+            total=10,
+            file=sys.stderr,
+            desc="pos0 bar",
+            bar_format="{l_bar}",
+            mininterval=0,
+            miniters=1,
+        )
 
-            t1.update()
-            before_err = sys.stderr.getvalue()
-            before_out = sys.stdout.getvalue()
+        t1.update()
+        before_err = sys.stderr.getvalue()
+        before_out = sys.stdout.getvalue()
 
-            tldm.write(s, file=sys.stdout)
-            after_err = sys.stderr.getvalue()
-            after_out = sys.stdout.getvalue()
+        tldm.write(s, file=sys.stdout)
+        after_err = sys.stderr.getvalue()
+        after_out = sys.stdout.getvalue()
 
-            t1.close()
+        t1.close()
 
-            assert before_err == "\rpos0 bar:   0%|\rpos0 bar:  10%|"
-            assert before_out == ""
-            after_err_res = [m[0] for m in RE_pos.findall(after_err)]
-            exres = [
-                "\rpos0 bar:   0%|",
-                "\rpos0 bar:  10%|",
-                "\r               ",
-                "\r\rpos0 bar:  10%|",
-            ]
-            pos_line_diff(after_err_res, exres)
-            assert after_out == s + "\n"
+        assert before_err == "\rpos0 bar:   0%|\rpos0 bar:  10%|"
+        assert before_out == ""
+        after_err_res = [m[0] for m in RE_pos.findall(after_err)]
+        exres = [
+            "\rpos0 bar:   0%|",
+            "\rpos0 bar:  10%|",
+            "\r               ",
+            "\r\rpos0 bar:  10%|",
+        ]
+        pos_line_diff(after_err_res, exres)
+        assert after_out == s + "\n"
     # Restore stdout and stderr
     sys.stderr = stde
     sys.stdout = stdo
@@ -1643,72 +1626,67 @@ def test_print() -> None:
         before_squashed = squash_ctrlchars(before)
         after_squashed = squash_ctrlchars(after)
 
-        assert (
-            after_squashed
-            == [" ".join("{}".format(v) for v in values)] * 2 + before_squashed
-        )
+        assert after_squashed == [" ".join(f"{v}" for v in values)] * 2 + before_squashed
 
     # Check that no bar clearing if different file
-    with closing(StringIO()) as our_file_bar:
-        with closing(StringIO()) as our_file_write:
-            t1 = tldm(
-                total=10,
-                file=our_file_bar,
-                desc="pos0 bar",
-                bar_format="{l_bar}",
-                mininterval=0,
-                miniters=1,
-            )
+    with closing(StringIO()) as our_file_bar, closing(StringIO()) as our_file_write:
+        t1 = tldm(
+            total=10,
+            file=our_file_bar,
+            desc="pos0 bar",
+            bar_format="{l_bar}",
+            mininterval=0,
+            miniters=1,
+        )
 
-            t1.update()
-            before_bar = our_file_bar.getvalue()
+        t1.update()
+        before_bar = our_file_bar.getvalue()
 
-            tldm.print(*values, file=our_file_write)
+        tldm.print(*values, file=our_file_write)
 
-            after_bar = our_file_bar.getvalue()
-            t1.close()
+        after_bar = our_file_bar.getvalue()
+        t1.close()
 
-            assert before_bar == after_bar
+        assert before_bar == after_bar
 
     # Test stdout/stderr anti-mixup strategy
     # Backup stdout/stderr
     stde = sys.stderr
     stdo = sys.stdout
     # Mock stdout/stderr
-    with closing(StringIO()) as our_stderr:
-        with closing(StringIO()) as our_stdout:
-            sys.stderr = our_stderr
-            sys.stdout = our_stdout
-            t1 = tldm(
-                total=10,
-                file=sys.stderr,
-                desc="pos0 bar",
-                bar_format="{l_bar}",
-                mininterval=0,
-                miniters=1,
-            )
+    with closing(StringIO()) as our_stderr, closing(StringIO()) as our_stdout:
+        sys.stderr = our_stderr
+        sys.stdout = our_stdout
+        t1 = tldm(
+            total=10,
+            file=sys.stderr,
+            desc="pos0 bar",
+            bar_format="{l_bar}",
+            mininterval=0,
+            miniters=1,
+        )
 
-            t1.update()
-            before_err = sys.stderr.getvalue()
-            before_out = sys.stdout.getvalue()
+        t1.update()
+        before_err = sys.stderr.getvalue()
+        before_out = sys.stdout.getvalue()
 
-            tldm.print(*values, file=sys.stdout)
-            after_err = sys.stderr.getvalue()
-            after_out = sys.stdout.getvalue()
+        tldm.print(*values, file=sys.stdout)
+        after_err = sys.stderr.getvalue()
+        after_out = sys.stdout.getvalue()
 
-            t1.close()
+        t1.close()
 
-            assert before_err == "\rpos0 bar:   0%|\rpos0 bar:  10%|"
-            assert before_out == ""
-            after_err_res = [m[0] for m in RE_pos.findall(after_err)]
-            exres = [
-                "\rpos0 bar:   0%|",
-                "\rpos0 bar:  10%|",
-                "\r               ",
-                "\r\rpos0 bar:  10%|",
-            ]
-            pos_line_diff(after_err_res, exres)
-            assert after_out == " ".join("{}".format(v) for v in values) + "\n"
+        assert before_err == "\rpos0 bar:   0%|\rpos0 bar:  10%|"
+        assert before_out == ""
+        after_err_res = [m[0] for m in RE_pos.findall(after_err)]
+        exres = [
+            "\rpos0 bar:   0%|",
+            "\rpos0 bar:  10%|",
+            "\r               ",
+            "\r\rpos0 bar:  10%|",
+        ]
+        pos_line_diff(after_err_res, exres)
+        assert after_out == " ".join(f"{v}" for v in values) + "\n"
     # Restore stdout and stderr
     sys.stderr = stde
     sys.stdout = stdo
@@ -1717,9 +1695,8 @@ def test_print() -> None:
 def test_len() -> None:
     """Test advance len (numpy array shape)"""
     np = importorskip("numpy")
-    with closing(StringIO()) as f:
-        with tldm(np.zeros((3, 4)), file=f) as t:
-            assert len(t) == 3
+    with closing(StringIO()) as f, tldm(np.zeros((3, 4)), file=f) as t:
+        assert len(t) == 3
 
 
 def test_autodisable_disable() -> None:
@@ -1746,25 +1723,27 @@ def test_postfix() -> None:
     expected_order = ["w=w", "a=0", "float=0.321", "gen=543", "lst=[2]", "str=h"]
 
     # Test postfix set at init
-    with closing(StringIO()) as our_file:
-        with tldm(
+    with (
+        closing(StringIO()) as our_file,
+        tldm(
             total=10,
             file=our_file,
             desc="pos0 bar",
             bar_format="{r_bar}",
             postfix=postfix,
-        ) as t1:
-            t1.refresh()
-            out = our_file.getvalue()
+        ) as t1,
+    ):
+        t1.refresh()
+        out = our_file.getvalue()
 
     # Test postfix set after init
-    with closing(StringIO()) as our_file:
-        with trange(
-            10, file=our_file, desc="pos1 bar", bar_format="{r_bar}", postfix=None
-        ) as t2:
-            t2.set_postfix(**postfix)
-            t2.refresh()
-            out2 = our_file.getvalue()
+    with (
+        closing(StringIO()) as our_file,
+        trange(10, file=our_file, desc="pos1 bar", bar_format="{r_bar}", postfix=None) as t2,
+    ):
+        t2.set_postfix(**postfix)
+        t2.refresh()
+        out2 = our_file.getvalue()
 
     # Order of items in dict may change, so need a loop to check per item
     for res in expected:
@@ -1772,37 +1751,37 @@ def test_postfix() -> None:
         assert res in out2
 
     # Test postfix (with ordered dict and no refresh) set after init
-    with closing(StringIO()) as our_file:
-        with trange(
-            10, file=our_file, desc="pos2 bar", bar_format="{r_bar}", postfix=None
-        ) as t3:
-            t3.set_postfix(postfix_order, False, **postfix)
-            t3.refresh()  # explicit external refresh
-            out3 = our_file.getvalue()
+    with (
+        closing(StringIO()) as our_file,
+        trange(10, file=our_file, desc="pos2 bar", bar_format="{r_bar}", postfix=None) as t3,
+    ):
+        t3.set_postfix(postfix_order, False, **postfix)
+        t3.refresh()  # explicit external refresh
+        out3 = our_file.getvalue()
 
     out3 = out3[1:-1].split(", ")[3:]
     assert out3 == expected_order
 
     # Test postfix (with ordered dict and refresh) set after init
-    with closing(StringIO()) as our_file:
-        with trange(
-            10, file=our_file, desc="pos2 bar", bar_format="{r_bar}", postfix=None
-        ) as t4:
-            t4.set_postfix(postfix_order, True, **postfix)
-            t4.refresh()  # double refresh
-            out4 = our_file.getvalue()
+    with (
+        closing(StringIO()) as our_file,
+        trange(10, file=our_file, desc="pos2 bar", bar_format="{r_bar}", postfix=None) as t4,
+    ):
+        t4.set_postfix(postfix_order, True, **postfix)
+        t4.refresh()  # double refresh
+        out4 = our_file.getvalue()
 
     assert out4.count("\r") > out3.count("\r")
     assert out4.count(", ".join(expected_order)) == 2
 
     # Test setting postfix string directly
-    with closing(StringIO()) as our_file:
-        with trange(
-            10, file=our_file, desc="pos2 bar", bar_format="{r_bar}", postfix=None
-        ) as t5:
-            t5.set_postfix_str("Hello", False)
-            t5.set_postfix_str("World")
-            out5 = our_file.getvalue()
+    with (
+        closing(StringIO()) as our_file,
+        trange(10, file=our_file, desc="pos2 bar", bar_format="{r_bar}", postfix=None) as t5,
+    ):
+        t5.set_postfix_str("Hello", False)
+        t5.set_postfix_str("World")
+        out5 = our_file.getvalue()
 
     assert "Hello" not in out5
     out5 = out5[1:-1].split(", ")[3:]
@@ -1851,15 +1830,14 @@ def test_file_redirection() -> None:
     """Test redirection of output"""
     with closing(StringIO()) as our_file:
         # Redirect stdout to tldm.write()
-        with std_out_err_redirect_tldm(tldm_file=our_file):
-            with tldm(total=3) as pbar:
-                print("Such fun")
-                pbar.update(1)
-                print("Such", "fun")
-                pbar.update(1)
-                print("Such ", end="")
-                print("fun")
-                pbar.update(1)
+        with std_out_err_redirect_tldm(tldm_file=our_file), tldm(total=3) as pbar:
+            print("Such fun")
+            pbar.update(1)
+            print("Such", "fun")
+            pbar.update(1)
+            print("Such ", end="")
+            print("fun")
+            pbar.update(1)
         res = our_file.getvalue()
         assert res.count("Such fun\n") == 3
         assert "0/3" in res
@@ -1953,15 +1931,14 @@ def test_wrapattr() -> None:
 
 def test_float_progress() -> None:
     """Test float totals"""
-    with closing(StringIO()) as our_file:
-        with trange(10, total=9.6, file=our_file) as t:
-            with catch_warnings(record=True) as w:
-                simplefilter("always", category=TldmWarning)
-                for i in t:
-                    if i < 9:
-                        assert not w
-                assert w
-                assert "clamping frac" in str(w[-1].message)
+    with closing(StringIO()) as our_file, trange(10, total=9.6, file=our_file) as t:
+        with catch_warnings(record=True) as w:
+            simplefilter("always", category=TldmWarning)
+            for i in t:
+                if i < 9:
+                    assert not w
+            assert w
+            assert "clamping frac" in str(w[-1].message)
 
 
 def test_screen_shape() -> None:
@@ -1998,9 +1975,7 @@ def test_screen_shape() -> None:
         assert "\n\n" not in res
         assert "more hidden" in res
         # double-check ncols
-        assert all(
-            len(i) == 50 for i in get_bar(res) if i.strip() and "more hidden" not in i
-        )
+        assert all(len(i) == 50 for i in get_bar(res) if i.strip() and "more hidden" not in i)
 
     # all bars, leave=True
     with closing(StringIO()) as our_file:
@@ -2026,9 +2001,7 @@ def test_screen_shape() -> None:
         assert "three" in res
         assert "more hidden" in res
         # double-check ncols
-        assert all(
-            len(i) == 50 for i in get_bar(res) if i.strip() and "more hidden" not in i
-        )
+        assert all(len(i) == 50 for i in get_bar(res) if i.strip() and "more hidden" not in i)
 
     # second bar becomes first, leave=False
     with closing(StringIO()) as our_file:
@@ -2058,9 +2031,7 @@ def test_screen_shape() -> None:
 def test_initial() -> None:
     """Test `initial`"""
     with closing(StringIO()) as our_file:
-        for _ in tldm(
-            range(9), initial=10, total=19, file=our_file, miniters=1, mininterval=0
-        ):
+        for _ in tldm(range(9), initial=10, total=19, file=our_file, miniters=1, mininterval=0):
             pass
         out = our_file.getvalue()
         assert "10/19" in out

@@ -1,18 +1,15 @@
 import sys
 from contextlib import contextmanager
 from functools import wraps
-from time import sleep, time
 
 # Use relative/cpu timer to have reliable timings when there is a sudden load
+from time import process_time, sleep, time
 
-from time import process_time
-
+from pytest import importorskip, mark, skip
 
 from tldm import tldm, trange
 
 from .conftest import patch_lock
-
-from pytest import importorskip, skip, mark
 
 
 def cpu_sleep(t):
@@ -119,9 +116,7 @@ def simple_progress(
                 spent = last_t[0] - start_t[0]
                 spent_fmt = format_interval(spent)
                 rate = n[0] / spent if spent > 0 else 0
-                rate_fmt = (
-                    "%.2fs/it" % (1.0 / rate) if 0.0 < rate < 1.0 else "%.2fit/s" % rate
-                )
+                rate_fmt = "%.2fs/it" % (1.0 / rate) if 0.0 < rate < 1.0 else "%.2fit/s" % rate
 
                 frac = n[0] / total
                 percentage = int(frac * 100)
@@ -180,10 +175,9 @@ def test_iter_basic_overhead():
     total = int(1e6)
 
     a = 0
-    with trange(total) as t:
-        with relative_timer() as time_tldm:
-            for i in t:
-                a += i
+    with trange(total) as t, relative_timer() as time_tldm:
+        for i in t:
+            a += i
     assert a == (total**2 - total) / 2.0
 
     a = 0
@@ -283,9 +277,7 @@ def test_manual_overhead_hard():
     """Test overhead of manual tldm (hard)"""
     total = int(1e5)
 
-    with tldm(
-        total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0
-    ) as t:
+    with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
         a = 0
         with relative_timer() as time_tldm:
             for i in range(total):
@@ -327,18 +319,14 @@ def test_manual_overhead_simplebar_hard():
     """Test overhead of manual tldm vs simple progress bar (hard)"""
     total = int(1e4)
 
-    with tldm(
-        total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0
-    ) as t:
+    with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
         a = 0
         with relative_timer() as time_tldm:
             for i in range(total):
                 a += i
                 t.update(10)
 
-    simplebar_update = simple_progress(
-        total=total * 10, leave=True, miniters=1, mininterval=0
-    )
+    simplebar_update = simple_progress(total=total * 10, leave=True, miniters=1, mininterval=0)
     a = 0
     with relative_timer() as time_bench:
         for i in range(total):

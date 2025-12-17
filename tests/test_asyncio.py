@@ -1,15 +1,15 @@
 """Tests `tldm.asyncio`."""
 
 import asyncio
+from contextlib import closing
 from functools import partial
+from io import StringIO
 from sys import platform
 from time import time
 
-from tldm.extensions.asyncio import tldm_asyncio
-
-from io import StringIO
-from contextlib import closing
 from pytest import mark, raises
+
+from tldm.extensions.asyncio import tldm_asyncio
 
 tldm = partial(tldm_asyncio, miniters=0, mininterval=0)
 as_completed = partial(tldm_asyncio.as_completed, miniters=0, mininterval=0)
