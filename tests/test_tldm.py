@@ -1,3 +1,4 @@
+import contextlib
 import csv
 import os
 import re
@@ -64,10 +65,8 @@ class DummyTldmFile(ObjectWrapper):
     def __del__(self):
         if self._buf:
             blank = type(self._buf[0])()
-            try:
+            with contextlib.suppress(OSError, ValueError):
                 tldm.write(blank.join(self._buf), end=blank, file=self._wrapped)
-            except (OSError, ValueError):
-                pass
 
 
 def pos_line_diff(res_list, expected_list, raise_nonempty=True):
@@ -729,8 +728,7 @@ def test_nototal() -> None:
     """Test unknown total length"""
 
     def unknown_length_run():
-        for i in range(10):
-            yield i
+        yield from range(10)
 
     with closing(StringIO()) as our_file:
         for _ in tldm(iter(unknown_length_run()), file=our_file, unit_scale=10):
