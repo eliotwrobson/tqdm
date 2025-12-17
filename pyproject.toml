@@ -138,8 +138,11 @@ select = [
     "C4",  # flake8-comprehensions
 ]
 ignore = [
-    "E501", # line too long (handled by formatter)
-    "B008", # function calls in argument defaults
+    "E501",   # line too long (handled by formatter)
+    "B008",   # function calls in argument defaults
+    "SIM117",
+    "UP031",
+    "B905",
 ]
 
 [tool.ruff.format]
