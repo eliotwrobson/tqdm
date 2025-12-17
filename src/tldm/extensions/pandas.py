@@ -2,6 +2,7 @@
 Registration for `tldm` to provide `pandas` progress indicators.
 """
 
+import contextlib
 from typing import Any
 
 from ..std import tldm as std_tldm
@@ -128,10 +129,8 @@ def tldm_pandas(**tldm_kwargs: dict[str, Any]) -> None:
                 from pandas.core.common import is_builtin_func
             except ImportError:
                 is_builtin_func = df._is_builtin_func
-            try:
+            with contextlib.suppress(TypeError):
                 func = is_builtin_func(func)
-            except TypeError:
-                pass
 
             # Define bar updating wrapper
             def wrapper(*args, **kwargs):

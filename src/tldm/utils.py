@@ -2,6 +2,7 @@
 General helpers required for `tldm.std`.
 """
 
+import contextlib
 import math
 import numbers
 import os
@@ -33,7 +34,7 @@ class FormatReplace:
     >>> a = FormatReplace('something')
     >>> f"{a:5d}"
     'something'
-    """  # NOQA: P102
+    """
 
     def __init__(self, replace: str = "") -> None:
         self.replace = replace
@@ -84,17 +85,13 @@ class DisableOnWriteError(ObjectWrapper):
             except OSError as e:
                 if e.errno != 5:
                     raise
-                try:
+                with contextlib.suppress(ReferenceError):
                     tldm_instance.miniters = float("inf")
-                except ReferenceError:
-                    pass
             except ValueError as e:
                 if "closed" not in str(e):
                     raise
-                try:
+                with contextlib.suppress(ReferenceError):
                     tldm_instance.miniters = float("inf")
-                except ReferenceError:
-                    pass
 
         return inner
 
@@ -164,10 +161,7 @@ def _supports_unicode(fp: Any) -> bool:
 
 def _is_ascii(s: Any) -> bool:
     if isinstance(s, str):
-        for c in s:
-            if ord(c) > 255:
-                return False
-        return True
+        return all(ord(c) <= 255 for c in s)
     return _supports_unicode(s)
 
 
@@ -709,10 +703,8 @@ def format_meter(
         n_fmt = str(n)
         total_fmt = str(total) if total is not None else "?"
 
-    try:
+    with contextlib.suppress(TypeError):
         postfix = ", " + postfix if postfix else ""
-    except TypeError:
-        pass
 
     remaining = elapsed / (n - initial) * (total - n + initial) if rate and total else 0
     remaining_str = format_interval(remaining) if rate else "?"

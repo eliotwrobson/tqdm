@@ -8,7 +8,7 @@ import signal
 import sys
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable, Iterator
-from contextlib import AbstractContextManager, contextmanager
+from contextlib import AbstractContextManager, contextmanager, suppress
 from functools import total_ordering
 from multiprocessing import RLock
 from numbers import Number
@@ -289,12 +289,11 @@ class tldm(Generic[T]):
         order is not maintained but screen flicker/blank space is minimised.
         """
         with cls._lock:
-            try:
+            with suppress(KeyError):
+                # py2: maybe magically removed already
                 cls._instances.remove(instance)
-            except KeyError:
-                # if not instance.gui:  # pragma: no cover
-                #     raise
-                pass  # py2: maybe magically removed already
+            # if not instance.gui:  # pragma: no cover
+            #     raise
             # else:
 
             last = (instance.nrows or 20) - 1
@@ -862,7 +861,7 @@ class tldm(Generic[T]):
             return
 
         if self.last_pause_t != 0.0:
-            warn("The progress bar is already paused")
+            warn("The progress bar is already paused", stacklevel=2)
             return
 
         if refresh:  # By default refresh before doing a pause
@@ -876,7 +875,7 @@ class tldm(Generic[T]):
             return
 
         if self.last_pause_t == 0.0:
-            warn("The progress bar is not paused")
+            warn("The progress bar is not paused", stacklevel=2)
             return
 
         dt = self._time() - self.last_pause_t
@@ -952,7 +951,7 @@ class tldm(Generic[T]):
         for key in sorted(kwargs.keys()):
             postfix[key] = kwargs[key]
         # Preprocess stats according to datatype
-        for key in postfix.keys():
+        for key in postfix:
             # Number: limit the length of the string
             if isinstance(postfix[key], Number):
                 postfix[key] = format_num(postfix[key])
@@ -961,7 +960,7 @@ class tldm(Generic[T]):
                 postfix[key] = str(postfix[key])
             # Else if it's a string, don't need to preprocess anything
         # Stitch together to get the final postfix
-        self.postfix = ", ".join(key + "=" + postfix[key].strip() for key in postfix.keys())
+        self.postfix = ", ".join(key + "=" + postfix[key].strip() for key in postfix)
         if refresh:
             self.refresh()
 
@@ -1085,7 +1084,6 @@ def resize_signal_handler(signalnum, frame):
                         instance.nrows = nrows
 
 
-try:
+# Some systems, like Windows, do not have SIGWINCH
+with suppress(AttributeError):
     signal.signal(signal.SIGWINCH, resize_signal_handler)  # type: ignore[attr-defined]
-except AttributeError:
-    pass  # Some systems, like Windows, do not have SIGWINCH

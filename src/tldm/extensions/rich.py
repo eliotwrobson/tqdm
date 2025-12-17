@@ -215,7 +215,7 @@ class tldm_rich(std_tldm):  # pragma: no cover
                 console.file = self.fp
                 console.width = d["ncols"]
                 console.height = d["nrows"]
-                if d["ascii"] and not console.encoding == "ascii":
+                if d["ascii"] and console.encoding != "ascii":
                     warn(
                         "ascii output requested but passed console's encoding is not 'ascii'. "
                         "See `tldm.rich.ASCIIConsole` to force ASCII rendering.",

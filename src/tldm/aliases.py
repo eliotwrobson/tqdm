@@ -38,8 +38,7 @@ def tzip(
     """
     kwargs = tldm_kwargs.copy()
     tldm_class = kwargs.pop("tldm_class", tldm)
-    for i in zip(tldm_class(iter1, **kwargs), *iter2plus):
-        yield i
+    yield from zip(tldm_class(iter1, **kwargs), *iter2plus)
 
 
 def tmap(function: Callable[..., R], *sequences: Iterable[Any], **tldm_kwargs: Any) -> Iterator[R]:

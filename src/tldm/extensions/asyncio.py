@@ -3,7 +3,6 @@ Asynchronous progressbar decorator for iterators.
 """
 
 import asyncio
-from sys import version_info
 
 from ..std import tldm as std_tldm
 
@@ -47,7 +46,7 @@ class tldm_asyncio(std_tldm):
             return res
         except StopIteration:
             self.close()
-            raise StopAsyncIteration
+            raise StopAsyncIteration from None
         except BaseException:
             self.close()
             raise
@@ -62,11 +61,8 @@ class tldm_asyncio(std_tldm):
         """
         if total is None:
             total = len(fs)
-        kwargs = {}
-        if version_info[:2] < (3, 10):
-            kwargs["loop"] = loop
         yield from cls(
-            asyncio.as_completed(fs, timeout=timeout, **kwargs),
+            asyncio.as_completed(fs, timeout=timeout),
             total=total,
             **tldm_kwargs,
         )
@@ -96,11 +92,8 @@ class tldm_asyncio(std_tldm):
                 raise
 
         async def aiter_as_completed():
-            kwargs = {}
-            if version_info[:2] < (3, 10):
-                kwargs["loop"] = loop
             ifs = [wrap_awaitable(i, f) for i, f in enumerate(fs)]
-            for r in asyncio.as_completed(ifs, timeout=timeout, **kwargs):
+            for r in asyncio.as_completed(ifs, timeout=timeout):
                 yield await r
 
         res = [f async for f in cls(aiter_as_completed(), total=total, **tldm_kwargs)]

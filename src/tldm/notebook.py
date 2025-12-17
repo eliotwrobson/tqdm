@@ -5,6 +5,7 @@ Includes a default `range` iterator printing to `stderr`.
 """
 
 # import compatibility functions and utilities
+import contextlib
 import re
 import sys
 from html import escape
@@ -30,10 +31,8 @@ if True:  # pragma: no cover
             warnings.filterwarnings(
                 "ignore", message=".*The `IPython.html` package has been deprecated.*"
             )
-            try:
+            with contextlib.suppress(ImportError):
                 import IPython.html.widgets as ipywidgets  # NOQA: F401
-            except ImportError:
-                pass
 
     try:  # IPython 4.x / 3.x
         if IPY == 32:
@@ -188,11 +187,10 @@ class tldm_notebook(std_tldm):
                 rtext.value = right
 
         # Change bar style
-        if bar_style:
-            # Hack-ish way to avoid the danger bar_style being overridden by
-            # success because the bar gets closed after the error...
-            if pbar.bar_style != "danger" or bar_style != "success":
-                pbar.bar_style = bar_style
+        # Hack-ish way to avoid the danger bar_style being overridden by
+        # success because the bar gets closed after the error...
+        if bar_style and (pbar.bar_style != "danger" or bar_style != "success"):
+            pbar.bar_style = bar_style
 
         # Special signal to close the bar
         if close and pbar.bar_style != "danger":  # hide only if no error
@@ -279,9 +277,8 @@ class tldm_notebook(std_tldm):
     def __iter__(self):
         try:
             it = super().__iter__()
-            for obj in it:
-                # return super(tldm...) will not catch exception
-                yield obj
+            # return super(tldm...) will not catch exception
+            yield from it
         # NB: except ... [ as ...] breaks IPython async KeyboardInterrupt
         except:  # NOQA
             self.disp(bar_style="danger")
