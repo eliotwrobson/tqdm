@@ -185,7 +185,7 @@ def _screen_shape_windows(
 ) -> tuple[int, int] | tuple[None, None]:  # pragma: no cover
     try:
         import struct
-        from ctypes import create_string_buffer, windll  # type: ignore[misc,unused-ignore]
+        from ctypes import create_string_buffer, windll  # type: ignore[attr-defined,misc,unused-ignore]
         from sys import stdin, stdout
 
         io_handle = -12  # assume stderr

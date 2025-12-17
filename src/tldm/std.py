@@ -1086,4 +1086,4 @@ def resize_signal_handler(signalnum, frame):
 
 # Some systems, like Windows, do not have SIGWINCH
 with suppress(AttributeError):
-    signal.signal(signal.SIGWINCH, resize_signal_handler)  # type: ignore[attr-defined]
+    signal.signal(signal.SIGWINCH, resize_signal_handler)  # type: ignore[attr-defined,unused-ignore]
