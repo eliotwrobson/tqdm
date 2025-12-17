@@ -57,16 +57,19 @@ def relative_timer():
 
 
 @contextmanager
-def suppress_stdout():
-    """Suppress stdout to avoid large console output on test failures"""
+def suppress_output():
+    """Suppress stdout and stderr to avoid large console output on test failures"""
     import io
 
     old_stdout = sys.stdout
+    old_stderr = sys.stderr
     sys.stdout = io.StringIO()
+    sys.stderr = io.StringIO()
     try:
         yield
     finally:
         sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
 
 def simple_progress(
@@ -162,7 +165,7 @@ def test_iter_basic_overhead():
     checkCpuTime()
     total = int(1e6)
 
-    with suppress_stdout():
+    with suppress_output():
         a = 0
         with trange(total) as t, relative_timer() as time_tldm:
             for i in t:
@@ -184,7 +187,7 @@ def test_manual_basic_overhead():
     checkCpuTime()
     total = int(1e6)
 
-    with suppress_stdout():
+    with suppress_output():
         with tldm(total=total * 10, leave=True) as t:
             a = 0
             with relative_timer() as time_tldm:
@@ -248,7 +251,7 @@ def test_iter_overhead_hard():
     checkCpuTime()
     total = int(1e5)
 
-    with suppress_stdout():
+    with suppress_output():
         a = 0
         with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
             with relative_timer() as time_tldm:
@@ -271,7 +274,7 @@ def test_manual_overhead_hard():
     checkCpuTime()
     total = int(1e5)
 
-    with suppress_stdout():
+    with suppress_output():
         with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
             a = 0
             with relative_timer() as time_tldm:
@@ -294,7 +297,7 @@ def test_iter_overhead_simplebar_hard():
     checkCpuTime()
     total = int(1e4)
 
-    with suppress_stdout():
+    with suppress_output():
         a = 0
         with trange(total, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
             with relative_timer() as time_tldm:
@@ -317,7 +320,7 @@ def test_manual_overhead_simplebar_hard():
     checkCpuTime()
     total = int(1e4)
 
-    with suppress_stdout():
+    with suppress_output():
         with tldm(total=total * 10, leave=True, miniters=1, mininterval=0, maxinterval=0) as t:
             a = 0
             with relative_timer() as time_tldm:
