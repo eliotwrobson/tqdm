@@ -1,9 +1,19 @@
+from typing import Any, Callable, Iterable, Iterator, TypeVar
 from .std import tqdm
 import itertools
 from operator import length_hint
 
+T = TypeVar("T")
+R = TypeVar("R")
 
-def tenumerate(iterable, start=0, total=None, tqdm_class=tqdm, **tqdm_kwargs):
+
+def tenumerate(
+    iterable: Iterable[T],
+    start: int = 0,
+    total: int | float | None = None,
+    tqdm_class: type[tqdm] = tqdm,
+    **tqdm_kwargs: Any,
+) -> Iterator[tuple[int, T]]:
     """
     Equivalent of builtin `enumerate`.
 
@@ -14,7 +24,9 @@ def tenumerate(iterable, start=0, total=None, tqdm_class=tqdm, **tqdm_kwargs):
     return enumerate(tqdm_class(iterable, total=total, **tqdm_kwargs), start)
 
 
-def tzip(iter1, *iter2plus, **tqdm_kwargs):
+def tzip(
+    iter1: Iterable[T], *iter2plus: Iterable[Any], **tqdm_kwargs: Any
+) -> Iterator[tuple[T, ...]]:
     """
     Equivalent of builtin `zip`.
 
@@ -28,7 +40,9 @@ def tzip(iter1, *iter2plus, **tqdm_kwargs):
         yield i
 
 
-def tmap(function, *sequences, **tqdm_kwargs):
+def tmap(
+    function: Callable[..., R], *sequences: Iterable[Any], **tqdm_kwargs: Any
+) -> Iterator[R]:
     """
     Equivalent of builtin `map`.
 
@@ -40,7 +54,7 @@ def tmap(function, *sequences, **tqdm_kwargs):
         yield function(*i)
 
 
-def tproduct(*iterables, **tqdm_kwargs):
+def tproduct(*iterables: Iterable[T], **tqdm_kwargs: Any) -> Iterator[tuple[T, ...]]:
     """
     Equivalent of `itertools.product`.
 
@@ -63,11 +77,11 @@ def tproduct(*iterables, **tqdm_kwargs):
         kwargs.setdefault("total", total)
     with tqdm_class(**kwargs) as t:
         it = itertools.product(*iterables, repeat=repeat)
-        for i in it:
-            yield i
+        for val in it:
+            yield val
             t.update()
 
 
-def trange(*args, **kwargs):
+def trange(*args: int, **kwargs: Any) -> tqdm:
     """Shortcut for tqdm(range(*args), **kwargs)."""
     return tqdm(range(*args), **kwargs)
