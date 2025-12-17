@@ -1,19 +1,19 @@
-"""Tests `tqdm.asyncio`."""
+"""Tests `tldm.asyncio`."""
 
 import asyncio
 from functools import partial
 from sys import platform
 from time import time
 
-from tqdm.extensions.asyncio import tqdm_asyncio
+from tldm.extensions.asyncio import tldm_asyncio
 
 from io import StringIO
 from contextlib import closing
 from pytest import mark, raises
 
-tqdm = partial(tqdm_asyncio, miniters=0, mininterval=0)
-as_completed = partial(tqdm_asyncio.as_completed, miniters=0, mininterval=0)
-gather = partial(tqdm_asyncio.gather, miniters=0, mininterval=0)
+tldm = partial(tldm_asyncio, miniters=0, mininterval=0)
+as_completed = partial(tldm_asyncio.as_completed, miniters=0, mininterval=0)
+gather = partial(tldm_asyncio.gather, miniters=0, mininterval=0)
 
 
 def count(start=0, step=1):
@@ -34,7 +34,7 @@ async def acount(*args, **kwargs):
 @mark.asyncio
 async def test_break():
     """Test asyncio break"""
-    pbar = tqdm(count())
+    pbar = tldm(count())
     async for _ in pbar:
         break
     pbar.close()
@@ -43,7 +43,7 @@ async def test_break():
 @mark.asyncio
 async def test_generators(capsys):
     """Test asyncio generators"""
-    with tqdm(count(), desc="counter") as pbar:
+    with tldm(count(), desc="counter") as pbar:
         async for i in pbar:
             if i >= 8:
                 break
@@ -52,7 +52,7 @@ async def test_generators(capsys):
 
     acounter = acount()
     try:
-        with tqdm(acounter, desc="async_counter") as pbar:
+        with tldm(acounter, desc="async_counter") as pbar:
             async for i in pbar:
                 if i >= 8:
                     break

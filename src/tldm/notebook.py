@@ -10,8 +10,8 @@ import sys
 from html import escape
 from weakref import proxy
 
-# to inherit from the tqdm class
-from .std import tqdm as std_tqdm
+# to inherit from the tldm class
+from .std import tldm as std_tldm
 
 
 # TODO get rid of legacy imports
@@ -69,7 +69,7 @@ if True:  # pragma: no cover
         pass
 
 __author__ = {"github.com/": ["lrq3000", "casperdcl", "alexanderkuk"]}
-__all__ = ["tqdm_notebook", "tnrange", "tqdm", "trange"]
+__all__ = ["tldm_notebook", "tnrange", "tldm", "trange"]
 WARN_NOIPYW = (
     "IProgress not found. Please update jupyter and ipywidgets."
     " See https://ipywidgets.readthedocs.io/en/stable"
@@ -77,7 +77,7 @@ WARN_NOIPYW = (
 )
 
 
-class TqdmHBox(HBox):
+class TldmHBox(HBox):
     """`ipywidgets.HBox` with a pretty representation"""
 
     def _json_(self, pretty=None):
@@ -99,9 +99,9 @@ class TqdmHBox(HBox):
         pp.text(self.__repr__(True))
 
 
-class tqdm_notebook(std_tqdm):
+class tldm_notebook(std_tldm):
     """
-    Experimental IPython/Jupyter Notebook widget using tqdm!
+    Experimental IPython/Jupyter Notebook widget using tldm!
     """
 
     outer_container = None
@@ -114,7 +114,7 @@ class tqdm_notebook(std_tqdm):
         # Fallback to text bar if there's no total
         # DEPRECATED: replaced with an 'info' style bar
         # if not total:
-        #    return super(tqdm_notebook, tqdm_notebook).status_printer(file)
+        #    return super(tldm_notebook, tldm_notebook).status_printer(file)
 
         # fp = file
 
@@ -123,7 +123,7 @@ class tqdm_notebook(std_tqdm):
             raise ImportError(WARN_NOIPYW)
         if total:
             pbar = IProgress(min=0, max=total)
-        else:  # No total? Show info style bar with no progress tqdm status
+        else:  # No total? Show info style bar with no progress tldm status
             pbar = IProgress(min=0, max=1)
             pbar.value = 1
             pbar.bar_style = "info"
@@ -134,7 +134,7 @@ class tqdm_notebook(std_tqdm):
         rtext = HTML()
         if desc:
             ltext.value = desc
-        container = TqdmHBox(children=[ltext, pbar, rtext])
+        container = TldmHBox(children=[ltext, pbar, rtext])
         # Prepare layout
         if ncols is not None:  # use default style of ipywidgets
             # ncols could be 100, "100px", "100%"
@@ -160,7 +160,7 @@ class tqdm_notebook(std_tqdm):
         bar_style=None,
         check_delay=True,
     ):
-        # Note: contrary to native tqdm, msg='' does NOT clear bar
+        # Note: contrary to native tldm, msg='' does NOT clear bar
         # goal is to keep all infos if error happens so user knows
         # at which iteration the loop failed.
 
@@ -200,23 +200,23 @@ class tqdm_notebook(std_tqdm):
         # Special signal to close the bar
         if close and pbar.bar_style != "danger":  # hide only if no error
             # Remove self.container from the list of children of outer_container
-            tqdm_notebook.outer_container.children = tuple(
+            tldm_notebook.outer_container.children = tuple(
                 c
-                for c in tqdm_notebook.outer_container.children
+                for c in tldm_notebook.outer_container.children
                 if c is not self.container
             )
             try:
                 self.container.close()
                 if abs(self.pos) == 0:
-                    tqdm_notebook.outer_container.close()
+                    tldm_notebook.outer_container.close()
             except AttributeError:
                 self.container.visible = False
             self.container.layout.visibility = "hidden"  # IPYW>=8
 
         if check_delay and self.delay > 0 and not self.displayed:
-            tqdm_notebook.outer_container.children += (self.container,)
+            tldm_notebook.outer_container.children += (self.container,)
             if abs(self.pos) == 0:
-                display(tqdm_notebook.outer_container)
+                display(tldm_notebook.outer_container)
             self.displayed = True
 
     @property
@@ -231,7 +231,7 @@ class tqdm_notebook(std_tqdm):
 
     def __init__(self, *args, **kwargs):
         """
-        Supports the usual `tqdm.tqdm` parameters as well as those listed below.
+        Supports the usual `tldm.tldm` parameters as well as those listed below.
 
         Parameters
         ----------
@@ -263,16 +263,16 @@ class tqdm_notebook(std_tqdm):
         total = self.total
 
         if abs(self.pos) == 0:
-            tqdm_notebook.outer_container = VBox()
+            tldm_notebook.outer_container = VBox()
 
         self.container = self.status_printer(self.fp, total, self.desc, self.ncols)
 
         self.container.pbar = proxy(self)
         self.displayed = False
         if display_here and self.delay <= 0:
-            tqdm_notebook.outer_container.children += (self.container,)
+            tldm_notebook.outer_container.children += (self.container,)
             if abs(self.pos) == 0:
-                display(tqdm_notebook.outer_container)
+                display(tldm_notebook.outer_container)
             self.displayed = True
         self.disp = self.display
         self.colour = colour
@@ -285,7 +285,7 @@ class tqdm_notebook(std_tqdm):
         try:
             it = super().__iter__()
             for obj in it:
-                # return super(tqdm...) will not catch exception
+                # return super(tldm...) will not catch exception
                 yield obj
         # NB: except ... [ as ...] breaks IPython async KeyboardInterrupt
         except:  # NOQA
@@ -299,7 +299,7 @@ class tqdm_notebook(std_tqdm):
             return super().update(n=n)
         # NB: except ... [ as ...] breaks IPython async KeyboardInterrupt
         except:  # NOQA
-            # cannot catch KeyboardInterrupt when using manual tqdm
+            # cannot catch KeyboardInterrupt when using manual tldm
             # as the interrupt will most likely happen on another statement
             self.disp(bar_style="danger")
             raise
@@ -347,10 +347,10 @@ class tqdm_notebook(std_tqdm):
 
 
 def tnrange(*args, **kwargs):
-    """Shortcut for `tqdm.notebook.tqdm(range(*args), **kwargs)`."""
-    return tqdm_notebook(range(*args), **kwargs)
+    """Shortcut for `tldm.notebook.tldm(range(*args), **kwargs)`."""
+    return tldm_notebook(range(*args), **kwargs)
 
 
 # Aliases
-tqdm = tqdm_notebook
+tldm = tldm_notebook
 trange = tnrange

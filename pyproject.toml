@@ -78,7 +78,7 @@ requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/tqdm"]
+packages = ["src/tldm"]
 
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
@@ -144,7 +144,7 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 branch = true
-include = ["src/tqdm/*"]
+include = ["src/tldm/*"]
 relative_files = true
 disable_warnings = ["include-ignored"]
 [tool.coverage.report]

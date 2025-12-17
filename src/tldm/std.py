@@ -34,7 +34,7 @@ from multiprocessing import RLock
 from threading import RLock as TRLock
 
 from ._monitor import TMonitor
-from tqdm.utils import (
+from tldm.utils import (
     CallbackIOWrapper,
     DisableOnWriteError,
     _is_ascii,
@@ -44,21 +44,21 @@ from tqdm.utils import (
     format_meter,
     format_num,
     get_status_printer,
-    TqdmWarning,
+    TldmWarning,
 )
 
 
 # TODO remove some of these errors and put them in a separate file
-class TqdmTypeError(TypeError):
+class TldmTypeError(TypeError):
     pass
 
 
-class TqdmKeyError(KeyError):
+class TldmKeyError(KeyError):
     pass
 
 
-class TqdmMonitorWarning(Warning):
-    """tqdm monitor errors which do not affect external functionality"""
+class TldmMonitorWarning(Warning):
+    """tldm monitor errors which do not affect external functionality"""
 
     pass
 
@@ -71,11 +71,11 @@ class _LockType(AbstractContextManager, Protocol):
     def release(self) -> None: ...
 
 
-class TqdmDefaultWriteLock(object):
+class TldmDefaultWriteLock(object):
     """
     Provide a default write lock for thread and multiprocessing safety.
     Works only on platforms supporting `fork` (so Windows is excluded).
-    You must initialise a `tqdm` or `TqdmDefaultWriteLock` instance
+    You must initialise a `tldm` or `TldmDefaultWriteLock` instance
     before forking in order for the write lock to work.
     On Windows, you need to supply the lock from the parent to the children as
     an argument to joblib or the parallelism lib you use.
@@ -115,8 +115,8 @@ class TqdmDefaultWriteLock(object):
         self.release()
 
     def __del__(self) -> None:
-        if TqdmDefaultWriteLock.mp_lock is not None:
-            del TqdmDefaultWriteLock.mp_lock
+        if TldmDefaultWriteLock.mp_lock is not None:
+            del TldmDefaultWriteLock.mp_lock
 
     @classmethod
     def create_mp_lock(cls) -> None:
@@ -127,12 +127,12 @@ class TqdmDefaultWriteLock(object):
                 cls.mp_lock = None
 
 
-# TODO add typevar the way the TQDM types are set up
+# TODO add typevar the way the tldm types are set up
 T = TypeVar("T")
 
 
 @total_ordering
-class tqdm(Generic[T]):
+class tldm(Generic[T]):
     """
     Decorate an iterable object, returning an iterator which acts exactly
     like the original iterable, but prints a dynamically updating
@@ -249,14 +249,14 @@ class tqdm(Generic[T]):
 
     monitor_interval: ClassVar[float] = 10  # set to 0 to disable the thread
     monitor: ClassVar[TMonitor | None] = None
-    _instances: ClassVar[WeakSet["tqdm"]] = WeakSet()
-    _lock: ClassVar[TqdmDefaultWriteLock]
+    _instances: ClassVar[WeakSet["tldm"]] = WeakSet()
+    _lock: ClassVar[TldmDefaultWriteLock]
 
-    registered_classes: ClassVar[set[type["tqdm"]]] = set()
+    registered_classes: ClassVar[set[type["tldm"]]] = set()
 
-    def __new__(cls, *args: Any, **kwargs: dict[str, Any]) -> "tqdm":
+    def __new__(cls, *args: Any, **kwargs: dict[str, Any]) -> "tldm":
         instance = object.__new__(cls)
-        tqdm.registered_classes.add(cls)  # type: ignore[misc]
+        tldm.registered_classes.add(cls)  # type: ignore[misc]
         with cls.get_lock():  # also constructs lock if non-existent
             cls._instances.add(instance)
             # create monitoring thread
@@ -267,16 +267,16 @@ class tqdm(Generic[T]):
                     cls.monitor = TMonitor(cls, cls.monitor_interval)
                 except Exception as e:  # pragma: nocover
                     warn(
-                        "tqdm:disabling monitor support"
+                        "tldm:disabling monitor support"
                         " (monitor_interval = 0) due to:\n" + str(e),
-                        TqdmMonitorWarning,
+                        TldmMonitorWarning,
                         stacklevel=2,
                     )
                     cls.monitor_interval = 0
         return instance
 
     @classmethod
-    def _get_free_pos(cls, instance: "tqdm | None" = None) -> int:
+    def _get_free_pos(cls, instance: "tldm | None" = None) -> int:
         """Skips specified instance."""
         positions = {
             abs(inst.pos)
@@ -286,7 +286,7 @@ class tqdm(Generic[T]):
         return min(set(range(len(positions) + 1)).difference(positions))
 
     @classmethod
-    def _decr_instances(cls, instance: "tqdm") -> None:
+    def _decr_instances(cls, instance: "tldm") -> None:
         """
         Remove from list and reposition another unfixed bar
         to fill the new gap.
@@ -343,7 +343,7 @@ class tqdm(Generic[T]):
         end: str = "\n",
         nolock: bool = False,
     ) -> None:
-        """Print a message via tqdm (without overlap with bars)."""
+        """Print a message via tldm (without overlap with bars)."""
         fp = file if file is not None else sys.stdout
         with cls.external_write_mode(file=file, nolock=nolock):
             # Write the message
@@ -359,7 +359,7 @@ class tqdm(Generic[T]):
         end: str = "\n",
         nolock: bool = False,
     ) -> None:
-        """Print several heterogeneous values via tqdm (without overlap with bars)."""
+        """Print several heterogeneous values via tldm (without overlap with bars)."""
         cls.write(
             sep.join("{}".format(v) for v in values), file=file, end=end, nolock=nolock
         )
@@ -370,7 +370,7 @@ class tqdm(Generic[T]):
         cls, file: TextIO | None = None, nolock: bool = False
     ) -> Iterator[None]:
         """
-        Disable tqdm within context and refresh tqdm when exits.
+        Disable tldm within context and refresh tldm when exits.
         Useful when writing to standard output stream
         """
         fp = file if file is not None else sys.stdout
@@ -382,7 +382,7 @@ class tqdm(Generic[T]):
             inst_cleared = []
             for inst in getattr(cls, "_instances", []):
                 # Clear instance if in the target output file
-                # or if write output + tqdm output are both either
+                # or if write output + tldm output are both either
                 # sys.stdout or sys.stderr (because both are mixed in terminal)
                 if hasattr(inst, "start_t") and (
                     inst.fp == fp
@@ -399,15 +399,15 @@ class tqdm(Generic[T]):
                 cls._lock.release()
 
     @classmethod
-    def set_lock(cls, lock: TqdmDefaultWriteLock) -> None:
+    def set_lock(cls, lock: TldmDefaultWriteLock) -> None:
         """Set the global lock."""
         cls._lock = lock
 
     @classmethod
-    def get_lock(cls) -> TqdmDefaultWriteLock:
+    def get_lock(cls) -> TldmDefaultWriteLock:
         """Get the global lock. Construct it if it does not exist."""
         if not hasattr(cls, "_lock"):
-            cls._lock = TqdmDefaultWriteLock()
+            cls._lock = TldmDefaultWriteLock()
         return cls._lock
 
     # Type annotations for instance variables
@@ -442,13 +442,13 @@ class tqdm(Generic[T]):
         title: bool = False,
         **kwargs: dict[str, Any],
     ) -> None:
-        """see tqdm.tqdm for arguments"""
+        """see tldm.tldm for arguments"""
 
         # NOTE must set this here first to avoid issues with changing sys.stderr
         if file is None:
             file = sys.stderr
 
-        file = cast(TextIO, DisableOnWriteError(file, tqdm_instance=self))
+        file = cast(TextIO, DisableOnWriteError(file, tldm_instance=self))
 
         if total is None and iterable is not None:
             total = length_hint(iterable)
@@ -578,7 +578,7 @@ class tqdm(Generic[T]):
 
     def __reversed__(self) -> Self:
         if self.iterable is None:
-            raise TypeError("tqdm instance needs an iterable")
+            raise TypeError("tldm instance needs an iterable")
 
         # Shallow copy the object.
         reversed_obj = copy.copy(self)
@@ -602,16 +602,16 @@ class tqdm(Generic[T]):
             # maybe eager thread cleanup upon external error
             if (exc_type, exc_value, traceback) == (None, None, None):
                 raise
-            warn("AttributeError ignored", TqdmWarning, stacklevel=2)
+            warn("AttributeError ignored", TldmWarning, stacklevel=2)
 
     # TODO add the functionality from this code back if necessary
     # def __del__(self) -> None:
     #     self.close()
-    #     if len(tqdm._instances) == 0:
-    #         if hasattr(tqdm, "_lock"):
-    #             del tqdm._lock
-    #         if hasattr(tqdm, "monitor") and tqdm.monitor is not None:
-    #             tqdm.monitor.exit()
+    #     if len(tldm._instances) == 0:
+    #         if hasattr(tldm, "_lock"):
+    #             del tldm._lock
+    #         if hasattr(tldm, "monitor") and tldm.monitor is not None:
+    #             tldm.monitor.exit()
 
     def __str__(self) -> str:
         return format_meter(**self.format_dict)
@@ -652,7 +652,7 @@ class tqdm(Generic[T]):
         return len(self) <= len(other)
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, tqdm):
+        if not isinstance(other, tldm):
             return NotImplemented
 
         if hasattr(other, "_comparable"):
@@ -673,10 +673,10 @@ class tqdm(Generic[T]):
         return id(self)
 
     def __iter__(self) -> Iterator[T]:
-        """Backward-compatibility to use: for x in tqdm(iterable)"""
+        """Backward-compatibility to use: for x in tldm(iterable)"""
 
         if self.iterable is None:
-            raise TqdmTypeError("tqdm instance needs an iterable")
+            raise TldmTypeError("tldm instance needs an iterable")
 
         # If the bar is disabled, then just walk the iterable
         # (note: keep this check outside the loop for performance)
@@ -717,7 +717,7 @@ class tqdm(Generic[T]):
         Manually update the progress bar, useful for streams
         such as reading files.
         E.g.:
-        >>> t = tqdm(total=filesize) # Initialise
+        >>> t = tldm(total=filesize) # Initialise
         >>> for current_buffer in stream:
         ...    ...
         ...    t.update(len(current_buffer))
@@ -760,8 +760,8 @@ class tqdm(Generic[T]):
                 if self.dynamic_miniters:
                     # If no `miniters` was specified, adjust automatically to the
                     # maximum iteration rate seen so far between two prints.
-                    # e.g.: After running `tqdm.update(5)`, subsequent
-                    # calls to `tqdm.update()` will only cause an update after
+                    # e.g.: After running `tldm.update(5)`, subsequent
+                    # calls to `tldm.update()` will only cause an update after
                     # at least 5 more iterations.
                     if self.maxinterval and dt >= self.maxinterval:
                         self.miniters = dn * (self.mininterval or self.maxinterval) / dt
@@ -872,7 +872,7 @@ class tqdm(Generic[T]):
                 self._lock.release()
 
     def pause(self, refresh: bool = True) -> None:
-        """Pause the tqdm timer.
+        """Pause the tldm timer.
 
         Refresh the progress bar by default.
         """
@@ -889,7 +889,7 @@ class tqdm(Generic[T]):
         self.last_pause_t = self._time()
 
     def unpause(self) -> None:
-        """Restart tqdm timer from last pause."""
+        """Restart tldm timer from last pause."""
         if self.disable:
             return
 
@@ -1073,7 +1073,7 @@ class tqdm(Generic[T]):
         method: Literal["read", "write"],
         total: int | float | None = None,
         bytes: bool = True,
-        **tqdm_kwargs: Any,
+        **tldm_kwargs: Any,
     ):
         # TODO add return type
         """
@@ -1081,13 +1081,13 @@ class tqdm(Generic[T]):
         method  : str, "read" or "write". The result of `read()` and
             the first argument of `write()` should have a `len()`.
 
-        >>> with tqdm.wrapattr(file_obj, "read", total=file_obj.size) as fobj:
+        >>> with tldm.wrapattr(file_obj, "read", total=file_obj.size) as fobj:
         ...     while True:
         ...         chunk = fobj.read(chunk_size)
         ...         if not chunk:
         ...             break
         """
-        with cls(total=total, **tqdm_kwargs) as t:
+        with cls(total=total, **tldm_kwargs) as t:
             if bytes:
                 t.unit = "B"
                 t.unit_scale = True
@@ -1096,7 +1096,7 @@ class tqdm(Generic[T]):
 
 
 def resize_signal_handler(signalnum, frame):
-    for cls in tqdm.registered_classes:
+    for cls in tldm.registered_classes:
         with cls.get_lock():
             for instance in cls._instances:
                 if instance.dynamic_ncols:

@@ -8,7 +8,7 @@ from time import sleep, time
 from time import process_time
 
 
-from tqdm import tqdm, trange
+from tldm import tldm, trange
 
 from .conftest import patch_lock
 
@@ -346,3 +346,5 @@ def test_manual_overhead_simplebar_hard():
             simplebar_update(10)
 
     assert_performance(10, "tqdm", time_tqdm(), "simple_progress", time_bench())
+
+

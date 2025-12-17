@@ -1,15 +1,15 @@
 """
-Registration for `tqdm` to provide `pandas` progress indicators.
+Registration for `tldm` to provide `pandas` progress indicators.
 """
 
 from typing import Any
 
-from ..std import tqdm as std_tqdm
+from ..std import tldm as std_tldm
 
 
-def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
+def tldm_pandas(**tldm_kwargs: dict[str, Any]) -> None:
     """
-    Registers the current `tqdm` class with
+    Registers the current `tldm` class with
         pandas.core.
         ( frame.DataFrame
         | series.Series
@@ -22,17 +22,17 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
 
     Parameters
     ----------
-    tqdm_kwargs  : arguments for the tqdm instance
+    tldm_kwargs  : arguments for the tldm instance
 
     Examples
     --------
     >>> import pandas as pd
     >>> import numpy as np
-    >>> from tqdm import tqdm, tqdm_pandas
-    >>> from tqdm.gui import tqdm as tqdm_gui
+    >>> from tldm import tldm, tldm_pandas
+    >>> from tldm.gui import tldm as tldm_gui
     >>>
     >>> df = pd.DataFrame(np.random.randint(0, 100, (100000, 6)))
-    >>> tqdm_pandas(ncols=50)  # can use tqdm_gui, optional kwargs, etc
+    >>> tldm_pandas(ncols=50)  # can use tldm_gui, optional kwargs, etc
     >>> # Now you can use `progress_apply` instead of `apply`
     >>> df.groupby(0).progress_apply(lambda x: x**2)
 
@@ -87,7 +87,7 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
         except ImportError:  # pandas>=0.25.0
             PanelGroupBy = None
 
-    tqdm_kwargs = tqdm_kwargs.copy()
+    tldm_kwargs = tldm_kwargs.copy()
 
     def inner_generator(df_function="apply"):
         def inner(df, func, **kwargs):
@@ -103,7 +103,7 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
             """
 
             # Precompute total iterations
-            total = tqdm_kwargs.pop("total", getattr(df, "ngroups", None))
+            total = tldm_kwargs.pop("total", getattr(df, "ngroups", None))
             if total is None:  # not grouped
                 if df_function == "applymap":
                     total = df.size
@@ -122,7 +122,7 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
                     total = df.size // df.shape[axis]
 
             # Init bar
-            t = std_tqdm(total=total, **tqdm_kwargs)
+            t = std_tldm(total=total, **tldm_kwargs)
 
             try:  # pandas>=1.3.0
                 from pandas.core.common import is_builtin_func
@@ -152,7 +152,7 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
         return inner
 
     # Monkeypatch pandas to provide easy methods
-    # Enable custom tqdm progress in pandas!
+    # Enable custom tldm progress in pandas!
     Series.progress_apply = inner_generator()
     SeriesGroupBy.progress_apply = inner_generator()
     Series.progress_map = inner_generator("map")
@@ -178,3 +178,6 @@ def tqdm_pandas(**tqdm_kwargs: dict[str, Any]) -> None:
         Expanding.progress_apply = inner_generator()
     elif _Rolling_and_Expanding is not None:
         _Rolling_and_Expanding.progress_apply = inner_generator()
+
+
+

@@ -1,5 +1,5 @@
 from typing import Any, Callable, Iterable, Iterator, TypeVar
-from .std import tqdm
+from .std import tldm
 import itertools
 from operator import length_hint
 
@@ -11,60 +11,60 @@ def tenumerate(
     iterable: Iterable[T],
     start: int = 0,
     total: int | float | None = None,
-    tqdm_class: type[tqdm] = tqdm,
-    **tqdm_kwargs: Any,
+    tldm_class: type[tldm] = tldm,
+    **tldm_kwargs: Any,
 ) -> Iterator[tuple[int, T]]:
     """
     Equivalent of builtin `enumerate`.
 
     Parameters
     ----------
-    tqdm_class  : [default: tqdm.std.tqdm].
+    tldm_class  : [default: tldm.std.tldm].
     """
-    return enumerate(tqdm_class(iterable, total=total, **tqdm_kwargs), start)
+    return enumerate(tldm_class(iterable, total=total, **tldm_kwargs), start)
 
 
 def tzip(
-    iter1: Iterable[T], *iter2plus: Iterable[Any], **tqdm_kwargs: Any
+    iter1: Iterable[T], *iter2plus: Iterable[Any], **tldm_kwargs: Any
 ) -> Iterator[tuple[T, ...]]:
     """
     Equivalent of builtin `zip`.
 
     Parameters
     ----------
-    tqdm_class  : [default: tqdm.std.tqdm].
+    tldm_class  : [default: tldm.std.tldm].
     """
-    kwargs = tqdm_kwargs.copy()
-    tqdm_class = kwargs.pop("tqdm_class", tqdm)
-    for i in zip(tqdm_class(iter1, **kwargs), *iter2plus):
+    kwargs = tldm_kwargs.copy()
+    tldm_class = kwargs.pop("tldm_class", tldm)
+    for i in zip(tldm_class(iter1, **kwargs), *iter2plus):
         yield i
 
 
 def tmap(
-    function: Callable[..., R], *sequences: Iterable[Any], **tqdm_kwargs: Any
+    function: Callable[..., R], *sequences: Iterable[Any], **tldm_kwargs: Any
 ) -> Iterator[R]:
     """
     Equivalent of builtin `map`.
 
     Parameters
     ----------
-    tqdm_class  : [default: tqdm.std.tqdm].
+    tldm_class  : [default: tldm.std.tldm].
     """
-    for i in tzip(*sequences, **tqdm_kwargs):
+    for i in tzip(*sequences, **tldm_kwargs):
         yield function(*i)
 
 
-def tproduct(*iterables: Iterable[T], **tqdm_kwargs: Any) -> Iterator[tuple[T, ...]]:
+def tproduct(*iterables: Iterable[T], **tldm_kwargs: Any) -> Iterator[tuple[T, ...]]:
     """
     Equivalent of `itertools.product`.
 
     Parameters
     ----------
-    tqdm_class  : [default: tqdm.std.tqdm].
+    tldm_class  : [default: tldm.std.tldm].
     """
-    kwargs = tqdm_kwargs.copy()
+    kwargs = tldm_kwargs.copy()
     repeat = kwargs.pop("repeat", 1)
-    tqdm_class = kwargs.pop("tqdm_class", tqdm)
+    tldm_class = kwargs.pop("tldm_class", tldm)
     try:
         lens = list(map(length_hint, iterables))
     except TypeError:
@@ -75,13 +75,13 @@ def tproduct(*iterables: Iterable[T], **tqdm_kwargs: Any) -> Iterator[tuple[T, .
             total *= i
         total = total**repeat
         kwargs.setdefault("total", total)
-    with tqdm_class(**kwargs) as t:
+    with tldm_class(**kwargs) as t:
         it = itertools.product(*iterables, repeat=repeat)
         for val in it:
             yield val
             t.update()
 
 
-def trange(*args: int, **kwargs: Any) -> tqdm:
-    """Shortcut for tqdm(range(*args), **kwargs)."""
-    return tqdm(range(*args), **kwargs)
+def trange(*args: int, **kwargs: Any) -> tldm:
+    """Shortcut for tldm(range(*args), **kwargs)."""
+    return tldm(range(*args), **kwargs)

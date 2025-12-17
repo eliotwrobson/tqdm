@@ -1,5 +1,5 @@
 """
-General helpers required for `tqdm.std`.
+General helpers required for `tldm.std`.
 """
 
 import os
@@ -70,17 +70,17 @@ class ObjectWrapper:
 
 class DisableOnWriteError(ObjectWrapper):
     """
-    Disable the given `tqdm_instance` upon `write()` or `flush()` errors.
+    Disable the given `tldm_instance` upon `write()` or `flush()` errors.
     """
 
     @staticmethod
     def disable_on_exception(
-        tqdm_instance: Any, func: Callable[..., Any]
+        tldm_instance: Any, func: Callable[..., Any]
     ) -> Callable[..., Any]:
         """
-        Quietly set `tqdm_instance.miniters=inf` if `func` raises `errno=5`.
+        Quietly set `tldm_instance.miniters=inf` if `func` raises `errno=5`.
         """
-        tqdm_instance = proxy(tqdm_instance)
+        tldm_instance = proxy(tldm_instance)
 
         def inner(*args, **kwargs):
             try:
@@ -89,28 +89,28 @@ class DisableOnWriteError(ObjectWrapper):
                 if e.errno != 5:
                     raise
                 try:
-                    tqdm_instance.miniters = float("inf")
+                    tldm_instance.miniters = float("inf")
                 except ReferenceError:
                     pass
             except ValueError as e:
                 if "closed" not in str(e):
                     raise
                 try:
-                    tqdm_instance.miniters = float("inf")
+                    tldm_instance.miniters = float("inf")
                 except ReferenceError:
                     pass
 
         return inner
 
-    def __init__(self, wrapped: TextIO, tqdm_instance: Any) -> None:
+    def __init__(self, wrapped: TextIO, tldm_instance: Any) -> None:
         super().__init__(wrapped)
         if hasattr(wrapped, "write"):
             self.wrapper_setattr(
-                "write", self.disable_on_exception(tqdm_instance, wrapped.write)
+                "write", self.disable_on_exception(tldm_instance, wrapped.write)
             )
         if hasattr(wrapped, "flush"):
             self.wrapper_setattr(
-                "flush", self.disable_on_exception(tqdm_instance, wrapped.flush)
+                "flush", self.disable_on_exception(tldm_instance, wrapped.flush)
             )
 
     def __eq__(self, other: Any) -> bool:
@@ -367,8 +367,8 @@ def get_ema_func(smoothing: float = 0.3) -> Callable[[float | None], float]:
 # TODO make a separate file with exception + warning types
 
 
-class TqdmWarning(Warning):
-    """base class for all tqdm warnings.
+class TldmWarning(Warning):
+    """base class for all tldm warnings.
 
     Used for non-external-code-breaking errors, such as garbled printing.
     """
@@ -424,7 +424,7 @@ class Bar(object):
         colour: str | None = None,
     ) -> None:
         if not 0 <= frac <= 1:
-            warn("clamping frac to range [0, 1]", TqdmWarning, stacklevel=2)
+            warn("clamping frac to range [0, 1]", TldmWarning, stacklevel=2)
             frac = max(0, min(1, frac))
         assert default_len > 0
         self.frac = frac
@@ -457,7 +457,7 @@ class Bar(object):
             warn(
                 "Unknown colour (%s); valid choices: [hex (#00ff00), %s]"
                 % (value, ", ".join(self.COLOURS)),
-                TqdmWarning,
+                TldmWarning,
                 stacklevel=2,
             )
             self._colour = None

@@ -2,7 +2,7 @@ from ast import literal_eval
 from collections import defaultdict
 from typing import Union  # py<3.10
 
-from tqdm.utils import (
+from tldm.utils import (
     get_ema_func,
     format_meter,
     format_num,
@@ -83,7 +83,7 @@ def test_format_meter() -> None:
     """Test statistics and progress bar formatting"""
 
     assert format_meter(0, 1000, 13) == "  0%|          | 0/1000 [00:13<?, ?it/s]"
-    # If not implementing any changes to _tqdm.py, set prefix='desc'
+    # If not implementing any changes to _tldm.py, set prefix='desc'
     # or else ": : " will be in output, so assertion should change
     assert format_meter(0, 1000, 13, ncols=68, prefix="desc: ") == (
         "desc:   0%|                                | 0/1000 [00:13<?, ?it/s]"
@@ -228,3 +228,5 @@ def test_format_interval() -> None:
     assert format_interval(60) == "01:00"
     assert format_interval(6160) == "1:42:40"
     assert format_interval(238113) == "2d 18:08:33"
+
+

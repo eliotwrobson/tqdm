@@ -1,18 +1,18 @@
-# tqdm
+# tldm
 
-**tqdm** derives from the Arabic word _taqaddum_ (تقدّم) which can mean "progress," and is an abbreviation for "I love you so much" in Spanish (_te quiero demasiado_).
+**tldm** derives from the Arabic word _taqaddum_ (تقدّم) which can mean "progress," and is an abbreviation for "I love you so much" in Spanish (_te quiero demasiado_).
 
-Instantly make your loops show a smart progress meter - just wrap any iterable with `tqdm(iterable)`, and you're done!
+Instantly make your loops show a smart progress meter - just wrap any iterable with `tldm(iterable)`, and you're done!
 
 ```python
-from tqdm import tqdm
-for i in tqdm(range(10000)):
+from tldm import tldm
+for i in tldm(range(10000)):
     ...
 ```
 
 `76%|████████████████████████        | 7568/10000 [00:33<00:10, 229.00it/s]`
 
-`trange(N)` can also be used as a convenient shortcut for `tqdm(range(N))`.
+`trange(N)` can also be used as a convenient shortcut for `tldm(range(N))`.
 
 A progress bar in Python with a focus on simplicity and ease of use. This library makes your loops display with a smart progress meter, offering predictive statistics and minimal overhead.
 
@@ -48,51 +48,51 @@ Works across all major platforms (Linux, Windows, macOS) and in all major enviro
 
 ## Installation
 
-You can install `tqdm` via pip:
+You can install `tldm` via pip:
 
 ```bash
-pip install tqdm
+pip install tldm
 ```
 
 Latest development release:
 
 ```bash
-pip install "git+https://github.com/tqdm/tqdm.git@devel#egg=tqdm"
+pip install "git+https://github.com/tqdm/tldm.git@devel#egg=tldm"
 ```
 
 ---
 
 ## Usage
 
-`tqdm` is very versatile and can be used in a number of ways. The two main ones are given below.
+`tldm` is very versatile and can be used in a number of ways. The two main ones are given below.
 
 ### Iterable-based
 
-Wrap `tqdm()` around any iterable:
+Wrap `tldm()` around any iterable:
 
 ```python
-from tqdm import tqdm
+from tldm import tldm
 from time import sleep
 
 text = ""
-for char in tqdm(["a", "b", "c", "d"]):
+for char in tldm(["a", "b", "c", "d"]):
     sleep(0.25)
     text = text + char
 ```
 
-`trange(i)` is a special optimised instance of `tqdm(range(i))`:
+`trange(i)` is a special optimised instance of `tldm(range(i))`:
 
 ```python
-from tqdm import trange
+from tldm import trange
 
 for i in trange(100):
     sleep(0.01)
 ```
 
-Instantiation outside of the loop allows for manual control over `tqdm()`:
+Instantiation outside of the loop allows for manual control over `tldm()`:
 
 ```python
-pbar = tqdm(["a", "b", "c", "d"])
+pbar = tldm(["a", "b", "c", "d"])
 for char in pbar:
     sleep(0.25)
     pbar.set_description("Processing %s" % char)
@@ -100,13 +100,13 @@ for char in pbar:
 
 ### Manual Control
 
-Manual control of `tqdm()` updates using a `with` statement:
+Manual control of `tldm()` updates using a `with` statement:
 
 ```python
-from tqdm import tqdm
+from tldm import tldm
 from time import sleep
 
-with tqdm(total=100) as pbar:
+with tldm(total=100) as pbar:
     for i in range(10):
         sleep(0.1)
         pbar.update(10)
@@ -114,10 +114,10 @@ with tqdm(total=100) as pbar:
 
 If the optional variable `total` (or an iterable with `len()`) is provided, predictive stats are displayed.
 
-`with` is also optional (you can just assign `tqdm()` to a variable, but in this case don't forget to `del` or `close()` at the end):
+`with` is also optional (you can just assign `tldm()` to a variable, but in this case don't forget to `del` or `close()` at the end):
 
 ```python
-pbar = tqdm(total=100)
+pbar = tldm(total=100)
 for i in range(10):
     sleep(0.1)
     pbar.update(10)
@@ -131,7 +131,7 @@ pbar.close()
 ### Simple Loop with Progress Bar
 
 ```python
-from tqdm import trange
+from tldm import trange
 from time import sleep
 
 for i in trange(16, leave=True):
@@ -141,7 +141,7 @@ for i in trange(16, leave=True):
 ### Nested Progress Bars
 
 ```python
-from tqdm import trange
+from tldm import trange
 from time import sleep
 
 for i in trange(10, desc='1st loop'):
@@ -157,12 +157,12 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from random import random
 from time import sleep
-from tqdm import tqdm
+from tldm import tldm
 
 def worker(n):
     interval = random() * 0.01
     total = 100
-    for _ in tqdm(range(total), desc=f"Task #{n}", position=n):
+    for _ in tldm(range(total), desc=f"Task #{n}", position=n):
         sleep(interval)
     return n + 1
 
@@ -174,15 +174,15 @@ if __name__ == '__main__':
 ### Custom Prefix and Units
 
 ```python
-from tqdm import tqdm
+from tldm import tldm
 from time import sleep
 
 # Custom unit and description
-for i in tqdm(range(100), desc="Processing", unit="files"):
+for i in tldm(range(100), desc="Processing", unit="files"):
     sleep(0.01)
 
 # Custom unit with scaling
-for i in tqdm(range(1000000), unit="B", unit_scale=True, unit_divisor=1024):
+for i in tldm(range(1000000), unit="B", unit_scale=True, unit_divisor=1024):
     pass  # This will show KB, MB, etc.
 ```
 
@@ -276,7 +276,7 @@ for i in tqdm(range(1000000), unit="B", unit_scale=True, unit_divisor=1024):
 Manually update the progress bar, useful for streams such as reading files.
 
 ```python
-with tqdm(total=100) as pbar:
+with tldm(total=100) as pbar:
     for i in range(10):
         # do something
         pbar.update(10)
@@ -299,7 +299,7 @@ Force refresh the display of this bar.
 Set/modify description of the progress bar.
 
 ```python
-pbar = tqdm(range(10))
+pbar = tldm(range(10))
 for i in pbar:
     pbar.set_description(f"Processing {i}")
 ```
@@ -309,7 +309,7 @@ for i in pbar:
 Set/modify postfix (additional stats) with automatic formatting based on datatype.
 
 ```python
-from tqdm import trange
+from tldm import trange
 from random import random
 from time import sleep
 
@@ -324,27 +324,27 @@ with trange(10) as t:
 Print messages via tqdm without overlapping with the progress bar. This works like the builtin `print()` function and is the recommended way to print messages.
 
 ```python
-from tqdm import tqdm
+from tldm import tldm
 from time import sleep
 
-for i in tqdm(range(10)):
+for i in tldm(range(10)):
     if i == 5:
-        tqdm.print("Half way there!")
-        tqdm.print("Progress:", i, "out of", 10)
+        tldm.print("Half way there!")
+        tldm.print("Progress:", i, "out of", 10)
     sleep(0.1)
 ```
 
 ### `write(s, file=sys.stdout, end="\n")`
 
-Print a single string via tqdm without overlapping with the progress bar. For most use cases, `tqdm.print()` is more convenient.
+Print a single string via tqdm without overlapping with the progress bar. For most use cases, `tldm.print()` is more convenient.
 
 ```python
-from tqdm import tqdm
+from tldm import tldm
 from time import sleep
 
-for i in tqdm(range(10)):
+for i in tldm(range(10)):
     if i == 5:
-        tqdm.write("Half way there!")
+        tldm.write("Half way there!")
     sleep(0.1)
 ```
 
@@ -358,10 +358,10 @@ Reset the progress bar to 0 iterations for repeated use.
 
 ### `trange(*args, **kwargs)`
 
-Shortcut for `tqdm(range(*args), **kwargs)`.
+Shortcut for `tldm(range(*args), **kwargs)`.
 
 ```python
-from tqdm import trange
+from tldm import trange
 
 for i in trange(100):
     pass
@@ -372,7 +372,7 @@ for i in trange(100):
 Equivalent of builtin `enumerate` with a progress bar.
 
 ```python
-from tqdm import tenumerate
+from tldm import tenumerate
 
 for i, item in tenumerate(['a', 'b', 'c']):
     print(f"{i}: {item}")
@@ -383,7 +383,7 @@ for i, item in tenumerate(['a', 'b', 'c']):
 Equivalent of builtin `zip` with a progress bar.
 
 ```python
-from tqdm import tzip
+from tldm import tzip
 
 for a, b in tzip(range(100), range(100, 200)):
     pass
@@ -394,7 +394,7 @@ for a, b in tzip(range(100), range(100, 200)):
 Equivalent of builtin `map` with a progress bar.
 
 ```python
-from tqdm import tmap
+from tldm import tmap
 
 results = list(tmap(lambda x: x**2, range(100)))
 ```
@@ -404,7 +404,7 @@ results = list(tmap(lambda x: x**2, range(100)))
 Equivalent of `itertools.product` with a progress bar.
 
 ```python
-from tqdm import tproduct
+from tldm import tproduct
 
 for combo in tproduct(range(10), range(10)):
     pass
@@ -416,14 +416,14 @@ for combo in tproduct(range(10), range(10)):
 
 > **Note:** Extension support is still a work in progress. The core library focuses on command-line use cases.
 
-This tqdm implementation includes several extension modules located in `tqdm.extensions`:
+This tqdm implementation includes several extension modules located in `tldm.extensions`:
 
 ### Asyncio
 
 Asynchronous-friendly version of tqdm for use with `async`/`await`:
 
 ```python
-from tqdm.extensions.asyncio import tqdm_asyncio
+from tldm.extensions.asyncio import tldm_asyncio
 import asyncio
 
 async def main():
@@ -436,7 +436,7 @@ asyncio.run(main())
 **Note**: When using `break` with async iterators, either call `pbar.close()` manually or use the context manager syntax to ensure proper cleanup:
 
 ```python
-from tqdm.extensions.asyncio import tqdm_asyncio
+from tldm.extensions.asyncio import tldm_asyncio
 
 with tqdm_asyncio(range(100)) as pbar:
     async for i in pbar:
@@ -451,10 +451,10 @@ Apply tqdm to pandas operations:
 ```python
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
+from tldm import tldm
 
 # Register pandas integration
-tqdm.pandas(desc="Processing")
+tldm.pandas(desc="Processing")
 
 df = pd.DataFrame(np.random.randint(0, 100, (1000, 6)))
 
@@ -470,9 +470,9 @@ df.groupby(0).progress_apply(lambda x: x**2)
 Integration with the `rich` library for enhanced terminal output:
 
 ```python
-from tqdm.extensions.rich import tqdm
+from tldm.extensions.rich import tldm
 
-for i in tqdm(range(100)):
+for i in tldm(range(100)):
     pass
 ```
 
@@ -481,7 +481,7 @@ for i in tqdm(range(100)):
 Convenient wrappers for concurrent futures:
 
 ```python
-from tqdm.extensions.concurrent import thread_map, process_map
+from tldm.extensions.concurrent import thread_map, process_map
 
 # Thread-based parallel processing with progress bar
 results = thread_map(lambda x: x**2, range(100), max_workers=4)
@@ -496,10 +496,10 @@ results = process_map(lambda x: x**2, range(100), max_workers=4)
 
 ### Description and Postfix
 
-Custom information can be displayed and updated dynamically on `tqdm` bars:
+Custom information can be displayed and updated dynamically on `tldm` bars:
 
 ```python
-from tqdm import tqdm, trange
+from tldm import tldm, trange
 from random import random, randint
 from time import sleep
 
@@ -516,9 +516,9 @@ with trange(10) as t:
 You can also use a custom `bar_format`:
 
 ```python
-from tqdm import tqdm
+from tldm import tldm
 
-with tqdm(total=10, bar_format="{postfix[0]} {postfix[1][value]:>8.2g}",
+with tldm(total=10, bar_format="{postfix[0]} {postfix[1][value]:>8.2g}",
           postfix=["Batch", {"value": 0}]) as t:
     for i in range(10):
         t.postfix[1]["value"] = i / 2
@@ -527,10 +527,10 @@ with tqdm(total=10, bar_format="{postfix[0]} {postfix[1][value]:>8.2g}",
 
 ### Nested Progress Bars
 
-`tqdm` supports nested progress bars. Here's an example:
+`tldm` supports nested progress bars. Here's an example:
 
 ```python
-from tqdm import trange
+from tldm import trange
 from time import sleep
 
 for i in trange(4, desc='1st loop'):
@@ -543,7 +543,7 @@ For manual control over positioning (e.g., for multi-processing), you may specif
 
 ```python
 from time import sleep
-from tqdm import trange, tqdm
+from tldm import trange, tqdm
 from multiprocessing import Pool, RLock, freeze_support
 
 L = list(range(9))
@@ -557,16 +557,16 @@ def progresser(n):
 
 if __name__ == '__main__':
     freeze_support()  # for Windows support
-    tqdm.set_lock(RLock())  # for managing output contention
-    p = Pool(initializer=tqdm.set_lock, initargs=(tqdm.get_lock(),))
+    tldm.set_lock(RLock())  # for managing output contention
+    p = Pool(initializer=tldm.set_lock, initargs=(tldm.get_lock(),))
     p.map(progresser, L)
 ```
 
-Note that `tqdm.write` is thread-safe:
+Note that `tldm.write` is thread-safe:
 
 ```python
 from time import sleep
-from tqdm import tqdm, trange
+from tldm import tldm, trange
 from concurrent.futures import ThreadPoolExecutor
 
 L = list(range(9))
@@ -578,8 +578,8 @@ def progresser(n):
     for _ in trange(total, desc=text):
         sleep(interval)
     if n == 6:
-        tqdm.write("n == 6 completed.")
-        tqdm.write("`tqdm.write()` is thread-safe!")
+        tldm.write("n == 6 completed.")
+        tldm.write("`tldm.write()` is thread-safe!")
 
 if __name__ == '__main__':
     with ThreadPoolExecutor() as p:
@@ -588,15 +588,15 @@ if __name__ == '__main__':
 
 ### Hooks and Callbacks
 
-`tqdm` can easily support callbacks/hooks and manual updates. Here's an example with `urllib`:
+`tldm` can easily support callbacks/hooks and manual updates. Here's an example with `urllib`:
 
 ```python
 import urllib.request
 import os
-from tqdm import tqdm
+from tldm import tldm
 
 class TqdmUpTo(tqdm):
-    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
+    """Provides `update_to(n)` which uses `tldm.update(delta_n)`."""
     def update_to(self, b=1, bsize=1, tsize=None):
         """
         b  : int, optional
@@ -623,11 +623,11 @@ Alternatively, use the `wrapattr` convenience function:
 ```python
 import urllib.request
 import os
-from tqdm import tqdm
+from tldm import tldm
 
 eg_link = "https://example.com/file.zip"
 response = urllib.request.urlopen(eg_link)
-with tqdm.wrapattr(open(os.devnull, "wb"), "write",
+with tldm.wrapattr(open(os.devnull, "wb"), "write",
                    miniters=1, desc=eg_link.split('/')[-1],
                    total=getattr(response, 'length', None)) as fout:
     for chunk in response:
@@ -639,11 +639,11 @@ The `requests` equivalent is nearly identical:
 ```python
 import requests
 import os
-from tqdm import tqdm
+from tldm import tldm
 
 eg_link = "https://example.com/file.zip"
 response = requests.get(eg_link, stream=True)
-with tqdm.wrapattr(open(os.devnull, "wb"), "write",
+with tldm.wrapattr(open(os.devnull, "wb"), "write",
                    miniters=1, desc=eg_link.split('/')[-1],
                    total=int(response.headers.get('content-length', 0))) as fout:
     for chunk in response.iter_content(chunk_size=4096):
@@ -656,7 +656,7 @@ You can also wrap file operations within zipfiles to show progress during compre
 
 ```python
 import zipfile
-from tqdm import tqdm
+from tldm import tldm
 
 class ZipFile(zipfile.ZipFile):
     """ZipFile subclass with progress bars for read/write operations."""
@@ -667,14 +667,14 @@ class ZipFile(zipfile.ZipFile):
         if mode == "r":
             if not isinstance(name, zipfile.ZipInfo):
                 name = self.getinfo(name)
-            return tqdm.wrapattr(
+            return tldm.wrapattr(
                 f, "read",
                 total=name.compress_size,
                 desc=f"Decompressing {name.filename}"
             )
         elif mode == "w":
             if isinstance(name, zipfile.ZipInfo):
-                return tqdm.wrapattr(
+                return tldm.wrapattr(
                     f, "write",
                     total=name.file_size,
                     desc=f"Compressing {name.filename}"
@@ -694,36 +694,36 @@ with ZipFile('archive.zip', 'r') as zf:
 
 ### Writing Messages
 
-Since `tqdm` uses a simple printing mechanism to display progress bars, you should not write any message in the terminal using the builtin `print()` function while a progressbar is open.
+Since `tldm` uses a simple printing mechanism to display progress bars, you should not write any message in the terminal using the builtin `print()` function while a progressbar is open.
 
-To write messages in the terminal without any collision with `tqdm` bar display, use the `tqdm.print()` method (recommended) or the `tqdm.write()` method:
+To write messages in the terminal without any collision with `tldm` bar display, use the `tldm.print()` method (recommended) or the `tldm.write()` method:
 
-**Using `tqdm.print()` (recommended):**
+**Using `tldm.print()` (recommended):**
 
 ```python
-from tqdm import tqdm, trange
+from tldm import tldm, trange
 from time import sleep
 
 bar = trange(10)
 for i in bar:
     sleep(0.1)
     if not (i % 3):
-        tqdm.print(f"Done task {i}")
+        tldm.print(f"Done task {i}")
 ```
 
-The `tqdm.print()` function works just like the builtin `print()`, accepting multiple values and standard keyword arguments like `sep`, `end`, and `file`.
+The `tldm.print()` function works just like the builtin `print()`, accepting multiple values and standard keyword arguments like `sep`, `end`, and `file`.
 
-**Using `tqdm.write()` (alternative):**
+**Using `tldm.write()` (alternative):**
 
 ```python
-from tqdm import tqdm, trange
+from tldm import tldm, trange
 from time import sleep
 
 bar = trange(10)
 for i in bar:
     sleep(0.1)
     if not (i % 3):
-        tqdm.write(f"Done task {i}")
+        tldm.write(f"Done task {i}")
 ```
 
 Both methods will print to standard output `sys.stdout` by default, but you can specify any file-like object using the `file` argument.
@@ -751,11 +751,11 @@ The most common issues relate to excessive output on multiple lines, instead of 
 
 ### Wrapping Generators
 
-Generator wrapper functions tend to hide the length of iterables. `tqdm` does not.
+Generator wrapper functions tend to hide the length of iterables. `tldm` does not.
 
-- Replace `tqdm(enumerate(...))` with `enumerate(tqdm(...))` or `tqdm(enumerate(x), total=len(x), ...)`.
+- Replace `tldm(enumerate(...))` with `enumerate(tldm(...))` or `tldm(enumerate(x), total=len(x), ...)`.
   - The same applies to `numpy.ndenumerate`.
-- Replace `tqdm(zip(a, b))` with `zip(tqdm(a), b)` or even `zip(tqdm(a), tqdm(b))`.
+- Replace `tldm(zip(a, b))` with `zip(tldm(a), b)` or even `zip(tldm(a), tldm(b))`.
 - The same applies to `itertools`.
 - Useful convenience functions: `tenumerate`, `tzip`, `tmap`, `tproduct` are available in this package.
 
@@ -765,7 +765,7 @@ Use `docker-compose run` instead of `docker-compose up` and `tty: true`.
 
 ### Monitoring thread, intervals and miniters
 
-`tqdm` implements a few tricks to increase efficiency and reduce overhead:
+`tldm` implements a few tricks to increase efficiency and reduce overhead:
 
 - Avoid unnecessary frequent bar refreshing: `mininterval` defines how long to wait between each refresh.
 - Reduce number of calls to check system clock/time.
@@ -775,7 +775,7 @@ However, consider a case with a combination of fast and slow iterations. After a
 
 - `maxinterval` defines the maximum time between display refreshes. A concurrent monitoring thread checks for overdue updates and forces one where necessary.
 
-The monitoring thread should not have a noticeable overhead, and guarantees updates at least every 10 seconds by default. This value can be directly changed by setting the `monitor_interval` of any `tqdm` instance (i.e., `t = tqdm(...); t.monitor_interval = 2`). The monitor thread may be disabled application-wide by setting `tqdm.monitor_interval = 0` before instantiation of any `tqdm` bar.
+The monitoring thread should not have a noticeable overhead, and guarantees updates at least every 10 seconds by default. This value can be directly changed by setting the `monitor_interval` of any `tldm` instance (i.e., `t = tldm(...); t.monitor_interval = 2`). The monitor thread may be disabled application-wide by setting `tldm.monitor_interval = 0` before instantiation of any `tldm` bar.
 
 ---
 
@@ -790,3 +790,4 @@ See the [CONTRIBUTING](CONTRIBUTING.md) file for more information.
 ## License
 
 This project is licensed under the MPL-2.0 AND MIT licenses. See the [LICENCE](LICENCE) file for details.
+

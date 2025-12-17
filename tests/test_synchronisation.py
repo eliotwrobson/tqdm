@@ -2,7 +2,7 @@ from functools import wraps
 from threading import Event
 from time import sleep, time
 
-from tqdm import TMonitor, tqdm, trange
+from tldm import TMonitor, tldm, trange
 import pytest
 
 from .conftest import patch_lock
@@ -57,21 +57,21 @@ def patch_sleep(func):
         """restores TMonitor on completion regardless of Exceptions"""
         TMonitor._test["time"] = Time.time
         TMonitor._test["Event"] = FakeEvent
-        if tqdm.monitor:
-            assert not tqdm.monitor.get_instances()
-            tqdm.monitor.exit()
-            del tqdm.monitor
-            tqdm.monitor = None
+        if tldm.monitor:
+            assert not tldm.monitor.get_instances()
+            tldm.monitor.exit()
+            del tldm.monitor
+            tldm.monitor = None
         try:
             return func(*args, **kwargs)
         finally:
             # Check that class var monitor is deleted if no instance left
-            tqdm.monitor_interval = 10
-            if tqdm.monitor:
-                assert not tqdm.monitor.get_instances()
-                tqdm.monitor.exit()
-                del tqdm.monitor
-                tqdm.monitor = None
+            tldm.monitor_interval = 10
+            if tldm.monitor:
+                assert not tldm.monitor.get_instances()
+                tldm.monitor.exit()
+                del tldm.monitor
+                tldm.monitor = None
             TMonitor._test.pop("Event")
             TMonitor._test.pop("time")
 
@@ -79,16 +79,16 @@ def patch_sleep(func):
 
 
 def cpu_timify(t, timer=Time):
-    """Force tqdm to use the specified timer instead of system-wide time"""
+    """Force tldm to use the specified timer instead of system-wide time"""
     t._time = timer.time
     t._sleep = timer.fake_sleep
     t.start_t = t.last_print_t = t._time()
     return timer
 
 
-class FakeTqdm(object):
+class FakeTldm(object):
     _instances = set()
-    get_lock = tqdm.get_lock
+    get_lock = tldm.get_lock
 
 
 def incr(x):
@@ -105,7 +105,7 @@ def incr_bar(x):
 @patch_sleep
 def test_monitor_thread():
     """Test dummy monitoring thread"""
-    monitor = TMonitor(FakeTqdm, 10)
+    monitor = TMonitor(FakeTldm, 10)
     # Test if alive, then killed
     assert monitor.report()
     monitor.exit()
@@ -116,15 +116,15 @@ def test_monitor_thread():
 
 @patch_sleep
 def test_monitoring_and_cleanup():
-    """Test for stalled tqdm instance and monitor deletion"""
+    """Test for stalled tldm instance and monitor deletion"""
     # Note: should fix miniters for these tests, else with dynamic_miniters
     # it's too complicated to handle with monitoring update and maxinterval...
-    maxinterval = tqdm.monitor_interval
+    maxinterval = tldm.monitor_interval
     assert maxinterval == 10
     total = 1000
 
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=total,
             file=our_file,
             miniters=500,
@@ -141,7 +141,7 @@ def test_monitoring_and_cleanup():
             # Then do 1 it after monitor interval, so that monitor kicks in
             Time.fake_sleep(maxinterval)
             t.update(1)
-            # Wait for the monitor to get out of sleep's loop and update tqdm.
+            # Wait for the monitor to get out of sleep's loop and update tldm.
             timeend = Time.time()
             while not (t.monitor.woken >= timeend and t.miniters == 1):
                 Time.fake_sleep(1)  # Force awake up if it woken too soon
@@ -158,7 +158,6 @@ def test_monitoring_and_cleanup():
             while t.monitor.woken < timeend:
                 Time.fake_sleep(1)  # Force awake if it woken too soon
             # Wait for the monitor to get out of sleep's loop and update
-            # tqdm
             assert t.miniters == 1  # check that monitor corrected miniters
 
 
@@ -167,12 +166,12 @@ def test_monitoring_multi():
     """Test on multiple bars, one not needing miniters adjustment"""
     # Note: should fix miniters for these tests, else with dynamic_miniters
     # it's too complicated to handle with monitoring update and maxinterval...
-    maxinterval = tqdm.monitor_interval
+    maxinterval = tldm.monitor_interval
     assert maxinterval == 10
     total = 1000
 
     with closing(StringIO()) as our_file:
-        with tqdm(
+        with tldm(
             total=total,
             file=our_file,
             miniters=500,
@@ -180,7 +179,7 @@ def test_monitoring_multi():
             maxinterval=maxinterval,
         ) as t1:
             # Set high maxinterval for t2 so monitor does not need to adjust it
-            with tqdm(
+            with tldm(
                 total=total,
                 file=our_file,
                 miniters=500,
@@ -199,7 +198,7 @@ def test_monitoring_multi():
                 Time.fake_sleep(maxinterval)
                 t1.update(1)
                 t2.update(1)
-                # Wait for the monitor to get out of sleep and update tqdm
+                # Wait for the monitor to get out of sleep and update
                 timeend = Time.time()
                 while not (t1.monitor.woken >= timeend and t1.miniters == 1):
                     Time.fake_sleep(1)
@@ -215,7 +214,7 @@ def test_imap():
         skip(str(err))
 
     pool = Pool()
-    res = list(tqdm(pool.imap(incr, range(100)), disable=True))
+    res = list(tldm(pool.imap(incr, range(100)), disable=True))
     pool.close()
     assert res[-1] == 100
 
@@ -226,5 +225,5 @@ def test_threadpool():
     ThreadPoolExecutor = importorskip("concurrent.futures").ThreadPoolExecutor
 
     with ThreadPoolExecutor(8) as pool:
-        res = list(tqdm(pool.map(incr_bar, range(100)), disable=True))
+        res = list(tldm(pool.map(incr_bar, range(100)), disable=True))
     assert sum(res) == sum(range(1, 101))

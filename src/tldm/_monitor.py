@@ -5,11 +5,11 @@ from typing import Callable, TYPE_CHECKING
 from warnings import warn
 
 if TYPE_CHECKING:
-    from tqdm.std import tqdm
+    from tldm.std import tldm
 
 
-class TqdmSynchronisationWarning(RuntimeWarning):
-    """tqdm multi-thread/-process errors which may cause incorrect nesting
+class TldmSynchronisationWarning(RuntimeWarning):
+    """tldm multi-thread/-process errors which may cause incorrect nesting
     but otherwise no adverse effects"""
 
     pass
@@ -17,14 +17,14 @@ class TqdmSynchronisationWarning(RuntimeWarning):
 
 class TMonitor(Thread):
     """
-    Monitoring thread for tqdm bars.
-    Monitors if tqdm bars are taking too much time to display
+    Monitoring thread for tldm bars.
+    Monitors if tldm bars are taking too much time to display
     and readjusts miniters automatically if necessary.
 
     Parameters
     ----------
-    tqdm_cls  : class
-        tqdm class to use (can be core tqdm or a submodule).
+    tldm_cls  : class
+        tldm class to use (can be core tldm or a submodule).
     sleep_interval  : float
         Time to sleep between monitoring checks.
     """
@@ -34,17 +34,17 @@ class TMonitor(Thread):
     name: str
     daemon: bool
     woken: float
-    tqdm_cls: type["tqdm"]
+    tldm_cls: type["tldm"]
     sleep_interval: float
     _time: Callable[[], float]
     was_killed: Event
 
-    def __init__(self, tqdm_cls: type["tqdm"], sleep_interval: float) -> None:
+    def __init__(self, tldm_cls: type["tldm"], sleep_interval: float) -> None:
         Thread.__init__(self)
-        self.name = "tqdm_monitor"
+        self.name = "tldm_monitor"
         self.daemon = True  # kill thread when main killed (KeyboardInterrupt)
         self.woken = 0  # last time woken up, to sync with monitor
-        self.tqdm_cls = tqdm_cls
+        self.tldm_cls = tldm_cls
         self.sleep_interval = sleep_interval
         self._time = self._test.get("time", time)  # type: ignore[assignment]
         self.was_killed = self._test.get("Event", Event)()  # type: ignore[operator]
@@ -57,11 +57,11 @@ class TMonitor(Thread):
             self.join()
         return self.report()
 
-    def get_instances(self) -> list["tqdm"]:
-        # returns a copy of started `tqdm_cls` instances
+    def get_instances(self) -> list["tldm"]:
+        # returns a copy of started `tldm_cls` instances
         return [
             i
-            for i in self.tqdm_cls._instances.copy()
+            for i in self.tldm_cls._instances.copy()
             # Avoid race by checking that the instance started
             if hasattr(i, "start_t")
         ]
@@ -79,9 +79,9 @@ class TMonitor(Thread):
                 return
             # Then monitor!
             # Acquire lock (to access _instances)
-            with self.tqdm_cls.get_lock():
+            with self.tldm_cls.get_lock():
                 cur_t = self._time()
-                # Check tqdm instances are waiting too long to print
+                # Check tldm instances are waiting too long to print
                 instances = self.get_instances()
                 for instance in instances:
                     # Check event in loop to reduce blocking time on exit
@@ -96,15 +96,15 @@ class TMonitor(Thread):
                         # force bypassing miniters on next iteration
                         # (dynamic_miniters adjusts mininterval automatically)
                         instance.miniters = 1
-                        # Refresh now! (works only for manual tqdm)
+                        # Refresh now! (works only for manual tldm)
                         instance.refresh(nolock=True)
                     # Remove accidental long-lived strong reference
                     del instance
                 if instances != self.get_instances():  # pragma: nocover
                     warn(
                         "Set changed size during iteration"
-                        + " (see https://github.com/tqdm/tqdm/issues/481)",
-                        TqdmSynchronisationWarning,
+                        + " (see https://github.com/tldm/tldm/issues/481)",
+                        TldmSynchronisationWarning,
                         stacklevel=2,
                     )
                 # Remove accidental long-lived strong references

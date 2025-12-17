@@ -8,8 +8,8 @@ from warnings import catch_warnings, simplefilter
 from pytest import importorskip, mark
 from .conftest import patch_lock
 
-from tqdm import tqdm, trange
-from tqdm.utils import format_interval, TqdmWarning, ObjectWrapper
+from tldm import tldm, trange
+from tldm.utils import format_interval, TldmWarning, ObjectWrapper
 
 from io import StringIO
 
@@ -40,7 +40,7 @@ RE_ctrlchr_excl = re.compile("|".join(CTRLCHR))  # Match and exclude ctrl chars
 RE_pos = re.compile(r"([\r\n]+((pos\d+) bar:\s+\d+%|\s{3,6})?[^\r\n]*)")
 
 
-class DummyTqdmFile(ObjectWrapper):
+class DummyTldmFile(ObjectWrapper):
     """Dummy file-like that will write to tqdm"""
 
     def __init__(self, wrapped):
@@ -52,7 +52,7 @@ class DummyTqdmFile(ObjectWrapper):
         pre, sep, post = x.rpartition(nl)
         if sep:
             blank = type(nl)()
-            tqdm.write(
+            tldm.write(
                 blank.join(self._buf + [pre, sep]),
                 end=blank,
                 file=self._wrapped,
@@ -66,7 +66,7 @@ class DummyTqdmFile(ObjectWrapper):
         if self._buf:
             blank = type(self._buf[0])()
             try:
-                tqdm.write(blank.join(self._buf), end=blank, file=self._wrapped)
+                tldm.write(blank.join(self._buf), end=blank, file=self._wrapped)
             except (OSError, ValueError):
                 pass
 
@@ -702,7 +702,7 @@ def test_lock_creation(mocker) -> None:
     lock_mock = mocker.patch("multiprocessing.RLock")
 
     # Importing the module should not create a lock
-    from tqdm import tqdm
+    from tldm import tldm
 
     assert lock_mock.call_count == 0
     # Creating a progress bar should use existing lock
@@ -828,9 +828,9 @@ def test_close() -> None:
         progressbar = tqdm(total=3, file=our_file, miniters=10)
         progressbar.update(3)
         assert "| 3/3 " not in our_file.getvalue()  # Should be blank
-        assert len(tqdm._instances) == 1
+        assert len(tldm._instances) == 1
         progressbar.close()
-        assert len(tqdm._instances) == 0
+        assert len(tldm._instances) == 0
         assert "| 3/3 " in our_file.getvalue()
 
     # Without `leave` option
@@ -842,17 +842,17 @@ def test_close() -> None:
 
     # With all updates
     with closing(StringIO()) as our_file:
-        assert len(tqdm._instances) == 0
+        assert len(tldm._instances) == 0
         with tqdm(
             total=3, file=our_file, miniters=0, mininterval=0, leave=True
         ) as progressbar:
-            assert len(tqdm._instances) == 1
+            assert len(tldm._instances) == 1
             progressbar.update(3)
             res = our_file.getvalue()
             assert "| 3/3 " in res  # Should be blank
             assert "\n" not in res
         # close() called
-        assert len(tqdm._instances) == 0
+        assert len(tldm._instances) == 0
 
         exres = res.rsplit(", ", 1)[0]
         res = our_file.getvalue()
@@ -918,9 +918,9 @@ def test_smoothing() -> None:
                         # (else delta_t is 0!)
                         timer.sleep(0.001)
                     t.update()
-            n_old = len(tqdm._instances)
+            n_old = len(tldm._instances)
             t.close()
-            assert len(tqdm._instances) == n_old - 1
+            assert len(tldm._instances) == n_old - 1
             # Get result for iter-based bar
             a = progressbar_rate(get_bar(our_file.getvalue(), 3))
         # Get result for manually updated bar
@@ -1210,7 +1210,7 @@ def test_position() -> None:
     t3.close()
 
     # Test auto repositioning of bars when a bar is prematurely closed
-    # tqdm._instances.clear()  # reset number of instances
+    # tldm._instances.clear()  # reset number of instances
     with closing(StringIO()) as our_file:
         t1 = tqdm(total=10, file=our_file, desc="1.pos0 bar", mininterval=0)
         t2 = tqdm(total=10, file=our_file, desc="2.pos1 bar", mininterval=0)
@@ -1519,7 +1519,7 @@ def test_write() -> None:
 
         # Write msg and see if bars are correctly redrawn below the msg
         t1.write(s, file=our_file)  # call as an instance method
-        tqdm.write(s, file=our_file)  # call as a class method
+        tldm.write(s, file=our_file)  # call as a class method
         after = our_file.getvalue()
 
         t1.close()
@@ -1546,7 +1546,7 @@ def test_write() -> None:
             t1.update()
             before_bar = our_file_bar.getvalue()
 
-            tqdm.write(s, file=our_file_write)
+            tldm.write(s, file=our_file_write)
 
             after_bar = our_file_bar.getvalue()
             t1.close()
@@ -1575,7 +1575,7 @@ def test_write() -> None:
             before_err = sys.stderr.getvalue()
             before_out = sys.stdout.getvalue()
 
-            tqdm.write(s, file=sys.stdout)
+            tldm.write(s, file=sys.stdout)
             after_err = sys.stderr.getvalue()
             after_out = sys.stdout.getvalue()
 
@@ -1633,7 +1633,7 @@ def test_print() -> None:
 
         # Write msg and see if bars are correctly redrawn below the msg
         t1.print(*values, file=our_file)  # call as an instance method
-        tqdm.print(*values, file=our_file)  # call as a class method
+        tldm.print(*values, file=our_file)  # call as a class method
         after = our_file.getvalue()
 
         t1.close()
@@ -1663,7 +1663,7 @@ def test_print() -> None:
             t1.update()
             before_bar = our_file_bar.getvalue()
 
-            tqdm.print(*values, file=our_file_write)
+            tldm.print(*values, file=our_file_write)
 
             after_bar = our_file_bar.getvalue()
             t1.close()
@@ -1692,7 +1692,7 @@ def test_print() -> None:
             before_err = sys.stderr.getvalue()
             before_out = sys.stdout.getvalue()
 
-            tqdm.print(*values, file=sys.stdout)
+            tldm.print(*values, file=sys.stdout)
             after_err = sys.stderr.getvalue()
             after_out = sys.stdout.getvalue()
 
@@ -1837,7 +1837,7 @@ def test_postfix_direct() -> None:
 def std_out_err_redirect_tqdm(tqdm_file=sys.stderr):
     orig_out_err = sys.stdout, sys.stderr
     try:
-        sys.stdout = sys.stderr = DummyTqdmFile(tqdm_file)
+        sys.stdout = sys.stderr = DummyTldmFile(tqdm_file)
         yield orig_out_err[0]
     # Relay exceptions
     except Exception as exc:
@@ -1850,7 +1850,7 @@ def std_out_err_redirect_tqdm(tqdm_file=sys.stderr):
 def test_file_redirection() -> None:
     """Test redirection of output"""
     with closing(StringIO()) as our_file:
-        # Redirect stdout to tqdm.write()
+        # Redirect stdout to tldm.write()
         with std_out_err_redirect_tqdm(tqdm_file=our_file):
             with tqdm(total=3) as pbar:
                 print("Such fun")
@@ -1869,10 +1869,10 @@ def test_file_redirection() -> None:
 def test_external_write() -> None:
     """Test external write mode"""
     with closing(StringIO()) as our_file:
-        # Redirect stdout to tqdm.write()
+        # Redirect stdout to tldm.write()
         for _ in trange(3, file=our_file):
-            del tqdm._lock  # classmethod should be able to recreate lock
-            with tqdm.external_write_mode(file=our_file):
+            del tldm._lock  # classmethod should be able to recreate lock
+            with tldm.external_write_mode(file=our_file):
                 our_file.write("Such fun\n")
         res = our_file.getvalue()
         assert res.count("Such fun\n") == 3
@@ -1936,7 +1936,7 @@ def test_wrapattr() -> None:
 
     with closing(StringIO()) as our_file:
         with closing(StringIO()) as writer:
-            with tqdm.wrapattr(writer, "write", file=our_file, bytes=True) as wrap:
+            with tldm.wrapattr(writer, "write", file=our_file, bytes=True) as wrap:
                 wrap.write(data)
             res = writer.getvalue()
             assert data == res
@@ -1945,7 +1945,7 @@ def test_wrapattr() -> None:
 
     with closing(StringIO()) as our_file:
         with closing(StringIO()) as writer:
-            with tqdm.wrapattr(writer, "write", file=our_file, bytes=False) as wrap:
+            with tldm.wrapattr(writer, "write", file=our_file, bytes=False) as wrap:
                 wrap.write(data)
         res = our_file.getvalue()
         assert "%dit [" % len(data) in res
@@ -1956,7 +1956,7 @@ def test_float_progress() -> None:
     with closing(StringIO()) as our_file:
         with trange(10, total=9.6, file=our_file) as t:
             with catch_warnings(record=True) as w:
-                simplefilter("always", category=TqdmWarning)
+                simplefilter("always", category=TldmWarning)
                 for i in t:
                     if i < 9:
                         assert not w
@@ -2076,7 +2076,7 @@ def test_colour() -> None:
         assert "\x1b[38;2;%d;%d;%dm" % (0xBE, 0xEF, 0xED) in out
 
         with catch_warnings(record=True) as w:
-            simplefilter("always", category=TqdmWarning)
+            simplefilter("always", category=TldmWarning)
             with tqdm(total=1, file=our_file, colour="charm") as t:
                 assert w
                 t.update()
@@ -2119,3 +2119,5 @@ def test_contains(capsys):
     assert not out
     assert "  0%" in err
     assert "100%" not in err
+
+

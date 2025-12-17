@@ -5,7 +5,7 @@
 from contextlib import nullcontext
 from typing import Any, Iterable, cast
 from warnings import warn
-from tqdm.utils import format_interval, format_sizeof
+from tldm.utils import format_interval, format_sizeof
 
 from rich.console import Console
 from rich.progress import (
@@ -18,8 +18,8 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from tqdm.std import TqdmWarning
-from tqdm.std import tqdm as std_tqdm
+from tldm.std import TldmWarning
+from tldm.std import tldm as std_tldm
 
 RenderReturnType = Text | str
 
@@ -127,8 +127,8 @@ class ASCIIConsole(Console):
         return "ascii"
 
 
-class tqdm_rich(std_tqdm):  # pragma: no cover
-    """Experimental rich.progress GUI version of tqdm!"""
+class tldm_rich(std_tldm):  # pragma: no cover
+    """Experimental rich.progress GUI version of tldm!"""
 
     # TODO: @classmethod: write()?
     _progress: Progress | None
@@ -143,7 +143,7 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         This class accepts the following parameters *in addition* to
-        the parameters accepted by `tqdm`.
+        the parameters accepted by `tldm`.
 
         Parameters
         ----------
@@ -163,12 +163,12 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
         for k in ("position", "bar_format"):
             if kwargs.pop(k, None) is not None:
                 warn(
-                    f"tqdm.rich does not support the `{k}` option. ",
-                    TqdmWarning,
+                    f"tldm.rich does not support the `{k}` option. ",
+                    TldmWarning,
                     stacklevel=2,
                 )
 
-        # NOTE: temporary dummy_lock to reuse std_tqdm's __init__
+        # NOTE: temporary dummy_lock to reuse std_tldm's __init__
         self._lock = nullcontext()  # type: ignore[misc, assignment]
         self._instances = [self]  # type: ignore[misc, assignment]
         super().__init__(*args, **kwargs)
@@ -225,8 +225,8 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
                 if d["ascii"] and not console.encoding == "ascii":
                     warn(
                         "ascii output requested but passed console's encoding is not 'ascii'. "
-                        "See `tqdm.rich.ASCIIConsole` to force ASCII rendering.",
-                        TqdmWarning,
+                        "See `tldm.rich.ASCIIConsole` to force ASCII rendering.",
+                        TldmWarning,
                         stacklevel=2,
                     )
             else:
@@ -240,8 +240,8 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
         else:
             if options.get("console") is not None:
                 warn(
-                    "ignoring passed `console` since tqdm_rich._progress exists",
-                    TqdmWarning,
+                    "ignoring passed `console` since tldm_rich._progress exists",
+                    TldmWarning,
                     stacklevel=2,
                 )
 
@@ -251,7 +251,7 @@ class tqdm_rich(std_tqdm):  # pragma: no cover
                 warn(
                     "ascii=True but global console is not ASCIIConsole. "
                     "Using (non-ascii) global console.",
-                    TqdmWarning,
+                    TldmWarning,
                     stacklevel=2,
                 )
 

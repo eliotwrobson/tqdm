@@ -1,11 +1,11 @@
 """
-Tests for `tqdm.contrib.itertools`.
+Tests for `tldm.contrib.itertools`.
 """
 
 import itertools as it
 
-from tqdm.std import tqdm
-from tqdm.aliases import tproduct, tenumerate, tmap, tzip
+from tldm.std import tldm
+from tldm.aliases import tproduct, tenumerate, tmap, tzip
 import pytest
 from io import StringIO
 from contextlib import closing
@@ -40,41 +40,41 @@ def test_product_with_repeat():
         )
 
 
-@pytest.mark.parametrize("tqdm_kwargs", [{}, {"tqdm_class": tqdm}])
-def test_enumerate(tqdm_kwargs):
+@pytest.mark.parametrize("tldm_kwargs", [{}, {"tldm_class": tldm}])
+def test_enumerate(tldm_kwargs):
     """Test contrib.tenumerate"""
     a = range(9)
 
     with closing(StringIO()) as our_file:
-        assert list(tenumerate(a, file=our_file, **tqdm_kwargs)) == list(enumerate(a))
-        assert list(tenumerate(a, 42, file=our_file, **tqdm_kwargs)) == list(
+        assert list(tenumerate(a, file=our_file, **tldm_kwargs)) == list(enumerate(a))
+        assert list(tenumerate(a, 42, file=our_file, **tldm_kwargs)) == list(
             enumerate(a, 42)
         )
     with closing(StringIO()) as our_file:
-        _ = tenumerate(iter(a), file=our_file, **tqdm_kwargs)
+        _ = tenumerate(iter(a), file=our_file, **tldm_kwargs)
         assert "100%" not in our_file.getvalue()
     with closing(StringIO()) as our_file:
-        _ = list(tenumerate(iter(a), file=our_file, **tqdm_kwargs))
+        _ = list(tenumerate(iter(a), file=our_file, **tldm_kwargs))
         assert "100%" in our_file.getvalue()
 
 
-@pytest.mark.parametrize("tqdm_kwargs", [{}, {"tqdm_class": tqdm}])
-def test_zip(tqdm_kwargs):
+@pytest.mark.parametrize("tldm_kwargs", [{}, {"tldm_class": tldm}])
+def test_zip(tldm_kwargs):
     """Test contrib.tzip"""
     with closing(StringIO()) as our_file:
         a = range(9)
         b = [i + 1 for i in a]
-        gen = tzip(a, b, file=our_file, **tqdm_kwargs)
+        gen = tzip(a, b, file=our_file, **tldm_kwargs)
         assert gen != list(zip(a, b))
         assert list(gen) == list(zip(a, b))
 
 
-@pytest.mark.parametrize("tqdm_kwargs", [{}, {"tqdm_class": tqdm}])
-def test_map(tqdm_kwargs):
+@pytest.mark.parametrize("tldm_kwargs", [{}, {"tldm_class": tldm}])
+def test_map(tldm_kwargs):
     """Test contrib.tmap"""
     with closing(StringIO()) as our_file:
         a = range(9)
         b = [i + 1 for i in a]
-        gen = tmap(lambda x: x + 1, a, file=our_file, **tqdm_kwargs)
+        gen = tmap(lambda x: x + 1, a, file=our_file, **tldm_kwargs)
         assert gen != b
         assert list(gen) == b

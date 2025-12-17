@@ -8,7 +8,7 @@ These tests serve two purposes:
 
 import pytest
 
-from tqdm import tqdm
+from tldm import tldm
 from rich.progress import track
 from progressbar import progressbar
 from alive_progress import alive_bar
@@ -187,3 +187,5 @@ class TestTqdmOverhead:
             pbar.close()
 
         benchmark.pedantic(run, rounds=10, iterations=1)
+
+

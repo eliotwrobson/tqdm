@@ -1,4 +1,4 @@
-from tqdm.extensions import tqdm_pandas
+from tldm.extensions import tldm_pandas
 
 from io import StringIO
 from contextlib import closing
@@ -192,3 +192,5 @@ def test_pandas_leave():
         if exres not in our_file.read():
             our_file.seek(0)
             raise AssertionError(f"\nExpected:\n{exres}\nIn:{our_file.read()}\n")
+
+

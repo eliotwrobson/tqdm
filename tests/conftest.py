@@ -4,7 +4,7 @@ import sys
 
 from pytest import fixture, skip
 
-from tqdm import tqdm
+from tldm import tldm
 
 from functools import wraps
 
@@ -18,16 +18,16 @@ def pretest_posttest():
         sys.setcheckinterval(100)  # deprecated
 
     if getattr(tqdm, "_instances", False):
-        n = len(tqdm._instances)
+        n = len(tldm._instances)
         if n:
-            tqdm._instances.clear()
-            raise EnvironmentError(f"{n} `tqdm` instances still in existence PRE-test")
+            tldm._instances.clear()
+            raise EnvironmentError(f"{n} `tldm` instances still in existence PRE-test")
     yield
     if getattr(tqdm, "_instances", False):
-        n = len(tqdm._instances)
+        n = len(tldm._instances)
         if n:
-            tqdm._instances.clear()
-            raise EnvironmentError(f"{n} `tqdm` instances still in existence POST-test")
+            tldm._instances.clear()
+            raise EnvironmentError(f"{n} `tldm` instances still in existence POST-test")
 
 
 def patch_lock(thread=True):
@@ -47,13 +47,15 @@ def patch_lock(thread=True):
         @wraps(func)
         def inner(*args, **kwargs):
             """set & reset lock even if exceptions occur"""
-            default_lock = tqdm.get_lock()
+            default_lock = tldm.get_lock()
             try:
-                tqdm.set_lock(lock)
+                tldm.set_lock(lock)
                 return func(*args, **kwargs)
             finally:
-                tqdm.set_lock(default_lock)
+                tldm.set_lock(default_lock)
 
         return inner
 
     return outer
+
+

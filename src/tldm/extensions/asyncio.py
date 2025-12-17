@@ -5,12 +5,12 @@ Asynchronous progressbar decorator for iterators.
 import asyncio
 from sys import version_info
 
-from ..std import tqdm as std_tqdm
+from ..std import tldm as std_tldm
 
 
-class tqdm_asyncio(std_tqdm):
+class tldm_asyncio(std_tldm):
     """
-    Asynchronous-friendly version of tqdm.
+    Asynchronous-friendly version of tldm.
     """
 
     def __init__(self, iterable=None, *args, **kwargs):
@@ -28,11 +28,11 @@ class tqdm_asyncio(std_tqdm):
 
     # def __del__(self):
     #     self.close()
-    #     if len(tqdm_asyncio._instances) == 0:
-    #         if hasattr(tqdm_asyncio, "_lock"):
-    #             del tqdm_asyncio._lock
-    #         if hasattr(tqdm_asyncio, "monitor") and tqdm_asyncio.monitor is not None:
-    #             tqdm_asyncio.monitor.exit()
+    #     if len(tldm_asyncio._instances) == 0:
+    #         if hasattr(tldm_asyncio, "_lock"):
+    #             del tldm_asyncio._lock
+    #         if hasattr(tldm_asyncio, "monitor") and tldm_asyncio.monitor is not None:
+    #             tldm_asyncio.monitor.exit()
 
     async def __anext__(self):
         try:
@@ -56,7 +56,7 @@ class tqdm_asyncio(std_tqdm):
         return self.iterable.send(*args, **kwargs)
 
     @classmethod
-    def as_completed(cls, fs, *, loop=None, timeout=None, total=None, **tqdm_kwargs):
+    def as_completed(cls, fs, *, loop=None, timeout=None, total=None, **tldm_kwargs):
         """
         Wrapper for `asyncio.as_completed`.
         """
@@ -68,7 +68,7 @@ class tqdm_asyncio(std_tqdm):
         yield from cls(
             asyncio.as_completed(fs, timeout=timeout, **kwargs),
             total=total,
-            **tqdm_kwargs,
+            **tldm_kwargs,
         )
 
     @classmethod
@@ -79,7 +79,7 @@ class tqdm_asyncio(std_tqdm):
         timeout=None,
         total=None,
         return_exceptions=False,
-        **tqdm_kwargs,
+        **tldm_kwargs,
     ):
         """
         Wrapper for `asyncio.gather`.
@@ -103,5 +103,8 @@ class tqdm_asyncio(std_tqdm):
             for r in asyncio.as_completed(ifs, timeout=timeout, **kwargs):
                 yield await r
 
-        res = [f async for f in cls(aiter_as_completed(), total=total, **tqdm_kwargs)]
+        res = [f async for f in cls(aiter_as_completed(), total=total, **tldm_kwargs)]
         return [i for _, i in sorted(res)]
+
+
+
