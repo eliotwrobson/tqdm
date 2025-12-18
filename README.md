@@ -1,5 +1,14 @@
 # TL;DM
 
+[![PyPI version](https://badge.fury.io/py/tldm.svg)](https://badge.fury.io/py/tldm)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![tests](https://github.com/eliotwrobson/tldm/actions/workflows/test.yml/badge.svg)](https://github.com/eliotwrobson/tldm/actions/workflows/test.yml)
+[![lint](https://github.com/eliotwrobson/tldm/actions/workflows/check.yml/badge.svg)](https://github.com/eliotwrobson/tldm/actions/workflows/check.yml)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+
 **TL;DM** (too long; didn't monitor) is a fast, extensible progress bar for Python, forked from [tqdm](https://github.com/tqdm/tqdm). This fork was created to provide continued maintenance and development as the original tqdm project has become unmaintained.
 
 Instantly make your loops show a smart progress meter - just wrap any iterable with `tldm(iterable)`, and you're done!
