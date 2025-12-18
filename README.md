@@ -1,6 +1,6 @@
 # TL;DM
 
-**TL;DM** (too long; didn't monitor) is a fast, extensible progress bar for Python, based on [tqdm](https://github.com/tqdm/tqdm).
+**TL;DM** (too long; didn't monitor) is a fast, extensible progress bar for Python, forked from [tqdm](https://github.com/tqdm/tqdm). This fork was created to provide continued maintenance and development as the original tqdm project has become unmaintained.
 
 Instantly make your loops show a smart progress meter - just wrap any iterable with `tldm(iterable)`, and you're done!
 
@@ -787,13 +787,15 @@ See the [CONTRIBUTING](CONTRIBUTING.md) file for more information.
 
 ### Acknowledgments
 
-TL;DM is based on [tqdm](https://github.com/tqdm/tqdm), created by Noam Yorav-Raphael. We gratefully acknowledge the contributions of all tqdm contributors, especially:
+TL;DM is forked from [tqdm](https://github.com/tqdm/tqdm), created by [Noam Yorav-Raphael](https://github.com/noamraph). We gratefully acknowledge the contributions of all tqdm contributors, especially (in no particular order):
 
-- **Casper da Costa-Luis** - Lead maintainer and major contributor
-- **Stephen L** - Significant feature development and maintenance
-- **Kyle Altendorf** - Notable contributions
-- **Hadrien Mary** - Notable contributions
-- **Richard Sheridan** - Notable contributions
+- [**Casper da Costa-Luis**](https://github.com/casperdcl)
+- [**Stephen Larroque**](https://github.com/lrq3000)
+- [**Kyle Altendorf**](https://github.com/altendky)
+- [**Hadrien Mary**](https://github.com/hadim)
+- [**Richard Sheridan**](https://github.com/richardsheridan)
+- [**Ivan Ivanov**](https://github.com/obiwanus)
+- [**Mikhail Korobov**](https://github.com/kmike)
 
 And all other contributors to the original tqdm project.
 
