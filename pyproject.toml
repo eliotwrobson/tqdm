@@ -110,18 +110,6 @@ dev = [
 ]
 notebook = ["ipywidgets>=6"]
 
-[tool.yapf]
-spaces_before_comment = [15, 20]
-arithmetic_precedence_indication = true
-allow_split_before_dict_value = false
-coalesce_brackets = true
-column_limit = 99
-each_dict_entry_on_separate_line = false
-space_between_ending_comma_and_closing_bracket = false
-split_before_named_assigns = false
-split_before_closing_bracket = false
-blank_line_before_nested_class_or_def = false
-
 [tool.ruff]
 line-length = 99
 target-version = "py311"
