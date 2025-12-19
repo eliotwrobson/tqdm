@@ -218,6 +218,9 @@ class tldm(Generic[T]):
         The initial counter value. Useful when restarting a progress
         bar [default: 0]. If using float, consider specifying `{n:.3f}`
         or similar in `bar_format`, or specifying `unit_scale`.
+    complete_bar_on_early_finish  : bool, optional
+        If True, complete the bar when closing early without errors
+        and a total is known. [default: False].
     position  : int, optional
         Specify the line offset to print this bar (starting from 0)
         Automatic if unspecified.
@@ -428,6 +431,7 @@ class tldm(Generic[T]):
         colour: str | None = None,
         delay: float = 0.0,
         title: bool = False,
+        complete_bar_on_early_finish: bool = False,
         **kwargs: dict[str, Any],
     ) -> None:
         """see tldm.tldm for arguments"""
@@ -518,6 +522,8 @@ class tldm(Generic[T]):
         self.colour = colour
         self._time = time
         self.title = title
+        self.complete_bar_on_early_finish = complete_bar_on_early_finish
+        self._close_with_exception = False
         if postfix:
             try:
                 self.set_postfix(refresh=False, **postfix)
@@ -584,6 +590,7 @@ class tldm(Generic[T]):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self._close_with_exception = exc_type is not None
         try:
             self.close()
         except AttributeError:
@@ -675,6 +682,7 @@ class tldm(Generic[T]):
         n = self.n
         time = self._time
 
+        self._close_with_exception = False
         try:
             for obj in self.iterable:
                 yield obj
@@ -689,6 +697,9 @@ class tldm(Generic[T]):
                         self.update(n - last_print_n)
                         last_print_n = self.last_print_n
                         last_print_t = self.last_print_t
+        except BaseException:
+            self._close_with_exception = True
+            raise
         finally:
             self.n = n
             self.close()
@@ -769,6 +780,8 @@ class tldm(Generic[T]):
         self.disable = True
 
         try:
+            if self._should_complete_bar_on_close():
+                self.n = self.total
             if self.last_print_t < self.start_t + self.delay:
                 # haven't ever displayed; nothing to clear
                 return
@@ -805,6 +818,14 @@ class tldm(Generic[T]):
         finally:
             # decrement instance pos and remove from internal set
             self._decr_instances(self)
+
+    def _should_complete_bar_on_close(self) -> bool:
+        return (
+            self.complete_bar_on_early_finish
+            and not self._close_with_exception
+            and self.total is not None
+            and self.n < self.total
+        )
 
     def clear(self, nolock: bool = False) -> None:
         """Clear current bar display."""
