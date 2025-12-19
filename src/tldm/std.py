@@ -861,7 +861,7 @@ class tldm(Generic[T]):
         This provides type safety for the caller.
         """
         if (
-            self.complete_bar_on_early_finish
+            getattr(self, "complete_bar_on_early_finish", False)
             and not self._close_with_exception
             and self.total is not None
             and self.n < self.total
