@@ -697,7 +697,7 @@ class tldm(Generic[T]):
                         self.update(n - last_print_n)
                         last_print_n = self.last_print_n
                         last_print_t = self.last_print_t
-        except BaseException:
+        except Exception:
             self._close_with_exception = True
             raise
         finally:
