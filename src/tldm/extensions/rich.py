@@ -258,8 +258,8 @@ class tldm_rich(std_tldm):  # pragma: no cover
 
         if cls._progress is None or self._task is None:
             return
-        if self._should_complete_bar_on_close():
-            self.n = self.total
+        if (completion_total := self._get_completion_total()) is not None:
+            self.n = completion_total
         with cls._progress._lock:
             if not self._task.finished:
                 cls._progress.stop_task(self._task.id)
