@@ -120,6 +120,8 @@ class TestAlternativeComparison:
 
         benchmark.pedantic(run, rounds=5, iterations=1)
 
+    @pytest.mark.timeout(60)
+    @pytest.mark.xfail(reason="alive-progress can be slow and timeout on CI", strict=False)
     def test_benchmark_alive_progress(self, benchmark, iterable):
         """Benchmark alive-progress."""
         benchmark.group = "library-comparison"

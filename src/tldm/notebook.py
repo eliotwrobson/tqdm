@@ -5,7 +5,6 @@ Includes a default `range` iterator printing to `stderr`.
 """
 
 # import compatibility functions and utilities
-import contextlib
 import re
 import sys
 from html import escape
@@ -14,58 +13,18 @@ from weakref import proxy
 # to inherit from the tldm class
 from .std import tldm as std_tldm
 
-# TODO get rid of legacy imports
+try:
+    from IPython.display import clear_output, display
+    from ipywidgets import HTML, HBox, VBox
+    from ipywidgets import FloatProgress as IProgress
 
-if True:  # pragma: no cover
-    # import IPython/Jupyter base widget and display utilities
-    IPY = 0
-    try:  # IPython 4.x
-        import ipywidgets
+    clear_output(wait=False)  # Necessary when rerunning cells
+except ImportError:
+    IProgress = None
+    HBox = object
+    VBox = object
 
-        IPY = 4
-    except ImportError:  # IPython 3.x / 2.x
-        IPY = 32
-        import warnings
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", message=".*The `IPython.html` package has been deprecated.*"
-            )
-            with contextlib.suppress(ImportError):
-                import IPython.html.widgets as ipywidgets  # NOQA: F401
-
-    try:  # IPython 4.x / 3.x
-        if IPY == 32:
-            from IPython.html.widgets import HTML, HBox, VBox
-            from IPython.html.widgets import FloatProgress as IProgress
-
-            IPY = 3
-        else:
-            from ipywidgets import HTML, HBox, VBox
-            from ipywidgets import FloatProgress as IProgress
-    except ImportError:
-        try:  # IPython 2.x
-            from IPython.html.widgets import HTML
-            from IPython.html.widgets import ContainerWidget as HBox
-            from IPython.html.widgets import ContainerWidget as VBox
-            from IPython.html.widgets import FloatProgressWidget as IProgress
-
-            IPY = 2
-        except ImportError:
-            IPY = 0
-            IProgress = None
-            HBox = object
-            VBox = object
-
-    try:
-        from IPython.display import clear_output, display
-
-        clear_output(wait=False)  # Necessary when rerunning cells
-    except ImportError:
-        pass
-
-__author__ = {"github.com/": ["lrq3000", "casperdcl", "alexanderkuk"]}
-__all__ = ["tldm_notebook", "tnrange", "tldm", "trange"]
 WARN_NOIPYW = (
     "IProgress not found. Please update jupyter and ipywidgets."
     " See https://ipywidgets.readthedocs.io/en/stable"
@@ -338,11 +297,4 @@ class tldm_notebook(std_tldm):
         return super().reset(total=total)
 
 
-def tnrange(*args, **kwargs):
-    """Shortcut for `tldm.notebook.tldm(range(*args), **kwargs)`."""
-    return tldm_notebook(range(*args), **kwargs)
-
-
-# Aliases
 tldm = tldm_notebook
-trange = tnrange

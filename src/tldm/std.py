@@ -34,6 +34,7 @@ from tldm.utils import (
     DisableOnWriteError,
     TldmWarning,
     _is_ascii,
+    _resize_signal_handler,
     _screen_shape_wrapper,
     _supports_unicode,
     format_meter,
@@ -251,6 +252,7 @@ class tldm(Generic[T]):
     monitor: ClassVar[TMonitor | None] = None
     _instances: ClassVar[WeakSet["tldm"]] = WeakSet()
     _lock: ClassVar[TldmDefaultWriteLock]
+    _resize_handler_registered: ClassVar[bool] = False
 
     registered_classes: ClassVar[set[type["tldm"]]] = set()
 
@@ -395,6 +397,15 @@ class tldm(Generic[T]):
         cls._lock = lock
 
     @classmethod
+    def _register_resize_handler(cls) -> None:
+        """Register SIGWINCH handler for dynamic ncols support (called once)."""
+        if not cls._resize_handler_registered:
+            cls._resize_handler_registered = True
+            # Some systems, like Windows, do not have SIGWINCH
+            with suppress(AttributeError):
+                signal.signal(signal.SIGWINCH, _resize_signal_handler)  # type: ignore[attr-defined,unused-ignore]
+
+    @classmethod
     def get_lock(cls) -> TldmDefaultWriteLock:
         """Get the global lock. Construct it if it does not exist."""
         if not hasattr(cls, "_lock"):
@@ -513,6 +524,9 @@ class tldm(Generic[T]):
         self.delay = delay
         self.force_dynamic_ncols_update = force_dynamic_ncols_update
         self.dynamic_ncols_func = dynamic_ncols_func
+        # Register signal handler for window resize if dynamic ncols is enabled
+        if dynamic_ncols_func:
+            self._register_resize_handler()
         self.smoothing = smoothing
         self._ema_dn = get_ema_func(smoothing)
         self._ema_dt = get_ema_func(smoothing)
@@ -1091,20 +1105,3 @@ class tldm(Generic[T]):
                 t.unit_scale = True
                 t.unit_divisor = 1024
             yield CallbackIOWrapper(t.update, stream, method)
-
-
-def resize_signal_handler(signalnum, frame):
-    for cls in tldm.registered_classes:
-        with cls.get_lock():
-            for instance in cls._instances:
-                if instance.dynamic_ncols_func:
-                    ncols, nrows = instance.dynamic_ncols_func(instance.fp)
-                    if not instance.keep_original_size[0]:
-                        instance.ncols = ncols
-                    if not instance.keep_original_size[1]:
-                        instance.nrows = nrows
-
-
-# Some systems, like Windows, do not have SIGWINCH
-with suppress(AttributeError):
-    signal.signal(signal.SIGWINCH, resize_signal_handler)  # type: ignore[attr-defined,unused-ignore]

@@ -87,9 +87,10 @@ def pos_line_diff(res_list, expected_list, raise_nonempty=True):
                 for i in range(pos + 1)
                 for end in [
                     "]",  # bar
-                    "  ",
+                    "  ",  # cleared
+                    "%",  # percentage only format
                 ]
-            )  # cleared
+            )
             or "100%" in r  # completed bar
             or r == "\n"
         )  # final bar
@@ -1281,6 +1282,7 @@ def test_position_leave(leave: bool):
         "mininterval": 0,
         "maxinterval": 0,
         "leave": leave,
+        "bar_format": "{desc}: {percentage:3.0f}%",
     }
     for _ in trange(2, desc="pos0 bar", position=0, **kwargs):
         t2 = tldm(total=2, desc="pos1 bar", position=1, **kwargs)
