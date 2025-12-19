@@ -41,6 +41,41 @@ async def test_break():
 
 
 @mark.asyncio
+async def test_complete_bar_on_early_finish(capsys):
+    """Test completing the bar on early exit."""
+    with tldm(
+        count(),
+        total=10,
+        miniters=0,
+        mininterval=0,
+        complete_bar_on_early_finish=True,
+    ) as pbar:
+        async for i in pbar:
+            if i == 4:
+                break
+    _, err = capsys.readouterr()
+    assert "10/10" in err
+
+
+@mark.asyncio
+async def test_no_complete_bar_on_exception(capsys):
+    """Test not completing the bar on exception."""
+    with raises(RuntimeError):
+        with tldm(
+            count(),
+            total=10,
+            miniters=0,
+            mininterval=0,
+            complete_bar_on_early_finish=True,
+        ) as pbar:
+            async for i in pbar:
+                if i == 4:
+                    raise RuntimeError("boom")
+    _, err = capsys.readouterr()
+    assert "10/10" not in err
+
+
+@mark.asyncio
 async def test_generators(capsys):
     """Test asyncio generators"""
     with tldm(count(), desc="counter") as pbar:

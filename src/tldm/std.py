@@ -219,6 +219,9 @@ class tldm(Generic[T]):
         The initial counter value. Useful when restarting a progress
         bar [default: 0]. If using float, consider specifying `{n:.3f}`
         or similar in `bar_format`, or specifying `unit_scale`.
+    complete_bar_on_early_finish  : bool, optional
+        If True, complete the bar when closing early without errors
+        and a total is known. [default: False].
     position  : int, optional
         Specify the line offset to print this bar (starting from 0)
         Automatic if unspecified.
@@ -439,6 +442,7 @@ class tldm(Generic[T]):
         colour: str | None = None,
         delay: float = 0.0,
         title: bool = False,
+        complete_bar_on_early_finish: bool = False,
         **kwargs: dict[str, Any],
     ) -> None:
         """see tldm.tldm for arguments"""
@@ -532,6 +536,8 @@ class tldm(Generic[T]):
         self.colour = colour
         self._time = time
         self.title = title
+        self.complete_bar_on_early_finish = complete_bar_on_early_finish
+        self._close_with_exception = False
         if postfix:
             try:
                 self.set_postfix(refresh=False, **postfix)
@@ -598,6 +604,26 @@ class tldm(Generic[T]):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
+        # Track if close() was already called
+        was_closed = self.disable
+
+        # If there was no real exception (clean break), clear the exception flag
+        # that may have been set by GeneratorExit in __iter__
+        if exc_type is None:
+            self._close_with_exception = False
+            # Re-enable temporarily to allow bar completion, but only if not already closed
+            if was_closed:
+                # Re-evaluate should_complete and update n if needed
+                if (completion_total := self._get_completion_total()) is not None:
+                    self.n = completion_total
+                    # Display the completed bar
+                    if self.last_print_t >= self.start_t + self.delay:
+                        self._display_final_bar()
+                return
+        else:
+            # There was an exception
+            self._close_with_exception = True
+
         try:
             self.close()
         except AttributeError:
@@ -689,6 +715,7 @@ class tldm(Generic[T]):
         n = self.n
         time = self._time
 
+        self._close_with_exception = False
         try:
             for obj in self.iterable:
                 yield obj
@@ -703,8 +730,19 @@ class tldm(Generic[T]):
                         self.update(n - last_print_n)
                         last_print_n = self.last_print_n
                         last_print_t = self.last_print_t
+        except Exception:
+            self._close_with_exception = True
+            raise
         finally:
             self.n = n
+            # Check if we're closing due to any exception (including GeneratorExit)
+            # We set the flag here, but __exit__ may override it if it turns out
+            # to be a clean break (no exception in __exit__)
+            import sys
+
+            exc_type = sys.exc_info()[0]
+            if exc_type is not None:
+                self._close_with_exception = True
             self.close()
 
     def update(self, n: int | float = 1) -> None:
@@ -783,6 +821,8 @@ class tldm(Generic[T]):
         self.disable = True
 
         try:
+            if (completion_total := self._get_completion_total()) is not None:
+                self.n = completion_total
             if self.last_print_t < self.start_t + self.delay:
                 # haven't ever displayed; nothing to clear
                 return
@@ -801,24 +841,49 @@ class tldm(Generic[T]):
             pos = abs(self.pos)
             leave = pos == 0 if self.leave is None else self.leave
 
-            with self._lock:
-                if leave:
-
-                    def dummy_func(_: Any = None) -> float:
-                        return 1.0
-
-                    # stats for overall rate (no weighted average)
-                    self._ema_dt = dummy_func
-                    self.display(pos=0)
-                    fp_write("\n")
-                else:
-                    # clear previous display
+            if leave:
+                # stats for overall rate (no weighted average)
+                self._display_final_bar()
+            else:
+                # clear previous display
+                with self._lock:
                     if self.display(msg="", pos=pos) and not pos:
                         fp_write("\r")
 
         finally:
             # decrement instance pos and remove from internal set
             self._decr_instances(self)
+
+    def _get_completion_total(self) -> int | float | None:
+        """Get the total value if bar should be completed on close.
+
+        Returns the total if the bar should be completed, None otherwise.
+        This provides type safety for the caller.
+        """
+        if (
+            getattr(self, "complete_bar_on_early_finish", False)
+            and not self._close_with_exception
+            and self.total is not None
+            and self.n < self.total
+        ):
+            return self.total
+        return None
+
+    def _display_final_bar(self) -> None:
+        """Display the final progress bar with overall rate statistics.
+
+        This is called when closing a completed progress bar. It disables
+        smoothing (sets EMA to always return 1.0) to show the overall rate
+        (total iterations / total time) instead of a weighted average.
+        """
+        with self._lock:
+
+            def dummy_func(_: Any = None) -> float:
+                return 1.0
+
+            self._ema_dt = dummy_func
+            self.display(pos=0)
+            self.fp.write("\n")
 
     def clear(self, nolock: bool = False) -> None:
         """Clear current bar display."""

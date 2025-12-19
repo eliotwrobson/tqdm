@@ -45,9 +45,11 @@ class tldm_asyncio(std_tldm):
             self.update()
             return res
         except StopIteration:
+            self._close_with_exception = False
             self.close()
             raise StopAsyncIteration from None
         except BaseException:
+            self._close_with_exception = True
             self.close()
             raise
 

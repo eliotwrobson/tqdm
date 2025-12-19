@@ -252,6 +252,9 @@ for i in tldm(range(1000000), unit="B", unit_scale=True, unit_divisor=1024):
 - **initial** : int or float, optional
   The initial counter value. Useful when restarting a progress bar [default: 0].
 
+- **complete_bar_on_early_finish** : bool, optional
+  If True, complete the bar when closing early without errors and a total is known [default: False].
+
 - **position** : int, optional
   Specify the line offset to print this bar (starting from 0). Useful to manage multiple bars at once (eg, from threads).
 
