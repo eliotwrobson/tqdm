@@ -830,3 +830,19 @@ def format_meter(
             f"{(prefix + ': ') if prefix else ''}"
             f"{n_fmt}{unit} [{elapsed_str}, {rate_fmt}{postfix}]"
         )
+
+
+def _resize_signal_handler(signalnum, frame):
+    """Handle terminal resize signal (SIGWINCH) to update dynamic ncols/nrows."""
+    # Import here to avoid circular dependency
+    from .std import tldm
+
+    for cls in tldm.registered_classes:
+        with cls.get_lock():
+            for instance in cls._instances:
+                if instance.dynamic_ncols_func:
+                    ncols, nrows = instance.dynamic_ncols_func(instance.fp)
+                    if not instance.keep_original_size[0]:
+                        instance.ncols = ncols
+                    if not instance.keep_original_size[1]:
+                        instance.nrows = nrows
