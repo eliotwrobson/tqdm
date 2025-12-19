@@ -812,4 +812,4 @@ And all other contributors to the original tqdm project.
 
 ## License
 
-This project is licensed under the MPL-2.0 AND MIT licenses. See the [LICENCE](LICENCE) file for details.
+This project is licensed under the MPL-2.0 license. See the [LICENCE](LICENCE) file for details.
