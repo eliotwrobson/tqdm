@@ -618,14 +618,7 @@ class tldm(Generic[T]):
                     self.n = self.total
                     # Display the completed bar
                     if self.last_print_t >= self.start_t + self.delay:
-                        with self._lock:
-
-                            def dummy_func(_: Any = None) -> float:
-                                return 1.0
-
-                            self._ema_dt = dummy_func
-                            self.display(pos=0)
-                            self.fp.write("\n")
+                        self._display_final_bar()
                 return
         else:
             # There was an exception
@@ -848,18 +841,12 @@ class tldm(Generic[T]):
             pos = abs(self.pos)
             leave = pos == 0 if self.leave is None else self.leave
 
-            with self._lock:
-                if leave:
-
-                    def dummy_func(_: Any = None) -> float:
-                        return 1.0
-
-                    # stats for overall rate (no weighted average)
-                    self._ema_dt = dummy_func
-                    self.display(pos=0)
-                    fp_write("\n")
-                else:
-                    # clear previous display
+            if leave:
+                # stats for overall rate (no weighted average)
+                self._display_final_bar()
+            else:
+                # clear previous display
+                with self._lock:
                     if self.display(msg="", pos=pos) and not pos:
                         fp_write("\r")
 
@@ -874,6 +861,22 @@ class tldm(Generic[T]):
             and self.total is not None
             and self.n < self.total
         )
+
+    def _display_final_bar(self) -> None:
+        """Display the final progress bar with overall rate statistics.
+
+        This is called when closing a completed progress bar. It disables
+        smoothing (sets EMA to always return 1.0) to show the overall rate
+        (total iterations / total time) instead of a weighted average.
+        """
+        with self._lock:
+
+            def dummy_func(_: Any = None) -> float:
+                return 1.0
+
+            self._ema_dt = dummy_func
+            self.display(pos=0)
+            self.fp.write("\n")
 
     def clear(self, nolock: bool = False) -> None:
         """Clear current bar display."""
