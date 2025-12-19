@@ -614,8 +614,8 @@ class tldm(Generic[T]):
             # Re-enable temporarily to allow bar completion, but only if not already closed
             if was_closed:
                 # Re-evaluate should_complete and update n if needed
-                if self._should_complete_bar_on_close():
-                    self.n = self.total
+                if (completion_total := self._get_completion_total()) is not None:
+                    self.n = completion_total
                     # Display the completed bar
                     if self.last_print_t >= self.start_t + self.delay:
                         self._display_final_bar()
@@ -821,8 +821,8 @@ class tldm(Generic[T]):
         self.disable = True
 
         try:
-            if self._should_complete_bar_on_close():
-                self.n = self.total
+            if (completion_total := self._get_completion_total()) is not None:
+                self.n = completion_total
             if self.last_print_t < self.start_t + self.delay:
                 # haven't ever displayed; nothing to clear
                 return
@@ -854,13 +854,20 @@ class tldm(Generic[T]):
             # decrement instance pos and remove from internal set
             self._decr_instances(self)
 
-    def _should_complete_bar_on_close(self) -> bool:
-        return (
+    def _get_completion_total(self) -> int | float | None:
+        """Get the total value if bar should be completed on close.
+
+        Returns the total if the bar should be completed, None otherwise.
+        This provides type safety for the caller.
+        """
+        if (
             getattr(self, "complete_bar_on_early_finish", False)
             and not self._close_with_exception
             and self.total is not None
             and self.n < self.total
-        )
+        ):
+            return self.total
+        return None
 
     def _display_final_bar(self) -> None:
         """Display the final progress bar with overall rate statistics.
