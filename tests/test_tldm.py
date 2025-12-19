@@ -741,6 +741,27 @@ def test_complete_bar_on_early_finish() -> None:
         assert "10/10" in our_file.getvalue()
 
 
+def test_no_complete_bar_on_exception() -> None:
+    """Test not completing the bar on exception."""
+    with closing(StringIO()) as our_file:
+        try:
+            with tldm(
+                range(10),
+                total=10,
+                file=our_file,
+                miniters=1,
+                mininterval=0,
+                complete_bar_on_early_finish=True,
+            ) as pbar:
+                for i in pbar:
+                    if i == 4:
+                        raise RuntimeError("boom")
+        except RuntimeError:
+            pass
+        out = our_file.getvalue()
+        assert "10/10" not in out
+
+
 def test_nototal() -> None:
     """Test unknown total length"""
 
