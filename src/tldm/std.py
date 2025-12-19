@@ -604,7 +604,33 @@ class tldm(Generic[T]):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._close_with_exception = exc_type is not None
+        # Track if close() was already called
+        was_closed = self.disable
+
+        # If there was no real exception (clean break), clear the exception flag
+        # that may have been set by GeneratorExit in __iter__
+        if exc_type is None:
+            self._close_with_exception = False
+            # Re-enable temporarily to allow bar completion, but only if not already closed
+            if was_closed:
+                # Re-evaluate should_complete and update n if needed
+                if self._should_complete_bar_on_close():
+                    self.n = self.total
+                    # Display the completed bar
+                    if self.last_print_t >= self.start_t + self.delay:
+                        with self._lock:
+
+                            def dummy_func(_: Any = None) -> float:
+                                return 1.0
+
+                            self._ema_dt = dummy_func
+                            self.display(pos=0)
+                            self.fp.write("\n")
+                return
+        else:
+            # There was an exception
+            self._close_with_exception = True
+
         try:
             self.close()
         except AttributeError:
@@ -716,6 +742,14 @@ class tldm(Generic[T]):
             raise
         finally:
             self.n = n
+            # Check if we're closing due to any exception (including GeneratorExit)
+            # We set the flag here, but __exit__ may override it if it turns out
+            # to be a clean break (no exception in __exit__)
+            import sys
+
+            exc_type = sys.exc_info()[0]
+            if exc_type is not None:
+                self._close_with_exception = True
             self.close()
 
     def update(self, n: int | float = 1) -> None:
@@ -835,7 +869,7 @@ class tldm(Generic[T]):
 
     def _should_complete_bar_on_close(self) -> bool:
         return (
-            self.complete_bar_on_early_finish
+            getattr(self, "complete_bar_on_early_finish", False)
             and not self._close_with_exception
             and self.total is not None
             and self.n < self.total
